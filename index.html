@@ -1391,7 +1391,7 @@ body { font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans','Yu Gothic UI',sa
     <!-- グラフ行 -->
     <div class="charts-row" style="grid-template-columns:1fr 1fr;margin-bottom:16px">
       <div class="chart-card">
-        <div class="chart-title">月別売上推移（カテゴリ別積み上げ）</div>
+        <div class="chart-title">月別粗利推移（カテゴリ別積み上げ）</div>
         <div class="chart-wrap"><canvas id="budget-chart-stack"></canvas></div>
       </div>
       <div class="chart-card">
@@ -3388,17 +3388,19 @@ function renderBudgetDashboard() {
 
   const months = [...allMonths].sort();
 
-  // 月別集計
-  const mSales={}, mConst={}, mGal={}, mEc={};
-  months.forEach(mo=>{ mSales[mo]=0; mConst[mo]=0; mGal[mo]=0; mEc[mo]=0; });
+  // 月別集計（グラフ用は粗利ベース。ガリレイ工事は粗利データがないため売上ベースのまま）
+  const mSales={}, mConst={}, mGal={}, mEc={}, mSalesProfit={}, mConstProfit={};
+  months.forEach(mo=>{ mSales[mo]=0; mConst[mo]=0; mGal[mo]=0; mEc[mo]=0; mSalesProfit[mo]=0; mConstProfit[mo]=0; });
 
   (allSalesData||[]).filter(s=>inRange(s.yearMonth)).forEach(s=>{
     const mo = String(s.yearMonth).replace('/','-').substring(0,7);
     if(mSales[mo]!==undefined) mSales[mo]+=s.sales;
+    if(mSalesProfit[mo]!==undefined) mSalesProfit[mo]+=s.profit;
   });
   allConstructionData.filter(s=>inRange(s.yearMonth)).forEach(s=>{
     const mo = String(s.yearMonth).replace('/','-').substring(0,7);
     if(mConst[mo]!==undefined) mConst[mo]+=s.sales;
+    if(mConstProfit[mo]!==undefined) mConstProfit[mo]+=s.profit;
   });
   allGalileiSites.filter(s=>inRange(s.yearMonthNorm)).forEach(s=>{
     const mo = s.yearMonthNorm.substring(0,7);
@@ -3409,7 +3411,7 @@ function renderBudgetDashboard() {
     if(mo && mEc[mo]!==undefined) mEc[mo]+=s.profit;
   });
 
-  // ── グラフ1: 積み上げ棒グラフ ──
+  // ── グラフ1: 積み上げ棒グラフ（粗利ベース。ガリレイ工事のみ粗利データがないため実績額） ──
   const ctx1 = document.getElementById('budget-chart-stack');
   if (ctx1) {
     if (ctx1._chartInst) ctx1._chartInst.destroy();
@@ -3418,8 +3420,8 @@ function renderBudgetDashboard() {
       data:{
         labels: months.map(mo=>mo.replace('-','/')),
         datasets:[
-          { label:'営業',       data:months.map(mo=>mSales[mo]||0), backgroundColor:'#3B82F680', borderColor:'#3B82F6', borderWidth:1 },
-          { label:'その他工事', data:months.map(mo=>mConst[mo]||0), backgroundColor:'#F59E0B80', borderColor:'#F59E0B', borderWidth:1 },
+          { label:'営業（粗利）',       data:months.map(mo=>mSalesProfit[mo]||0), backgroundColor:'#3B82F680', borderColor:'#3B82F6', borderWidth:1 },
+          { label:'その他工事（粗利）', data:months.map(mo=>mConstProfit[mo]||0), backgroundColor:'#F59E0B80', borderColor:'#F59E0B', borderWidth:1 },
           { label:'ガリレイ工事',data:months.map(mo=>mGal[mo]||0),  backgroundColor:'#10B98180', borderColor:'#10B981', borderWidth:1 },
           { label:'EC（粗利）', data:months.map(mo=>mEc[mo]||0),    backgroundColor:'#8B5CF680', borderColor:'#8B5CF6', borderWidth:1 },
         ]
@@ -3435,16 +3437,16 @@ function renderBudgetDashboard() {
     });
   }
 
-  // ── グラフ2: 達成率横棒グラフ ──
+  // ── グラフ2: 達成率横棒グラフ（粗利ベース。ガリレイ工事のみ粗利データがないため実質達成率） ──
   const ctx2 = document.getElementById('budget-chart-achieve');
   if (ctx2) {
     if (ctx2._chartInst) ctx2._chartInst.destroy();
-    const achData = [sAchS, cAchSfix, gAchS, ecAchP];
+    const achData = [sAchP, cAchP, gAchS, ecAchP];
     const achColors = achData.map(v => v>=100?'#10B981':v>=70?'#3B82F6':'#EF4444');
     ctx2._chartInst = new Chart(ctx2, {
       type:'bar',
       data:{
-        labels:['営業（売上）','その他工事（売上）','ガリレイ（実質）','EC（粗利）'],
+        labels:['営業（粗利）','その他工事（粗利）','ガリレイ（実質）','EC（粗利）'],
         datasets:[{
           label:'達成率（%）',
           data: achData,
@@ -3480,8 +3482,8 @@ function renderBudgetDashboard() {
   document.getElementById('budget-summary-thead').innerHTML = `
     <tr style="border-bottom:1px solid var(--border)">
       <th style="text-align:left;padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500;white-space:nowrap">年月</th>
-      <th style="text-align:right;padding:6px 8px;font-size:11px;color:#3B82F6;font-weight:500">営業</th>
-      <th style="text-align:right;padding:6px 8px;font-size:11px;color:#F59E0B;font-weight:500">その他工事</th>
+      <th style="text-align:right;padding:6px 8px;font-size:11px;color:#3B82F6;font-weight:500">営業（粗利）</th>
+      <th style="text-align:right;padding:6px 8px;font-size:11px;color:#F59E0B;font-weight:500">その他工事（粗利）</th>
       <th style="text-align:right;padding:6px 8px;font-size:11px;color:#10B981;font-weight:500">ガリレイ工事</th>
       <th style="text-align:right;padding:6px 8px;font-size:11px;color:#8B5CF6;font-weight:500">EC（粗利）</th>
       <th style="text-align:right;padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500;border-left:1px solid var(--border)">合計</th>
@@ -3489,7 +3491,7 @@ function renderBudgetDashboard() {
 
   let totalRow = {s:0,c:0,g:0,e:0};
   document.getElementById('budget-summary-tbody').innerHTML = months.map(mo=>{
-    const s=mSales[mo]||0, cv=mConst[mo]||0, g=mGal[mo]||0, e=mEc[mo]||0;
+    const s=mSalesProfit[mo]||0, cv=mConstProfit[mo]||0, g=mGal[mo]||0, e=mEc[mo]||0;
     const t=s+cv+g+e;
     totalRow.s+=s; totalRow.c+=cv; totalRow.g+=g; totalRow.e+=e;
     return `<tr style="border-bottom:1px solid var(--border);transition:background .15s" onmouseover="this.style.background='var(--hover)'" onmouseout="this.style.background=''">
