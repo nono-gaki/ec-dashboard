@@ -3319,51 +3319,52 @@ function renderBudgetDashboard() {
   const totalAchS    = totalTargetS>0 ? (salesRev+constRev+galRev)/totalTargetS*100 : 0;
   const totalAchP    = totalTargetP>0 ? totalProfit/totalTargetP*100 : 0;
 
-  // ── 全体KPIカード ──
+  // ── 全体KPIカード（粗利を優先表示） ──
   document.getElementById('budget-total-kpi').innerHTML =
-    kpiCard('売上合計（税抜）', '¥'+fmtYen(Math.round(totalRev)), totalAchS, periodLabel+'目標: ¥'+fmtYen(totalTargetS)) +
     kpiCard('粗利合計（税抜）', '¥'+fmtYen(Math.round(totalProfit)), totalAchP, periodLabel+'目標: ¥'+fmtYen(totalTargetP)) +
-    kpiCard('営業+工事 達成率', fmtPct(totalAchS), totalAchS, '売上目標対比', false) +
-    kpiCard('粗利 達成率', fmtPct(totalAchP), totalAchP, '粗利目標対比', false);
+    kpiCard('粗利 達成率', fmtPct(totalAchP), totalAchP, '粗利目標対比', false) +
+    kpiCard('売上合計（税抜）', '¥'+fmtYen(Math.round(totalRev)), totalAchS, periodLabel+'目標: ¥'+fmtYen(totalTargetS)) +
+    kpiCard('営業+工事 達成率', fmtPct(totalAchS), totalAchS, '売上目標対比', false);
 
-  // ── カテゴリ別KPIグリッド ──
+  // ── カテゴリ別KPIグリッド（粗利を優先表示、粗利データがない場合のみ売上を表示） ──
   const categories = [
-    { name:'営業',      color:'#3B82F6', rev:salesRev,  profit:salesProfit, targetS:sTargetS, targetP:sTargetP, achS:sAchS, achP:sAchP },
-    { name:'その他工事', color:'#F59E0B', rev:constRev,  profit:constProfit, targetS:cTargetS, targetP:cTargetP, achS:cAchSfix, achP:cAchP },
-    { name:'ガリレイ工事',color:'#10B981', rev:galRev,   profit:null,        targetS:gTargetS, targetP:gTargetP, achS:gAchS, achP:null },
-    { name:'EC（粗利）', color:'#8B5CF6', rev:ecProfit,  profit:null,        targetS:ecTargetP,targetP:ecTargetP, achS:ecAchP, achP:null },
+    { name:'営業',       color:'#3B82F6',
+      primary:  { label:'粗利実績', value:salesProfit, target:sTargetP, ach:sAchP },
+      secondary:{ label:'売上実績', value:salesRev,    target:sTargetS, ach:sAchS } },
+    { name:'その他工事', color:'#F59E0B',
+      primary:  { label:'粗利実績', value:constProfit, target:cTargetP, ach:cAchP },
+      secondary:{ label:'売上実績', value:constRev,    target:cTargetS, ach:cAchSfix } },
+    { name:'ガリレイ工事',color:'#10B981',
+      primary:  { label:'売上実績', value:galRev, target:gTargetS, ach:gAchS },
+      secondary:null },
+    { name:'EC（粗利）', color:'#8B5CF6',
+      primary:  { label:'粗利実績', value:ecProfit, target:ecTargetP, ach:ecAchP },
+      secondary:null },
   ];
 
-  document.getElementById('budget-category-kpi').innerHTML = categories.map(cat => `
+  document.getElementById('budget-category-kpi').innerHTML = categories.map(cat => {
+    const barColor = (ach) => ach>=100?'var(--green)':ach>=70?cat.color:'var(--red)';
+    const block = (b) => !b ? '<div></div>' : `
+        <div>
+          <div style="font-size:10px;color:var(--text-muted);margin-bottom:2px">${b.label}</div>
+          <div style="font-size:16px;font-weight:700;color:var(--text-primary)">¥${fmtYen(Math.round(b.value))}</div>
+          <div style="font-size:10px;color:var(--text-muted);margin-top:1px">目標: ¥${fmtYen(b.target)}</div>
+          <div style="margin-top:4px">
+            <div style="height:4px;background:var(--border);border-radius:2px;overflow:hidden">
+              <div style="height:100%;width:${Math.min(b.ach,100)}%;background:${barColor(b.ach)};border-radius:2px"></div>
+            </div>
+            <div style="font-size:11px;font-weight:600;color:${barColor(b.ach)};margin-top:2px">${fmtPct(b.ach)}</div>
+          </div>
+        </div>`;
+    return `
     <div class="table-card" style="border-left:3px solid ${cat.color};padding:14px 16px">
       <div style="font-weight:600;font-size:13px;color:var(--text-primary);margin-bottom:10px">${cat.name}</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-        <div>
-          <div style="font-size:10px;color:var(--text-muted);margin-bottom:2px">${cat.name==='EC（粗利）'?'粗利':'売上'}実績</div>
-          <div style="font-size:16px;font-weight:700;color:var(--text-primary)">¥${fmtYen(Math.round(cat.rev))}</div>
-          <div style="font-size:10px;color:var(--text-muted);margin-top:1px">目標: ¥${fmtYen(cat.targetS)}</div>
-          <div style="margin-top:4px">
-            <div style="height:4px;background:var(--border);border-radius:2px;overflow:hidden">
-              <div style="height:100%;width:${Math.min(cat.achS,100)}%;background:${cat.achS>=100?'var(--green)':cat.achS>=70?cat.color:'var(--red)'};border-radius:2px"></div>
-            </div>
-            <div style="font-size:11px;font-weight:600;color:${cat.achS>=100?'var(--green)':cat.achS>=70?cat.color:'var(--red)'};margin-top:2px">${fmtPct(cat.achS)}</div>
-          </div>
-        </div>
-        ${cat.profit!==null?`
-        <div>
-          <div style="font-size:10px;color:var(--text-muted);margin-bottom:2px">粗利実績</div>
-          <div style="font-size:16px;font-weight:700;color:var(--text-primary)">¥${fmtYen(Math.round(cat.profit))}</div>
-          <div style="font-size:10px;color:var(--text-muted);margin-top:1px">目標: ¥${fmtYen(cat.targetP)}</div>
-          <div style="margin-top:4px">
-            <div style="height:4px;background:var(--border);border-radius:2px;overflow:hidden">
-              <div style="height:100%;width:${Math.min(cat.achP,100)}%;background:${cat.achP>=100?'var(--green)':cat.achP>=70?cat.color:'var(--red)'};border-radius:2px"></div>
-            </div>
-            <div style="font-size:11px;font-weight:600;color:${cat.achP>=100?'var(--green)':cat.achP>=70?cat.color:'var(--red)'};margin-top:2px">${fmtPct(cat.achP)}</div>
-          </div>
-        </div>` : '<div></div>'}
+        ${block(cat.primary)}
+        ${block(cat.secondary)}
       </div>
-    </div>
-  `).join('');
+    </div>`;
+  }).join('');
 
   // ── 月別集計（全カテゴリ共通月リスト） ──
   const allMonths = new Set();
