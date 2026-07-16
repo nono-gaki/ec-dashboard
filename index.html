@@ -249,13 +249,34 @@ body { font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans','Yu Gothic UI',sa
   .table-card th, .table-card td { font-size:11px; padding:5px 6px; }
   .kpi-progress-table th, .kpi-progress-table td { font-size:11px; padding:6px; }
 
-  /* 在庫・買取・営業の個別テーブル類も横スクロール */
-  #stock-table, .purchase-table, table:has(#sales-table-body) { min-width:600px; }
+  /* 在庫・買取の個別テーブル類は横スクロール */
+  #stock-table, .purchase-table { min-width:600px; }
 
   /* 月別×カテゴリ別サマリー: 横スクロールさせず元の表形式のまま画面幅に収める */
   #budget-summary-table { min-width:0; table-layout:fixed; width:100%; }
   #budget-summary-table th, #budget-summary-table td { font-size:8px !important; padding:3px 1px !important; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   #budget-summary-table th:first-child, #budget-summary-table td:first-child { width:11%; }
+
+  /* 月別実績サマリー・案件一覧・現場一覧: 同様に横スクロールさせず画面幅に収める */
+  .tbl-fit-mobile { min-width:0 !important; table-layout:fixed; width:100%; }
+  .tbl-fit-mobile th, .tbl-fit-mobile td { font-size:8px !important; padding:3px 1px !important; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .tbl-fit-mobile td span { font-size:7px !important; }
+  .tbl-fit-mobile.cols-5 th:first-child, .tbl-fit-mobile.cols-5 td:first-child { width:22%; }
+  .tbl-fit-mobile.cols-6 th:nth-child(1), .tbl-fit-mobile.cols-6 td:nth-child(1) { width:16%; }
+  .tbl-fit-mobile.cols-6 th:nth-child(2), .tbl-fit-mobile.cols-6 td:nth-child(2),
+  .tbl-fit-mobile.cols-6 th:nth-child(3), .tbl-fit-mobile.cols-6 td:nth-child(3) { width:14%; }
+  .tbl-fit-mobile.cols-6 th:nth-child(4), .tbl-fit-mobile.cols-6 td:nth-child(4),
+  .tbl-fit-mobile.cols-6 th:nth-child(5), .tbl-fit-mobile.cols-6 td:nth-child(5) { width:19%; }
+  .tbl-fit-mobile.cols-6 th:nth-child(6), .tbl-fit-mobile.cols-6 td:nth-child(6) { width:18%; }
+  /* 現場一覧(8列)はスマホでは優先度の低い「市町村区」「翌月検収」を非表示にして残り6列を収める */
+  .tbl-fit-mobile.cols-8 th:nth-child(4), .tbl-fit-mobile.cols-8 td:nth-child(4),
+  .tbl-fit-mobile.cols-8 th:nth-child(8), .tbl-fit-mobile.cols-8 td:nth-child(8) { display:none; }
+  .tbl-fit-mobile.cols-8 th:nth-child(1), .tbl-fit-mobile.cols-8 td:nth-child(1) { width:14%; }
+  .tbl-fit-mobile.cols-8 th:nth-child(2), .tbl-fit-mobile.cols-8 td:nth-child(2) { width:12%; }
+  .tbl-fit-mobile.cols-8 th:nth-child(3), .tbl-fit-mobile.cols-8 td:nth-child(3),
+  .tbl-fit-mobile.cols-8 th:nth-child(5), .tbl-fit-mobile.cols-8 td:nth-child(5) { width:19%; }
+  .tbl-fit-mobile.cols-8 th:nth-child(6), .tbl-fit-mobile.cols-8 td:nth-child(6),
+  .tbl-fit-mobile.cols-8 th:nth-child(7), .tbl-fit-mobile.cols-8 td:nth-child(7) { width:18%; }
 
   /* ステータスバッジ */
   .status-badges { gap:6px; }
@@ -548,7 +569,7 @@ body { font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans','Yu Gothic UI',sa
         <div class="bottom-row">
           <div class="table-card">
             <div class="chart-title">月別実績サマリー</div>
-            <table>
+            <table class="tbl-fit-mobile cols-5">
               <thead><tr><th>年月</th><th>粗利額（円）</th><th>販売点数</th><th>粗利率</th><th>平均粗利/点</th></tr></thead>
               <tbody id="monthly-table"></tbody>
             </table>
@@ -817,7 +838,7 @@ body { font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans','Yu Gothic UI',sa
           <div class="bottom-row">
             <div class="table-card">
               <div class="chart-title">月別実績サマリー</div>
-              <table>
+              <table class="tbl-fit-mobile cols-5">
                 <thead><tr><th>完工年月</th><th>売上高（円）</th><th>粗利額（円）</th><th>粗利率</th><th>件数</th></tr></thead>
                 <tbody id="sales-monthly-table"></tbody>
               </table>
@@ -855,7 +876,7 @@ body { font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans','Yu Gothic UI',sa
           <div class="table-card">
             <div class="chart-title">案件一覧</div>
             <div style="overflow-x:auto;margin-top:10px">
-              <table style="width:100%;border-collapse:collapse;font-size:12px">
+              <table class="tbl-fit-mobile cols-6" style="width:100%;border-collapse:collapse;font-size:12px">
                 <thead>
                   <tr style="border-bottom:1px solid var(--border)">
                     <th style="text-align:left;padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500">完工日</th>
@@ -990,7 +1011,7 @@ body { font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans','Yu Gothic UI',sa
           <div class="bottom-row">
             <div class="table-card">
               <div class="chart-title">月別実績サマリー</div>
-              <table>
+              <table class="tbl-fit-mobile cols-5">
                 <thead><tr><th>完工年月</th><th>売上高（円）</th><th>粗利額（円）</th><th>粗利率</th><th>件数</th></tr></thead>
                 <tbody id="construction-monthly-table"></tbody>
               </table>
@@ -1028,7 +1049,7 @@ body { font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans','Yu Gothic UI',sa
           <div class="table-card">
             <div class="chart-title">案件一覧</div>
             <div style="overflow-x:auto;margin-top:10px">
-              <table style="width:100%;border-collapse:collapse;font-size:12px">
+              <table class="tbl-fit-mobile cols-6" style="width:100%;border-collapse:collapse;font-size:12px">
                 <thead>
                   <tr style="border-bottom:1px solid var(--border)">
                     <th style="text-align:left;padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500">完工日</th>
@@ -1175,7 +1196,7 @@ body { font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans','Yu Gothic UI',sa
           <div class="bottom-row">
             <div class="table-card">
               <div class="chart-title">月別実績サマリー</div>
-              <table>
+              <table class="tbl-fit-mobile cols-5">
                 <thead><tr><th>年月</th><th>実質金額（円）</th><th>予算売上（円）</th><th>粗利額（円）</th><th>件数</th></tr></thead>
                 <tbody id="galilei-monthly-table"></tbody>
               </table>
@@ -1223,7 +1244,7 @@ body { font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans','Yu Gothic UI',sa
               </div>
             </div>
             <div style="overflow-x:auto;margin-top:10px">
-              <table style="width:100%;border-collapse:collapse;font-size:12px">
+              <table class="tbl-fit-mobile cols-8" style="width:100%;border-collapse:collapse;font-size:12px">
                 <thead>
                   <tr style="border-bottom:1px solid var(--border)">
                     <th style="text-align:left;padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500">施行日</th>
@@ -1606,6 +1627,7 @@ let charts = {};
 function destroyChart(id) { if (charts[id]) { charts[id].destroy(); delete charts[id]; } }
 const fmtYen = n => Math.round(n).toLocaleString('ja-JP');
 const fmtPct = n => (Math.round(n*10)/10).toFixed(1) + '%';
+const shortDate = d => (d && /^\d{4}\//.test(d)) ? d.slice(2) : (d||'');
 const achCls = p => p >= 100 ? 'good' : p >= 80 ? 'warn' : 'bad';
 const parseNum = v => parseFloat(String(v||'0').replace(/[¥,\s]/g,'')) || 0;
 
@@ -2574,7 +2596,7 @@ function renderSalesDashboard() {
   // 案件一覧テーブル
   document.getElementById('sales-table-body').innerHTML = [...sales].reverse().map(d=>`
     <tr style="border-bottom:0.5px solid var(--bg)">
-      <td data-label="完工日" style="padding:6px 8px">${d.date}</td>
+      <td data-label="完工日" style="padding:6px 8px">${shortDate(d.date)}</td>
       <td data-label="販売先" style="padding:6px 8px;font-weight:500">${d.client}</td>
       <td data-label="売上内容" style="padding:6px 8px;color:var(--text-secondary)">${d.content}</td>
       <td data-label="売上金額(税抜)" style="padding:6px 8px;text-align:right">¥${fmtYen(d.sales)}</td>
@@ -2808,7 +2830,7 @@ function renderConstructionDashboard() {
   // 案件一覧テーブル
   document.getElementById('construction-table-body').innerHTML = [...sales].reverse().map(d=>`
     <tr style="border-bottom:0.5px solid var(--bg)">
-      <td data-label="完工日" style="padding:6px 8px">${d.date}</td>
+      <td data-label="完工日" style="padding:6px 8px">${shortDate(d.date)}</td>
       <td data-label="販売先" style="padding:6px 8px;font-weight:500">${d.client}</td>
       <td data-label="施主" style="padding:6px 8px;color:var(--text-secondary)">${d.owner}</td>
       <td data-label="売上金額(税抜)" style="padding:6px 8px;text-align:right">¥${fmtYen(d.sales)}</td>
@@ -3586,7 +3608,7 @@ function renderGalileiSites() {
   });
   document.getElementById('galilei-sites-table-body').innerHTML = sorted.map(s => `
     <tr style="border-bottom:0.5px solid var(--bg)">
-      <td data-label="施行日" style="padding:6px 8px">${s.date}</td>
+      <td data-label="施行日" style="padding:6px 8px">${shortDate(s.date)}</td>
       <td data-label="営業担当" style="padding:6px 8px">${s.rep}</td>
       <td data-label="物件名" style="padding:6px 8px;font-weight:500">${s.property}</td>
       <td data-label="市町村区" style="padding:6px 8px;color:var(--text-secondary)">${s.area}</td>
