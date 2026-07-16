@@ -252,16 +252,10 @@ body { font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans','Yu Gothic UI',sa
   /* 在庫・買取・営業の個別テーブル類も横スクロール */
   #stock-table, .purchase-table, table:has(#sales-table-body) { min-width:600px; }
 
-  /* 月別×カテゴリ別サマリー: 横スクロールではなく1行=1カードに積む */
-  #budget-summary-table { min-width:0; }
-  #budget-summary-table thead { display:none; }
-  #budget-summary-table, #budget-summary-table tbody, #budget-summary-table tr, #budget-summary-table td { display:block; width:100%; }
-  #budget-summary-table tr { border:1px solid var(--border); border-radius:8px; margin-bottom:8px; padding:6px 10px; }
-  #budget-summary-table td { display:flex; justify-content:space-between; align-items:center; padding:4px 0 !important; border-left:none !important; font-size:12px !important; }
-  #budget-summary-table td::before { content:attr(data-label); color:var(--text-muted); font-size:11px; }
-  #budget-summary-table td[data-label="年月"] { font-weight:700; font-size:13px !important; border-bottom:1px solid var(--border); margin-bottom:2px; padding-bottom:6px !important; }
-  #budget-summary-table td[data-label="年月"]::before { content:none; }
-  #budget-summary-table td[data-label="合計"] { border-top:1px solid var(--border); margin-top:2px; padding-top:6px !important; font-weight:700 !important; }
+  /* 月別×カテゴリ別サマリー: 横スクロールさせず元の表形式のまま画面幅に収める */
+  #budget-summary-table { min-width:0; table-layout:fixed; width:100%; }
+  #budget-summary-table th, #budget-summary-table td { font-size:8px !important; padding:3px 1px !important; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  #budget-summary-table th:first-child, #budget-summary-table td:first-child { width:11%; }
 
   /* ステータスバッジ */
   .status-badges { gap:6px; }
@@ -1427,6 +1421,7 @@ body { font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans','Yu Gothic UI',sa
     <!-- 月別×カテゴリ別サマリーテーブル -->
     <div class="table-card">
       <div class="chart-title">月別 × カテゴリ別サマリー</div>
+      <div style="font-size:10px;color:var(--text-muted);margin-top:-4px">※すべて粗利ベース</div>
       <div style="overflow-x:auto;margin-top:10px">
         <table style="width:100%;border-collapse:collapse;font-size:12px" id="budget-summary-table">
           <thead id="budget-summary-thead"></thead>
@@ -3520,10 +3515,10 @@ function renderBudgetDashboard() {
   document.getElementById('budget-summary-thead').innerHTML = `
     <tr style="border-bottom:1px solid var(--border)">
       <th style="text-align:left;padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500;white-space:nowrap">年月</th>
-      <th style="text-align:right;padding:6px 8px;font-size:11px;color:#3B82F6;font-weight:500">営業（粗利）</th>
-      <th style="text-align:right;padding:6px 8px;font-size:11px;color:#F59E0B;font-weight:500">その他工事（粗利）</th>
-      <th style="text-align:right;padding:6px 8px;font-size:11px;color:#10B981;font-weight:500">ガリレイ工事（粗利）</th>
-      <th style="text-align:right;padding:6px 8px;font-size:11px;color:#8B5CF6;font-weight:500">EC（粗利）</th>
+      <th style="text-align:right;padding:6px 8px;font-size:11px;color:#3B82F6;font-weight:500">営業</th>
+      <th style="text-align:right;padding:6px 8px;font-size:11px;color:#F59E0B;font-weight:500">工事</th>
+      <th style="text-align:right;padding:6px 8px;font-size:11px;color:#10B981;font-weight:500">ガリレイ</th>
+      <th style="text-align:right;padding:6px 8px;font-size:11px;color:#8B5CF6;font-weight:500">EC</th>
       <th style="text-align:right;padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500;border-left:1px solid var(--border)">合計</th>
     </tr>`;
 
@@ -3533,21 +3528,21 @@ function renderBudgetDashboard() {
     const t=s+cv+g+e;
     totalRow.s+=s; totalRow.c+=cv; totalRow.g+=g; totalRow.e+=e;
     return `<tr style="border-bottom:1px solid var(--border);transition:background .15s" onmouseover="this.style.background='var(--hover)'" onmouseout="this.style.background=''">
-      <td data-label="年月" style="padding:6px 8px;font-size:12px;font-weight:500">${mo.replace('-','/')}</td>
-      <td data-label="営業（粗利）" style="text-align:right;padding:6px 8px;font-size:12px">${s?'¥'+fmtYen(Math.round(s)):'-'}</td>
-      <td data-label="その他工事（粗利）" style="text-align:right;padding:6px 8px;font-size:12px">${cv?'¥'+fmtYen(Math.round(cv)):'-'}</td>
-      <td data-label="ガリレイ工事（粗利）" style="text-align:right;padding:6px 8px;font-size:12px">${g?'¥'+fmtYen(Math.round(g)):'-'}</td>
-      <td data-label="EC（粗利）" style="text-align:right;padding:6px 8px;font-size:12px">${e?'¥'+fmtYen(Math.round(e)):'-'}</td>
-      <td data-label="合計" style="text-align:right;padding:6px 8px;font-size:12px;font-weight:600;border-left:1px solid var(--border)">¥${fmtYen(Math.round(t))}</td>
+      <td style="padding:6px 8px;font-size:12px;font-weight:500">${mo.replace('-','/').slice(2)}</td>
+      <td style="text-align:right;padding:6px 8px;font-size:12px">${s?'¥'+fmtYen(Math.round(s)):'-'}</td>
+      <td style="text-align:right;padding:6px 8px;font-size:12px">${cv?'¥'+fmtYen(Math.round(cv)):'-'}</td>
+      <td style="text-align:right;padding:6px 8px;font-size:12px">${g?'¥'+fmtYen(Math.round(g)):'-'}</td>
+      <td style="text-align:right;padding:6px 8px;font-size:12px">${e?'¥'+fmtYen(Math.round(e)):'-'}</td>
+      <td style="text-align:right;padding:6px 8px;font-size:12px;font-weight:600;border-left:1px solid var(--border)">¥${fmtYen(Math.round(t))}</td>
     </tr>`;
   }).join('') + `
     <tr style="border-top:2px solid var(--border);background:var(--hover)">
-      <td data-label="年月" style="padding:7px 8px;font-size:12px;font-weight:700">合計</td>
-      <td data-label="営業（粗利）" style="text-align:right;padding:7px 8px;font-size:12px;font-weight:600;color:#3B82F6">¥${fmtYen(Math.round(totalRow.s))}</td>
-      <td data-label="その他工事（粗利）" style="text-align:right;padding:7px 8px;font-size:12px;font-weight:600;color:#F59E0B">¥${fmtYen(Math.round(totalRow.c))}</td>
-      <td data-label="ガリレイ工事（粗利）" style="text-align:right;padding:7px 8px;font-size:12px;font-weight:600;color:#10B981">¥${fmtYen(Math.round(totalRow.g))}</td>
-      <td data-label="EC（粗利）" style="text-align:right;padding:7px 8px;font-size:12px;font-weight:600;color:#8B5CF6">¥${fmtYen(Math.round(totalRow.e))}</td>
-      <td data-label="合計" style="text-align:right;padding:7px 8px;font-size:12px;font-weight:700;border-left:1px solid var(--border)">¥${fmtYen(Math.round(totalRow.s+totalRow.c+totalRow.g+totalRow.e))}</td>
+      <td style="padding:7px 8px;font-size:12px;font-weight:700">合計</td>
+      <td style="text-align:right;padding:7px 8px;font-size:12px;font-weight:600;color:#3B82F6">¥${fmtYen(Math.round(totalRow.s))}</td>
+      <td style="text-align:right;padding:7px 8px;font-size:12px;font-weight:600;color:#F59E0B">¥${fmtYen(Math.round(totalRow.c))}</td>
+      <td style="text-align:right;padding:7px 8px;font-size:12px;font-weight:600;color:#10B981">¥${fmtYen(Math.round(totalRow.g))}</td>
+      <td style="text-align:right;padding:7px 8px;font-size:12px;font-weight:600;color:#8B5CF6">¥${fmtYen(Math.round(totalRow.e))}</td>
+      <td style="text-align:right;padding:7px 8px;font-size:12px;font-weight:700;border-left:1px solid var(--border)">¥${fmtYen(Math.round(totalRow.s+totalRow.c+totalRow.g+totalRow.e))}</td>
     </tr>`;
 }
 
