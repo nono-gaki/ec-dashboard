@@ -116,6 +116,14 @@ body { font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans','Yu Gothic UI',sa
 .progress-fill.warn { background:var(--amber); }
 .progress-fill.bad  { background:var(--red); }
 
+/* BUDGET PAGE: 全体合計・カテゴリ別カード（レスポンシブ対応のため専用クラス化） */
+.kpi-row-3 { grid-template-columns:repeat(3,1fr); }
+.budget-cat-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+.budget-cat-inner { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+@media(max-width:700px){
+  .budget-cat-grid { grid-template-columns:1fr; }
+}
+
 /* CHARTS */
 .charts-row { display:grid; grid-template-columns:1fr 1fr 320px; gap:12px; margin-bottom:16px; }
 .chart-card { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:16px; }
@@ -213,6 +221,11 @@ body { font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans','Yu Gothic UI',sa
   .kpi-value { font-size:16px; }
   .kpi-achieve { font-size:10px; }
   .kpi-target { font-size:9px; }
+
+  /* 予算進捗ページ: 全体合計・カテゴリ別カードは1列に積む */
+  .kpi-row-3 { grid-template-columns:1fr !important; }
+  .budget-cat-grid { grid-template-columns:1fr !important; }
+  .budget-cat-inner { grid-template-columns:1fr !important; gap:10px; }
 
   /* CHARTS: 1列に積む、横スクロールでグラフを保護 */
   .charts-row { grid-template-columns:1fr !important; }
@@ -1379,13 +1392,13 @@ body { font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans','Yu Gothic UI',sa
     <!-- 全体合計KPI -->
     <div style="margin-bottom:12px">
       <div style="font-size:11px;font-weight:600;color:var(--text-muted);letter-spacing:.05em;margin-bottom:8px;padding-left:2px">全体合計</div>
-      <div class="kpi-row" id="budget-total-kpi" style="grid-template-columns:repeat(3,1fr)"></div>
+      <div class="kpi-row kpi-row-3" id="budget-total-kpi"></div>
     </div>
 
     <!-- カテゴリ別KPI -->
     <div style="margin-bottom:16px">
       <div style="font-size:11px;font-weight:600;color:var(--text-muted);letter-spacing:.05em;margin-bottom:8px;padding-left:2px">カテゴリ別</div>
-      <div id="budget-category-kpi" style="display:grid;grid-template-columns:1fr 1fr;gap:12px"></div>
+      <div id="budget-category-kpi" class="budget-cat-grid"></div>
     </div>
 
     <!-- グラフ行 -->
@@ -3362,7 +3375,7 @@ function renderBudgetDashboard() {
     return `
     <div class="table-card" style="border-left:3px solid ${cat.color};padding:14px 16px">
       <div style="font-weight:600;font-size:13px;color:var(--text-primary);margin-bottom:10px">${cat.name}</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+      <div class="budget-cat-inner">
         ${block(cat.primary)}
         ${block(cat.secondary)}
       </div>
