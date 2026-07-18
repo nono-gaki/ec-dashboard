@@ -3377,8 +3377,8 @@ function renderBudgetDashboard() {
   const constRows  = allConstructionData.filter(s=>inRange(s.yearMonth));
   const constRev   = constRows.reduce((a,s)=>a+s.sales,0);
   const constProfit= constRows.reduce((a,s)=>a+s.profit,0);
-  const cTargetS   = Math.round(CONSTRUCTION_CONFIG.annualSalesTarget/12*filterMonths);
-  const cTargetP   = Math.round(CONSTRUCTION_CONFIG.annualProfitTarget/12*filterMonths);
+  const cTargetS   = Math.round(cfg.constructionAnnualSalesTarget/12*filterMonths);
+  const cTargetP   = Math.round(cfg.constructionAnnualProfitTarget/12*filterMonths);
   const cAchS      = cTargetS>0 ? constRev/constRev*100 : 0; // ※ 売上目標
   const cAchSfix   = cTargetS>0 ? constRev/cTargetS*100 : 0;
   const cAchP      = cTargetP>0 ? constProfit/cTargetP*100 : 0;
@@ -3390,8 +3390,8 @@ function renderBudgetDashboard() {
   const galOutsource = allGalileiOutsource.filter(o=>inRange(o.yearMonthNorm)).reduce((a,o)=>a+o.amount,0);
   const galExpense   = allGalileiExpense.filter(e=>inRange(e.yearMonthNorm)).reduce((a,e)=>a+e.parking+e.etc+e.parts+e.disposal,0);
   const galProfit  = galRev - galOutsource - galExpense;
-  const gTargetS   = Math.round(GALILEI_CONFIG.annualSalesTarget/12*filterMonths);
-  const gTargetP   = Math.round(GALILEI_CONFIG.annualProfitTarget/12*filterMonths);
+  const gTargetS   = Math.round(cfg.galileiAnnualSalesTarget/12*filterMonths);
+  const gTargetP   = Math.round(cfg.galileiAnnualProfitTarget/12*filterMonths);
   const gAchS      = gTargetS>0 ? galRev/gTargetS*100 : 0;
   const gAchP      = gTargetP>0 ? galProfit/gTargetP*100 : 0;
 
