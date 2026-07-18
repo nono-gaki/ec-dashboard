@@ -389,6 +389,21 @@ body { font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans','Yu Gothic UI',sa
       <div class="config-item"><label>年間粗利目標（税抜・円）</label><input type="number" id="cfg-sales-annual-profit"></div>
     </div>
 
+    <div style="font-size:12px;font-weight:600;color:var(--blue);margin:16px 0 4px;border-top:1px solid var(--border);padding-top:12px">その他工事 設定</div>
+    <div class="config-grid">
+      <div class="config-item"><label>スプレッドシートID（その他工事実績）</label><input type="text" id="cfg-construction-sheetid"></div>
+      <div class="config-item"><label>実績シート名</label><input type="text" id="cfg-construction-sheet"></div>
+      <div class="config-item"><label>年間売上高目標（税抜・円）</label><input type="number" id="cfg-construction-annual-sales"></div>
+      <div class="config-item"><label>年間粗利目標（税抜・円）</label><input type="number" id="cfg-construction-annual-profit"></div>
+    </div>
+
+    <div style="font-size:12px;font-weight:600;color:var(--blue);margin:16px 0 4px;border-top:1px solid var(--border);padding-top:12px">ガリレイ工事 設定</div>
+    <div class="config-grid">
+      <div class="config-item"><label>スプレッドシートID（ガリレイ工事実績）</label><input type="text" id="cfg-galilei-sheetid"></div>
+      <div class="config-item"><label>年間売上高目標（税別・円）</label><input type="number" id="cfg-galilei-annual-sales"></div>
+      <div class="config-item"><label>年間粗利目標（税別・円）</label><input type="number" id="cfg-galilei-annual-profit"></div>
+    </div>
+
     <button class="config-save" onclick="saveConfig()" style="margin-top:16px">保存して再読み込み</button>
   </div>
 
@@ -1485,6 +1500,13 @@ const DEFAULT_CONFIG = {
   salesSheet: '売上管理表',
   salesAnnualSalesTarget: 48600000,
   salesAnnualProfitTarget: 16350000,
+  constructionSheetId: '1lA1glCzhkl3bazoAhvQ2xmp6cG_0EiO3wzaFl8x8wHs',
+  constructionSheet: '売上管理表',
+  constructionAnnualSalesTarget: 16200000,
+  constructionAnnualProfitTarget: 13000000,
+  galileiSheetId: '1-Twac-Kb3EOb9jSMbI5vPZkXbw_0wm5VhYe2iJTbgc0',
+  galileiAnnualSalesTarget: 63750000,
+  galileiAnnualProfitTarget: 46970000,
 };
 
 let allSales = [];
@@ -1509,11 +1531,20 @@ function saveConfig() {
     salesSheet: document.getElementById('cfg-sales-sheet').value || DEFAULT_CONFIG.salesSheet,
     salesAnnualSalesTarget: Number(document.getElementById('cfg-sales-annual-sales').value) || DEFAULT_CONFIG.salesAnnualSalesTarget,
     salesAnnualProfitTarget: Number(document.getElementById('cfg-sales-annual-profit').value) || DEFAULT_CONFIG.salesAnnualProfitTarget,
+    constructionSheetId: document.getElementById('cfg-construction-sheetid').value || DEFAULT_CONFIG.constructionSheetId,
+    constructionSheet: document.getElementById('cfg-construction-sheet').value || DEFAULT_CONFIG.constructionSheet,
+    constructionAnnualSalesTarget: Number(document.getElementById('cfg-construction-annual-sales').value) || DEFAULT_CONFIG.constructionAnnualSalesTarget,
+    constructionAnnualProfitTarget: Number(document.getElementById('cfg-construction-annual-profit').value) || DEFAULT_CONFIG.constructionAnnualProfitTarget,
+    galileiSheetId: document.getElementById('cfg-galilei-sheetid').value || DEFAULT_CONFIG.galileiSheetId,
+    galileiAnnualSalesTarget: Number(document.getElementById('cfg-galilei-annual-sales').value) || DEFAULT_CONFIG.galileiAnnualSalesTarget,
+    galileiAnnualProfitTarget: Number(document.getElementById('cfg-galilei-annual-profit').value) || DEFAULT_CONFIG.galileiAnnualProfitTarget,
   };
   localStorage.setItem('kpi_config', JSON.stringify(cfg));
   toggleConfig();
   loadData();
   loadSalesData();
+  loadConstructionData();
+  loadGalileiData();
 }
 function toggleConfig() {
   const p = document.getElementById('config-panel');
@@ -1532,6 +1563,13 @@ function toggleConfig() {
     document.getElementById('cfg-sales-sheet').value = cfg.salesSheet;
     document.getElementById('cfg-sales-annual-sales').value = cfg.salesAnnualSalesTarget;
     document.getElementById('cfg-sales-annual-profit').value = cfg.salesAnnualProfitTarget;
+    document.getElementById('cfg-construction-sheetid').value = cfg.constructionSheetId;
+    document.getElementById('cfg-construction-sheet').value = cfg.constructionSheet;
+    document.getElementById('cfg-construction-annual-sales').value = cfg.constructionAnnualSalesTarget;
+    document.getElementById('cfg-construction-annual-profit').value = cfg.constructionAnnualProfitTarget;
+    document.getElementById('cfg-galilei-sheetid').value = cfg.galileiSheetId;
+    document.getElementById('cfg-galilei-annual-sales').value = cfg.galileiAnnualSalesTarget;
+    document.getElementById('cfg-galilei-annual-profit').value = cfg.galileiAnnualProfitTarget;
   }
 }
 
@@ -2620,12 +2658,6 @@ let constructionLoaded = false;
 let allConstructionData = [];
 let constructionFilterFrom = '';
 let constructionFilterTo = '';
-const CONSTRUCTION_SHEET_ID   = '1lA1glCzhkl3bazoAhvQ2xmp6cG_0EiO3wzaFl8x8wHs';
-const CONSTRUCTION_SHEET_NAME = '売上管理表';
-const CONSTRUCTION_CONFIG = {
-  annualSalesTarget: 16200000,
-  annualProfitTarget: 13000000,
-};
 
 function setConstructionPreset(key, el, autoApply=false) {
   document.querySelectorAll('#page-construction .preset-btn').forEach(b => b.classList.remove('active'));
@@ -2689,7 +2721,7 @@ async function loadConstructionData() {
   try {
     // A=完工年月[0] B=完工日[1] C=販売先[2] D=施主[3] E=売上金額(税抜)[4]
     // F=仕入経費(税抜)[5] G=外注費(税抜)[6] H=粗利額(税抜)[7] I=粗利率[8]
-    const rows = await fetchSheet(cfg.apiKey, CONSTRUCTION_SHEET_ID, CONSTRUCTION_SHEET_NAME, 'A6:I2000');
+    const rows = await fetchSheet(cfg.apiKey, cfg.constructionSheetId, cfg.constructionSheet, 'A6:I2000');
     console.log('工事データ行数:', rows.length);
     const dataRows = rows.filter(r => r[0]);
     console.log('フィルタ後行数:', dataRows.length);
@@ -2762,11 +2794,12 @@ function renderConstructionDashboard() {
   const thisYM_dash  = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
   const thisMonthData = monthMap[thisYM_slash] || monthMap[thisYM_dash] || {sales:0,profit:0,count:0};
 
+  const cfg = getConfig();
   const filterMonths = calcConstructionFilterMonths();
-  const scaledSalesTarget  = Math.round(CONSTRUCTION_CONFIG.annualSalesTarget  / 12 * filterMonths);
-  const scaledProfitTarget = Math.round(CONSTRUCTION_CONFIG.annualProfitTarget / 12 * filterMonths);
-  const monthlySalesTarget  = CONSTRUCTION_CONFIG.annualSalesTarget  / 12;
-  const monthlyProfitTarget = CONSTRUCTION_CONFIG.annualProfitTarget / 12;
+  const scaledSalesTarget  = Math.round(cfg.constructionAnnualSalesTarget  / 12 * filterMonths);
+  const scaledProfitTarget = Math.round(cfg.constructionAnnualProfitTarget / 12 * filterMonths);
+  const monthlySalesTarget  = cfg.constructionAnnualSalesTarget  / 12;
+  const monthlyProfitTarget = cfg.constructionAnnualProfitTarget / 12;
 
   const salesAchieve  = scaledSalesTarget>0  ? totalSales/scaledSalesTarget*100   : 0;
   const profitAchieve = scaledProfitTarget>0 ? totalProfit/scaledProfitTarget*100 : 0;
@@ -2857,11 +2890,6 @@ let allGalileiOutsource = [];   // 外注詳細
 let allGalileiExpense = [];     // 経費（月ごと）
 let galileiFilterFrom = '';
 let galileiFilterTo = '';
-const GALILEI_SHEET_ID = '1-Twac-Kb3EOb9jSMbI5vPZkXbw_0wm5VhYe2iJTbgc0';
-const GALILEI_CONFIG = {
-  annualSalesTarget: 63750000,
-  annualProfitTarget: 46970000,
-};
 
 // 今年度（10月始まり）を中心に対象シート名（年月）を動的生成
 function getGalileiSheetNames(onlyLastFy=false) {
@@ -2970,7 +2998,7 @@ async function loadGalileiData(onlyLastFy=false) {
         `${sheetName}!R6:U200`,  // ③外注詳細
         `${sheetName}!P37:P40`,  // ④経費
       ];
-      const [siteRows, repRows, outRows, expRows] = await fetchSheetBatch(cfg.apiKey, GALILEI_SHEET_ID, ranges);
+      const [siteRows, repRows, outRows, expRows] = await fetchSheetBatch(cfg.apiKey, cfg.galileiSheetId, ranges);
 
       siteRows.forEach(r => {
         const rawDate     = String(r[0]||'').trim();
@@ -3115,11 +3143,12 @@ function renderGalileiDashboard() {
   const thisMonthExpense = thisMonthExpenseRow ? (thisMonthExpenseRow.parking+thisMonthExpenseRow.etc+thisMonthExpenseRow.parts+thisMonthExpenseRow.disposal) : 0;
   const thisMonthProfit = thisMonthData.actual - thisMonthOutsource - thisMonthExpense;
 
+  const cfg = getConfig();
   const filterMonths = calcGalileiFilterMonths();
-  const scaledSalesTarget  = Math.round(GALILEI_CONFIG.annualSalesTarget  / 12 * filterMonths);
-  const scaledProfitTarget = Math.round(GALILEI_CONFIG.annualProfitTarget / 12 * filterMonths);
-  const monthlySalesTarget  = GALILEI_CONFIG.annualSalesTarget  / 12;
-  const monthlyProfitTarget = GALILEI_CONFIG.annualProfitTarget / 12;
+  const scaledSalesTarget  = Math.round(cfg.galileiAnnualSalesTarget  / 12 * filterMonths);
+  const scaledProfitTarget = Math.round(cfg.galileiAnnualProfitTarget / 12 * filterMonths);
+  const monthlySalesTarget  = cfg.galileiAnnualSalesTarget  / 12;
+  const monthlyProfitTarget = cfg.galileiAnnualProfitTarget / 12;
 
   const salesAchieve  = scaledSalesTarget>0  ? totalActual/scaledSalesTarget*100   : 0;
   const profitAchieve = scaledProfitTarget>0 ? totalProfit/scaledProfitTarget*100  : 0;
