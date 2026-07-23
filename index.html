@@ -3724,7 +3724,7 @@ function renderAiAnalysis() {
   const ecProfit = ecRows.reduce((a,s)=>a+s.profit,0);
   const ecRev    = ecRows.reduce((a,s)=>a+s.price,0);
   const ecMargin = ecRev>0 ? ecProfit/ecRev*100 : 0;
-  const ecTargetP = Math.round(cfg.annualProfitTarget/12*elapsed);
+  const ecTargetP = cfg.annualProfitTarget;
   const ecAchP = ecTargetP>0 ? ecProfit/ecTargetP*100 : 0;
   const ecProfitCurr = ecRows.filter(s=>isYM(s.yearMonth,currYM)).reduce((a,s)=>a+s.profit,0);
   const ecProfitPrev = allSales.filter(s=>isYM(s.yearMonth,prevYM)).reduce((a,s)=>a+s.profit,0);
@@ -3733,7 +3733,7 @@ function renderAiAnalysis() {
   // ---- 営業 ----
   const salesRows = (allSalesData||[]).filter(s=>inRange(s.yearMonth));
   const salesProfit = salesRows.reduce((a,s)=>a+s.profit,0);
-  const salesTargetP = Math.round(cfg.salesAnnualProfitTarget/12*elapsed);
+  const salesTargetP = cfg.salesAnnualProfitTarget;
   const salesAchP = salesTargetP>0 ? salesProfit/salesTargetP*100 : 0;
   const salesProfitCurr = salesRows.filter(s=>isYM(s.yearMonth,currYM)).reduce((a,s)=>a+s.profit,0);
   const salesProfitPrev = (allSalesData||[]).filter(s=>isYM(s.yearMonth,prevYM)).reduce((a,s)=>a+s.profit,0);
@@ -3745,7 +3745,7 @@ function renderAiAnalysis() {
   // ---- その他工事 ----
   const constRows = allConstructionData.filter(s=>inRange(s.yearMonth));
   const constProfit = constRows.reduce((a,s)=>a+s.profit,0);
-  const constTargetP = Math.round(cfg.constructionAnnualProfitTarget/12*elapsed);
+  const constTargetP = cfg.constructionAnnualProfitTarget;
   const constAchP = constTargetP>0 ? constProfit/constTargetP*100 : 0;
   const constProfitCurr = constRows.filter(s=>isYM(s.yearMonth,currYM)).reduce((a,s)=>a+s.profit,0);
   const constProfitPrev = allConstructionData.filter(s=>isYM(s.yearMonth,prevYM)).reduce((a,s)=>a+s.profit,0);
@@ -3760,7 +3760,7 @@ function renderAiAnalysis() {
   const galOutsource = allGalileiOutsource.filter(o=>inRange(o.yearMonthNorm)).reduce((a,o)=>a+o.amount,0);
   const galExpense = allGalileiExpense.filter(e=>inRange(e.yearMonthNorm)).reduce((a,e)=>a+e.parking+e.etc+e.parts+e.disposal,0);
   const galProfit = galRev - galOutsource - galExpense;
-  const galTargetP = Math.round(cfg.galileiAnnualProfitTarget/12*elapsed);
+  const galTargetP = cfg.galileiAnnualProfitTarget;
   const galAchP = galTargetP>0 ? galProfit/galTargetP*100 : 0;
   const galOutsourceRatio = galRev>0 ? galOutsource/galRev*100 : 0;
   function galProfitForYM(ym) {
