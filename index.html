@@ -357,6 +357,7 @@ body { font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans','Yu Gothic UI',sa
 
 <div class="tabs">
   <div class="tab active" onclick="switchTab('budget',this)">📊 予算進捗</div>
+  <div class="tab" onclick="switchTab('ai',this)">🤖 AI分析</div>
   <div class="tab" onclick="switchTab('sales',this)">営業</div>
   <div class="tab" onclick="switchTab('construction',this)">その他工事</div>
   <div class="tab" onclick="switchTab('galilei',this)">ガリレイ工事</div>
@@ -1477,6 +1478,17 @@ body { font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans','Yu Gothic UI',sa
     </div>
   </div><!-- /page-budget -->
 
+  <!-- ======================== AI分析ページ ======================== -->
+  <div id="page-ai" hidden>
+    <div class="table-card" style="margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+      <div>
+        <div style="font-weight:700;font-size:15px">🤖 AI分析（今年度の状況診断）</div>
+        <div style="font-size:11px;color:var(--text-muted);margin-top:2px" id="ai-period-label">読み込み中...</div>
+      </div>
+      <button class="apply-btn" onclick="renderAiAnalysis()">再分析</button>
+    </div>
+    <div id="ai-analysis-body"></div>
+  </div><!-- /page-ai -->
 
 </div><!-- /main -->
 
@@ -2403,10 +2415,14 @@ function switchTab(key, el) {
   document.getElementById('page-construction').hidden = (key !== 'construction');
   document.getElementById('page-galilei').hidden = (key !== 'galilei');
   document.getElementById('page-budget').hidden = (key !== 'budget');
+  document.getElementById('page-ai').hidden = (key !== 'ai');
   if (key === 'budget') {
     if (!budgetFilterFrom && !budgetFilterTo) {
       setBudgetPreset('this_fy', document.querySelector('#page-budget .preset-btn[onclick*="this_fy"]'));
     } else { renderBudgetDashboard(); }
+  }
+  if (key === 'ai') {
+    renderAiAnalysis();
   }
   if (key === 'sales' && !salesLoaded) {
     loadSalesData();
@@ -3607,6 +3623,211 @@ function renderBudgetDashboard() {
     </tr>`;
 }
 
+// ==================== AI分析（ルールベース診断） ====================
+function fyRangeAndElapsed() {
+  const now = new Date();
+  const y = now.getFullYear(), m = now.getMonth();
+  const fyStartY = m >= 9 ? y : y - 1;
+  const from = `${fyStartY}-10`;
+  const to = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+  const elapsed = Math.min(Math.max((now.getFullYear()-fyStartY)*12 + (now.getMonth()-9) + 1, 1), 12);
+  return { from, to, elapsed };
+}
+
+function aiPrevYM(ymStr) {
+  const [y, m] = ymStr.split('-').map(Number);
+  const d = new Date(y, m-2, 1);
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+}
+
+function aiNormYM(raw) {
+  return String(raw||'').replace('/','-').substring(0,7);
+}
+
+function aiStatusFromPace(achP, expectedPace) {
+  const diff = achP - expectedPace;
+  if (diff >= 5)   return { label:'順調',       color:'#16A34A', tier:'good' };
+  if (diff >= -15) return { label:'ほぼ計画通り', color:'#D97706', tier:'warn' };
+  return { label:'遅れ気味', color:'#DC2626', tier:'bad' };
+}
+
+function aiTrendLabel(curr, prev) {
+  if (!prev) return { text:'前月データなし', arrow:'', color:'var(--text-muted)' };
+  const diffPct = (curr-prev)/Math.abs(prev)*100;
+  if (diffPct > 5)  return { text:`前月比 +${Math.round(diffPct)}%`, arrow:'↑', color:'#16A34A' };
+  if (diffPct < -5) return { text:`前月比 ${Math.round(diffPct)}%`,  arrow:'↓', color:'#DC2626' };
+  return { text:'前月比 横ばい', arrow:'→', color:'var(--text-muted)' };
+}
+
+function aiAdviceFor(key, ctx) {
+  const { status } = ctx;
+  const actions = [];
+  let diagnosis = '';
+
+  if (key === 'ec') {
+    diagnosis = status.tier==='good' ? '想定ペースを上回って推移しています。このまま販売促進や在庫確保を継続しましょう。'
+      : status.tier==='warn' ? 'ほぼ計画通りですが、油断せず粗利率・在庫状況を注視しましょう。'
+      : '想定ペースを下回っています。粗利額の底上げが必要です。';
+    if (ctx.ecMargin < ctx.cfg.marginTarget) {
+      actions.push(`粗利率が目標(${ctx.cfg.marginTarget}%以上)を下回っています（実績${fmtPct(ctx.ecMargin)}）。仕入価格や販売価格の見直しを検討してください。`);
+    }
+    if (ctx.cfg.stockTarget > 0) {
+      if (ctx.activeStockCount > ctx.cfg.stockTarget*1.2) {
+        actions.push(`在庫が目標を超過しています（${ctx.activeStockCount}点 / 目標${ctx.cfg.stockTarget}点）。セールや値下げでの早期現金化を検討してください。`);
+      } else if (ctx.activeStockCount < ctx.cfg.stockTarget*0.5) {
+        actions.push(`在庫が目標を大きく下回っています（${ctx.activeStockCount}点 / 目標${ctx.cfg.stockTarget}点）。仕入れの強化を検討してください。`);
+      }
+    }
+  }
+
+  if (key === 'sales' || key === 'construction') {
+    diagnosis = status.tier==='good' ? '想定ペースを上回っています。この調子を維持しましょう。'
+      : status.tier==='warn' ? 'ほぼ計画通りに進捗しています。残り期間での積み増しを意識しましょう。'
+      : '想定ペースを下回っています。新規案件の獲得や単価改善が必要な状況です。';
+    const topClient = key==='sales' ? ctx.salesTopClient : ctx.constTopClient;
+    const topShare  = key==='sales' ? ctx.salesTopClientShare : ctx.constTopClientShare;
+    if (topClient && topShare >= 40) {
+      actions.push(`「${topClient[0]}」1社で粗利の${Math.round(topShare)}%を占めています。特定取引先への依存度が高く、新規開拓によるリスク分散を検討してください。`);
+    }
+  }
+
+  if (key === 'galilei') {
+    diagnosis = status.tier==='good' ? '想定ペースを上回っています。稼働状況とコスト管理を維持しましょう。'
+      : status.tier==='warn' ? 'ほぼ計画通りです。外注費・経費の推移を注視しましょう。'
+      : '想定ペースを下回っています。稼働件数の増加やコスト削減が必要です。';
+    if (ctx.galOutsourceRatio >= 30) {
+      actions.push(`外注費が実質金額の${Math.round(ctx.galOutsourceRatio)}%を占めています。内製化や外注先の見直しでコスト改善の余地があります。`);
+    }
+  }
+
+  if (!actions.length) {
+    actions.push('現状の運営を維持しつつ、次月以降の数値変化を注視してください。');
+  }
+  return { diagnosis, actions };
+}
+
+function renderAiAnalysis() {
+  const cfg = getConfig();
+  const { from, to, elapsed } = fyRangeAndElapsed();
+  const expectedPace = elapsed / 12 * 100;
+  const prevYM = aiPrevYM(to);
+  const currYM = to;
+
+  function inRange(ymRaw) { const ym = aiNormYM(ymRaw); return ym && ym >= from && ym <= to; }
+  function isYM(ymRaw, target) { return aiNormYM(ymRaw) === target; }
+
+  const labelEl = document.getElementById('ai-period-label');
+  if (labelEl) labelEl.textContent = `対象期間: ${from} 〜 ${to}（今年度 ${elapsed}ヶ月経過 / 想定進捗 ${Math.round(expectedPace)}%）`;
+
+  // ---- EC ----
+  const ecRows   = allSales.filter(s => inRange(s.yearMonth||''));
+  const ecProfit = ecRows.reduce((a,s)=>a+s.profit,0);
+  const ecRev    = ecRows.reduce((a,s)=>a+s.price,0);
+  const ecMargin = ecRev>0 ? ecProfit/ecRev*100 : 0;
+  const ecTargetP = Math.round(cfg.annualProfitTarget/12*elapsed);
+  const ecAchP = ecTargetP>0 ? ecProfit/ecTargetP*100 : 0;
+  const ecProfitCurr = ecRows.filter(s=>isYM(s.yearMonth,currYM)).reduce((a,s)=>a+s.profit,0);
+  const ecProfitPrev = allSales.filter(s=>isYM(s.yearMonth,prevYM)).reduce((a,s)=>a+s.profit,0);
+  const activeStockCount = allStock.filter(s=>s.status==='出品中').length;
+
+  // ---- 営業 ----
+  const salesRows = (allSalesData||[]).filter(s=>inRange(s.yearMonth));
+  const salesProfit = salesRows.reduce((a,s)=>a+s.profit,0);
+  const salesTargetP = Math.round(cfg.salesAnnualProfitTarget/12*elapsed);
+  const salesAchP = salesTargetP>0 ? salesProfit/salesTargetP*100 : 0;
+  const salesProfitCurr = salesRows.filter(s=>isYM(s.yearMonth,currYM)).reduce((a,s)=>a+s.profit,0);
+  const salesProfitPrev = (allSalesData||[]).filter(s=>isYM(s.yearMonth,prevYM)).reduce((a,s)=>a+s.profit,0);
+  const salesClientMap = {};
+  salesRows.forEach(s=>{ const cl=s.client||'その他'; salesClientMap[cl]=(salesClientMap[cl]||0)+s.profit; });
+  const salesTopClient = Object.entries(salesClientMap).sort((a,b)=>b[1]-a[1])[0];
+  const salesTopClientShare = salesTopClient && salesProfit>0 ? salesTopClient[1]/salesProfit*100 : 0;
+
+  // ---- その他工事 ----
+  const constRows = allConstructionData.filter(s=>inRange(s.yearMonth));
+  const constProfit = constRows.reduce((a,s)=>a+s.profit,0);
+  const constTargetP = Math.round(cfg.constructionAnnualProfitTarget/12*elapsed);
+  const constAchP = constTargetP>0 ? constProfit/constTargetP*100 : 0;
+  const constProfitCurr = constRows.filter(s=>isYM(s.yearMonth,currYM)).reduce((a,s)=>a+s.profit,0);
+  const constProfitPrev = allConstructionData.filter(s=>isYM(s.yearMonth,prevYM)).reduce((a,s)=>a+s.profit,0);
+  const constClientMap = {};
+  constRows.forEach(s=>{ const cl=s.client||'その他'; constClientMap[cl]=(constClientMap[cl]||0)+s.profit; });
+  const constTopClient = Object.entries(constClientMap).sort((a,b)=>b[1]-a[1])[0];
+  const constTopClientShare = constTopClient && constProfit>0 ? constTopClient[1]/constProfit*100 : 0;
+
+  // ---- ガリレイ ----
+  const galRows = allGalileiSites.filter(s=>inRange(s.yearMonthNorm));
+  const galRev = galRows.reduce((a,s)=>a+s.actualAmount,0);
+  const galOutsource = allGalileiOutsource.filter(o=>inRange(o.yearMonthNorm)).reduce((a,o)=>a+o.amount,0);
+  const galExpense = allGalileiExpense.filter(e=>inRange(e.yearMonthNorm)).reduce((a,e)=>a+e.parking+e.etc+e.parts+e.disposal,0);
+  const galProfit = galRev - galOutsource - galExpense;
+  const galTargetP = Math.round(cfg.galileiAnnualProfitTarget/12*elapsed);
+  const galAchP = galTargetP>0 ? galProfit/galTargetP*100 : 0;
+  const galOutsourceRatio = galRev>0 ? galOutsource/galRev*100 : 0;
+  function galProfitForYM(ym) {
+    const rev = allGalileiSites.filter(s=>isYM(s.yearMonthNorm,ym)).reduce((a,s)=>a+s.actualAmount,0);
+    const out = allGalileiOutsource.filter(o=>isYM(o.yearMonthNorm,ym)).reduce((a,o)=>a+o.amount,0);
+    const exp = allGalileiExpense.filter(e=>isYM(e.yearMonthNorm,ym)).reduce((a,e)=>a+e.parking+e.etc+e.parts+e.disposal,0);
+    return rev - out - exp;
+  }
+  const galProfitCurr = galProfitForYM(currYM);
+  const galProfitPrev = galProfitForYM(prevYM);
+
+  // ---- 全体 ----
+  const totalProfit = ecProfit + salesProfit + constProfit + galProfit;
+  const totalTargetP = ecTargetP + salesTargetP + constTargetP + galTargetP;
+  const totalAchP = totalTargetP>0 ? totalProfit/totalTargetP*100 : 0;
+
+  const categories = [
+    { key:'ec',           name:'EC',        color:'#8B5CF6', profit:ecProfit,    target:ecTargetP,    achP:ecAchP,    curr:ecProfitCurr,    prev:ecProfitPrev },
+    { key:'sales',        name:'営業',      color:'#3B82F6', profit:salesProfit, target:salesTargetP, achP:salesAchP, curr:salesProfitCurr, prev:salesProfitPrev },
+    { key:'construction', name:'その他工事', color:'#F59E0B', profit:constProfit, target:constTargetP, achP:constAchP, curr:constProfitCurr, prev:constProfitPrev },
+    { key:'galilei',      name:'ガリレイ工事',color:'#10B981', profit:galProfit,   target:galTargetP,   achP:galAchP,   curr:galProfitCurr,   prev:galProfitPrev },
+  ];
+
+  const sorted = [...categories].sort((a,b)=>a.achP-b.achP);
+  const worst = sorted[0];
+  const best  = sorted[sorted.length-1];
+  const overallStatus = aiStatusFromPace(totalAchP, expectedPace);
+
+  const ctxCommon = { cfg, ecMargin, activeStockCount, salesTopClient, salesTopClientShare, constTopClient, constTopClientShare, galOutsourceRatio };
+
+  let html = `
+    <div class="table-card" style="margin-bottom:16px;border-left:4px solid ${overallStatus.color}">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:10px">
+        <div style="font-weight:700;font-size:14px">総合診断</div>
+        <span style="font-size:12px;font-weight:700;color:${overallStatus.color};background:${overallStatus.color}1A;padding:3px 10px;border-radius:20px">${overallStatus.label}</span>
+      </div>
+      <div style="font-size:13px;line-height:1.8;color:var(--text-primary)">
+        今年度粗利合計は¥${fmtYen(Math.round(totalProfit))}（目標比 ${fmtPct(totalAchP)}）。経過${elapsed}ヶ月に対する想定進捗${Math.round(expectedPace)}%に対して、${totalAchP>=expectedPace?'計画を上回るペースです。':'計画をやや下回るペースです。'}<br>
+        最も遅れているのは <b style="color:${worst.color}">${worst.name}</b>（達成率${fmtPct(worst.achP)}）、最も好調なのは <b style="color:${best.color}">${best.name}</b>（達成率${fmtPct(best.achP)}）です。
+      </div>
+    </div>
+    <div class="budget-cat-grid" style="margin-bottom:16px">
+      ${categories.map(cat => {
+        const status = aiStatusFromPace(cat.achP, expectedPace);
+        const trend = aiTrendLabel(cat.curr, cat.prev);
+        const advice = aiAdviceFor(cat.key, { ...ctxCommon, status });
+        return `
+        <div class="table-card" style="border-left:3px solid ${cat.color}">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+            <div style="font-weight:700;font-size:13px">${cat.name}</div>
+            <span style="font-size:11px;font-weight:700;color:${status.color};background:${status.color}1A;padding:2px 8px;border-radius:20px">${status.label}</span>
+          </div>
+          <div style="font-size:10px;color:var(--text-muted);margin-bottom:2px">粗利実績 / 目標（今年度）</div>
+          <div style="font-size:17px;font-weight:700">¥${fmtYen(Math.round(cat.profit))} <span style="font-size:11px;font-weight:400;color:var(--text-muted)">/ ¥${fmtYen(cat.target)}</span></div>
+          <div style="font-size:11px;margin-top:3px">
+            <span style="color:${status.color};font-weight:600">達成率 ${fmtPct(cat.achP)}</span>
+            <span style="color:${trend.color};margin-left:8px">${trend.arrow} ${trend.text}</span>
+          </div>
+          <div style="font-size:12px;line-height:1.6;color:var(--text-secondary);margin-top:10px;padding-top:10px;border-top:1px dashed var(--border)">${advice.diagnosis}</div>
+          <ul style="margin:8px 0 0;padding-left:18px;font-size:12px;line-height:1.7;color:var(--text-primary)">${advice.actions.map(a=>`<li>${a}</li>`).join('')}</ul>
+        </div>`;
+      }).join('')}
+    </div>`;
+
+  document.getElementById('ai-analysis-body').innerHTML = html;
+}
+
 // ==================== GALILEI SECTION SWITCH ====================
 function switchGalileiSection(key, el) {
   document.querySelectorAll('#galilei-sidebar .page-sidebar-item').forEach(t => t.classList.remove('active'));
@@ -3806,6 +4027,7 @@ function renderGalileiExpense() {
 setPreset('this_fy', document.querySelector('.preset-btn[onclick*="this_fy"]'));
 Promise.all([loadData(), loadStockData(), loadPurchaseData(), loadSalesData(), loadConstructionData(), loadGalileiData()]).then(() => {
   setBudgetPreset('this_fy', document.querySelector('#page-budget .preset-btn[onclick*="this_fy"]'));
+  if (!document.getElementById('page-ai').hidden) renderAiAnalysis();
 });
 
 if ('serviceWorker' in navigator) {
