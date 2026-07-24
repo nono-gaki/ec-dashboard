@@ -3659,10 +3659,44 @@ function aiTrendLabel(curr, prev) {
   return { text:'前月比 横ばい', arrow:'→', color:'var(--text-muted)' };
 }
 
+function aiClientDecline(rows, currYM, prevYM, isYM, prevMonthTotal) {
+  const currMap = {}, prevMap = {};
+  rows.filter(s=>isYM(s.yearMonth,currYM)).forEach(s=>{ const cl=s.client||'その他'; currMap[cl]=(currMap[cl]||0)+s.profit; });
+  rows.filter(s=>isYM(s.yearMonth,prevYM)).forEach(s=>{ const cl=s.client||'その他'; prevMap[cl]=(prevMap[cl]||0)+s.profit; });
+  let worst = null;
+  Object.keys(prevMap).forEach(cl => {
+    const decline = prevMap[cl] - (currMap[cl]||0);
+    if (decline > 0 && (!worst || decline > worst.decline)) {
+      worst = { client:cl, decline, prev:prevMap[cl], curr:currMap[cl]||0 };
+    }
+  });
+  if (!worst) return null;
+  const threshold = Math.max(Math.abs(prevMonthTotal)*0.15, 50000);
+  return worst.decline >= threshold ? worst : null;
+}
+
+function aiPaceAdvice(profit, target, elapsed, remainingMonths) {
+  const gap = target - profit;
+  if (gap <= 0) {
+    return remainingMonths > 0
+      ? `年間目標はすでに達成しています（超過 ¥${fmtYen(Math.round(-gap))}）。残り${remainingMonths}ヶ月は上積みのチャンスです。`
+      : `年間目標を達成しました（超過 ¥${fmtYen(Math.round(-gap))}）。`;
+  }
+  if (remainingMonths <= 0) {
+    return `年度末時点で目標に¥${fmtYen(Math.round(gap))}届いていません。`;
+  }
+  const requiredMonthly = gap / remainingMonths;
+  const currentMonthly  = elapsed > 0 ? profit / elapsed : 0;
+  const ratioTxt = currentMonthly > 0 ? `現在の月平均（¥${fmtYen(Math.round(currentMonthly))}）の${(requiredMonthly/currentMonthly).toFixed(1)}倍のペースが必要` : `現在は実績がほぼ無い状態からの立て直しが必要`;
+  return `目標まであと¥${fmtYen(Math.round(gap))}。残り${remainingMonths}ヶ月で達成するには月平均¥${fmtYen(Math.round(requiredMonthly))}の粗利が必要です（${ratioTxt}）。`;
+}
+
 function aiAdviceFor(key, ctx) {
   const { status } = ctx;
   const actions = [];
   let diagnosis = '';
+
+  actions.push(aiPaceAdvice(ctx.profit, ctx.target, ctx.elapsed, ctx.remainingMonths));
 
   if (key === 'ec') {
     diagnosis = status.tier==='good' ? '想定ペースを上回って推移しています。このまま販売促進や在庫確保を継続しましょう。'
@@ -3670,6 +3704,10 @@ function aiAdviceFor(key, ctx) {
       : '想定ペースを下回っています。粗利額の底上げが必要です。';
     if (ctx.ecMargin < ctx.cfg.marginTarget) {
       actions.push(`粗利率が目標(${ctx.cfg.marginTarget}%以上)を下回っています（実績${fmtPct(ctx.ecMargin)}）。仕入価格や販売価格の見直しを検討してください。`);
+    }
+    if (ctx.ecWeakMaker) {
+      const [mk, v] = ctx.ecWeakMaker;
+      actions.push(`「${mk}」の粗利率が${fmtPct(v.profit/v.rev*100)}と低く、売上構成比も${Math.round(v.rev/ctx.ecRev*100)}%と無視できません。仕入価格・販売価格の見直しを検討してください。`);
     }
     if (ctx.cfg.stockTarget > 0) {
       if (ctx.activeStockCount > ctx.cfg.stockTarget*1.2) {
@@ -3687,7 +3725,11 @@ function aiAdviceFor(key, ctx) {
     const topClient = key==='sales' ? ctx.salesTopClient : ctx.constTopClient;
     const topShare  = key==='sales' ? ctx.salesTopClientShare : ctx.constTopClientShare;
     if (topClient && topShare >= 40) {
-      actions.push(`「${topClient[0]}」1社で粗利の${Math.round(topShare)}%を占めています。特定取引先への依存度が高く、新規開拓によるリスク分散を検討してください。`);
+      actions.push(`「${topClient[0]}」1社で粗利の${Math.round(topShare)}%（¥${fmtYen(Math.round(topClient[1]))}）を占めています。特定取引先への依存度が高く、新規開拓によるリスク分散を検討してください。`);
+    }
+    const decline = key==='sales' ? ctx.salesDecline : ctx.constDecline;
+    if (decline) {
+      actions.push(`「${decline.client}」の粗利が前月比¥${fmtYen(Math.round(decline.decline))}減少しています（¥${fmtYen(Math.round(decline.prev))}→¥${fmtYen(Math.round(decline.curr))}）。要因を確認し、必要ならフォローを検討してください。`);
     }
   }
 
@@ -3696,19 +3738,20 @@ function aiAdviceFor(key, ctx) {
       : status.tier==='warn' ? 'ほぼ計画通りです。外注費・経費の推移を注視しましょう。'
       : '想定ペースを下回っています。稼働件数の増加やコスト削減が必要です。';
     if (ctx.galOutsourceRatio >= 30) {
-      actions.push(`外注費が実質金額の${Math.round(ctx.galOutsourceRatio)}%を占めています。内製化や外注先の見直しでコスト改善の余地があります。`);
+      actions.push(`外注費が実質金額の${Math.round(ctx.galOutsourceRatio)}%（¥${fmtYen(Math.round(ctx.galOutsource))}）を占めています。内製化や外注先の見直しでコスト改善の余地があります。`);
+    }
+    if (ctx.galOutsourceRatioCurr - ctx.galOutsourceRatioPrev >= 5) {
+      actions.push(`外注費比率が前月から${Math.round(ctx.galOutsourceRatioCurr-ctx.galOutsourceRatioPrev)}pt上昇しています（${fmtPct(ctx.galOutsourceRatioPrev)}→${fmtPct(ctx.galOutsourceRatioCurr)}）。外注先ごとの単価を確認してください。`);
     }
   }
 
-  if (!actions.length) {
-    actions.push('現状の運営を維持しつつ、次月以降の数値変化を注視してください。');
-  }
   return { diagnosis, actions };
 }
 
 function renderAiAnalysis() {
   const cfg = getConfig();
   const { from, to, elapsed } = fyRangeAndElapsed();
+  const remainingMonths = 12 - elapsed;
   const expectedPace = elapsed / 12 * 100;
   const prevYM = aiPrevYM(to);
   const currYM = to;
@@ -3729,6 +3772,16 @@ function renderAiAnalysis() {
   const ecProfitCurr = ecRows.filter(s=>isYM(s.yearMonth,currYM)).reduce((a,s)=>a+s.profit,0);
   const ecProfitPrev = allSales.filter(s=>isYM(s.yearMonth,prevYM)).reduce((a,s)=>a+s.profit,0);
   const activeStockCount = allStock.filter(s=>s.status==='出品中').length;
+  const ecMakerMap = {};
+  ecRows.forEach(s => {
+    const mk = s.maker || 'その他';
+    if (!ecMakerMap[mk]) ecMakerMap[mk] = { profit:0, rev:0 };
+    ecMakerMap[mk].profit += s.profit;
+    ecMakerMap[mk].rev += s.price;
+  });
+  const ecWeakMaker = Object.entries(ecMakerMap)
+    .filter(([,v]) => v.rev > 0 && v.rev >= ecRev*0.05 && (v.profit/v.rev*100) < cfg.marginTarget)
+    .sort((a,b) => (a[1].profit/a[1].rev) - (b[1].profit/b[1].rev))[0];
 
   // ---- 営業 ----
   const salesRows = (allSalesData||[]).filter(s=>inRange(s.yearMonth));
@@ -3741,6 +3794,7 @@ function renderAiAnalysis() {
   salesRows.forEach(s=>{ const cl=s.client||'その他'; salesClientMap[cl]=(salesClientMap[cl]||0)+s.profit; });
   const salesTopClient = Object.entries(salesClientMap).sort((a,b)=>b[1]-a[1])[0];
   const salesTopClientShare = salesTopClient && salesProfit>0 ? salesTopClient[1]/salesProfit*100 : 0;
+  const salesDecline = aiClientDecline(allSalesData||[], currYM, prevYM, isYM, salesProfitPrev);
 
   // ---- その他工事 ----
   const constRows = allConstructionData.filter(s=>inRange(s.yearMonth));
@@ -3753,6 +3807,7 @@ function renderAiAnalysis() {
   constRows.forEach(s=>{ const cl=s.client||'その他'; constClientMap[cl]=(constClientMap[cl]||0)+s.profit; });
   const constTopClient = Object.entries(constClientMap).sort((a,b)=>b[1]-a[1])[0];
   const constTopClientShare = constTopClient && constProfit>0 ? constTopClient[1]/constProfit*100 : 0;
+  const constDecline = aiClientDecline(allConstructionData, currYM, prevYM, isYM, constProfitPrev);
 
   // ---- ガリレイ ----
   const galRows = allGalileiSites.filter(s=>inRange(s.yearMonthNorm));
@@ -3771,6 +3826,13 @@ function renderAiAnalysis() {
   }
   const galProfitCurr = galProfitForYM(currYM);
   const galProfitPrev = galProfitForYM(prevYM);
+  function galOutsourceRatioForYM(ym) {
+    const rev = allGalileiSites.filter(s=>isYM(s.yearMonthNorm,ym)).reduce((a,s)=>a+s.actualAmount,0);
+    const out = allGalileiOutsource.filter(o=>isYM(o.yearMonthNorm,ym)).reduce((a,o)=>a+o.amount,0);
+    return rev>0 ? out/rev*100 : 0;
+  }
+  const galOutsourceRatioCurr = galOutsourceRatioForYM(currYM);
+  const galOutsourceRatioPrev = galOutsourceRatioForYM(prevYM);
 
   // ---- 全体 ----
   const totalProfit = ecProfit + salesProfit + constProfit + galProfit;
@@ -3789,7 +3851,13 @@ function renderAiAnalysis() {
   const best  = sorted[sorted.length-1];
   const overallStatus = aiStatusFromPace(totalAchP, expectedPace);
 
-  const ctxCommon = { cfg, ecMargin, activeStockCount, salesTopClient, salesTopClientShare, constTopClient, constTopClientShare, galOutsourceRatio };
+  const ctxCommon = {
+    cfg, elapsed, remainingMonths,
+    ecMargin, ecRev, ecWeakMaker, activeStockCount,
+    salesTopClient, salesTopClientShare, salesDecline,
+    constTopClient, constTopClientShare, constDecline,
+    galOutsource, galOutsourceRatio, galOutsourceRatioCurr, galOutsourceRatioPrev,
+  };
 
   let html = `
     <div class="table-card" style="margin-bottom:16px;border-left:4px solid ${overallStatus.color}">
@@ -3806,7 +3874,7 @@ function renderAiAnalysis() {
       ${categories.map(cat => {
         const status = aiStatusFromPace(cat.achP, expectedPace);
         const trend = aiTrendLabel(cat.curr, cat.prev);
-        const advice = aiAdviceFor(cat.key, { ...ctxCommon, status });
+        const advice = aiAdviceFor(cat.key, { ...ctxCommon, status, profit:cat.profit, target:cat.target });
         return `
         <div class="table-card" style="border-left:3px solid ${cat.color}">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
