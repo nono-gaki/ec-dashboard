@@ -28,8 +28,18 @@ body { font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans','Yu Gothic UI',sa
 /* HEADER */
 .header { background:var(--surface); border-bottom:1px solid var(--border); padding:0 24px; display:flex; align-items:center; justify-content:space-between; height:56px; position:sticky; top:0; z-index:100; }
 .header-left { display:flex; align-items:center; gap:16px; }
-.logo { font-size:15px; font-weight:700; letter-spacing:-.3px; }
-.logo span { color:var(--blue); }
+.logo { display:flex; align-items:center; gap:9px; }
+.logo-mark {
+  width:24px; height:24px; border-radius:6px; flex-shrink:0;
+  background:linear-gradient(135deg,#0A1128,#16294F);
+  box-shadow:0 0 0 1px #38BDF84D inset;
+  color:#fff; font-size:9px; font-weight:700; letter-spacing:.02em;
+  display:flex; align-items:center; justify-content:center;
+}
+.logo-text { display:flex; align-items:center; gap:7px; font-size:12.5px; font-weight:500; letter-spacing:.14em; text-transform:uppercase; white-space:nowrap; }
+.logo-text .logo-life { color:var(--text-secondary); }
+.logo-text .logo-divider { width:1px; height:10px; background:var(--border); }
+.logo-text .logo-marks { color:#0A1128; font-weight:700; }
 .dept-label { font-size:12px; color:var(--text-secondary); background:var(--bg); padding:3px 10px; border-radius:20px; border:1px solid var(--border); }
 .header-right { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
 .updated { font-size:11px; color:var(--text-muted); }
@@ -200,9 +210,12 @@ body { font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans','Yu Gothic UI',sa
   .header { position:sticky; top:0; z-index:101; flex-wrap:wrap; height:auto; padding:10px 12px; gap:8px; row-gap:6px; }
   .header-left { gap:8px; flex-wrap:wrap; }
   .dept-label { font-size:10px; padding:2px 8px; }
-  .header-right { width:100%; justify-content:space-between; gap:6px; }
+  .header-right { width:100%; justify-content:flex-start; gap:8px; }
   .updated { font-size:10px; }
   .btn { font-size:11px; padding:5px 10px; }
+  .btn-gray { margin-left:auto; background:transparent; border:none; color:var(--text-muted); padding:6px; width:28px; height:28px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-size:14px; }
+  .btn-gray .btn-label { display:none; }
+  .btn-blue { padding:6px 14px; border-radius:20px; }
 
   /* TABS: 横スクロール可能に */
   .tabs { position:sticky; top:0; padding:0 8px; overflow-x:auto; -webkit-overflow-scrolling:touch; white-space:nowrap; z-index:99; }
@@ -345,12 +358,15 @@ body { font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans','Yu Gothic UI',sa
 
 <div class="header">
   <div class="header-left">
-    <div class="logo">LIFE <span>MARK'S</span></div>
+    <div class="logo">
+      <span class="logo-mark">LM</span>
+      <span class="logo-text"><span class="logo-life">LIFE</span><span class="logo-divider"></span><span class="logo-marks">MARK'S</span></span>
+    </div>
     <div class="dept-label">KPIダッシュボード</div>
   </div>
   <div class="header-right">
     <span class="updated" id="updated-at">読み込み中...</span>
-    <button class="btn btn-gray" onclick="toggleConfig()">⚙ 設定</button>
+    <button class="btn btn-gray" onclick="toggleConfig()">⚙<span class="btn-label"> 設定</span></button>
     <button class="btn btn-blue" onclick="applyFilter()">↻ 更新</button>
   </div>
 </div>
