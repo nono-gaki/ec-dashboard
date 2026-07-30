@@ -36,10 +36,8 @@ body { font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans','Yu Gothic UI',sa
   color:#fff; font-size:9px; font-weight:700; letter-spacing:.02em;
   display:flex; align-items:center; justify-content:center;
 }
-.logo-text { display:flex; align-items:center; gap:7px; font-size:12.5px; font-weight:500; letter-spacing:.14em; text-transform:uppercase; white-space:nowrap; }
-.logo-text .logo-life { color:var(--text-secondary); }
+.logo-text { display:flex; align-items:center; gap:7px; font-size:12.5px; font-weight:700; letter-spacing:.14em; text-transform:uppercase; white-space:nowrap; color:#0A1128; }
 .logo-text .logo-divider { width:1px; height:10px; background:var(--border); }
-.logo-text .logo-marks { color:#0A1128; font-weight:700; }
 .dept-label { font-size:12px; color:var(--text-secondary); background:var(--bg); padding:3px 10px; border-radius:20px; border:1px solid var(--border); }
 .header-right { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
 .updated { font-size:11px; color:var(--text-muted); }
@@ -1386,7 +1384,21 @@ body { font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans','Yu Gothic UI',sa
             </div>
           </div>
           <div class="table-card">
-            <div class="chart-title">月別 外注一覧（月をクリックして詳細展開）</div>
+            <div class="chart-title" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+              <span>月別 外注一覧（月をクリックして詳細展開）</span>
+              <div style="display:flex;gap:8px;flex-wrap:wrap">
+                <select id="galilei-outsource-vendor-filter" onchange="renderGalileiOutsource()" class="filter-select" style="font-size:11px">
+                  <option value="">全業者</option>
+                </select>
+                <select id="galilei-outsource-sort" onchange="renderGalileiOutsource()" class="filter-select" style="font-size:11px">
+                  <option value="date_desc">日付（新しい順）</option>
+                  <option value="date_asc">日付（古い順）</option>
+                  <option value="vendor_asc">業者名順</option>
+                  <option value="amount_desc">金額（高い順）</option>
+                  <option value="amount_asc">金額（低い順）</option>
+                </select>
+              </div>
+            </div>
             <div id="galilei-outsource-monthly-list" style="margin-top:10px"></div>
           </div>
         </div>
@@ -4025,7 +4037,29 @@ function renderGalileiReps() {
 
 // 外注一覧
 function renderGalileiOutsource() {
-  const outs = filterGalileiByPeriod(allGalileiOutsource);
+  const periodOuts = filterGalileiByPeriod(allGalileiOutsource);
+
+  // 業者フィルタのプルダウンを更新（選択中の値は維持）
+  const vendorFilterEl = document.getElementById('galilei-outsource-vendor-filter');
+  const vendorFilterVal = vendorFilterEl ? vendorFilterEl.value : '';
+  const vendorNames = [...new Set(periodOuts.map(o => o.vendor || 'その他'))].sort((a,b)=>a.localeCompare(b,'ja'));
+  if (vendorFilterEl) {
+    vendorFilterEl.innerHTML = '<option value="">全業者</option>' +
+      vendorNames.map(v => `<option value="${v}">${v}</option>`).join('');
+    if (vendorNames.includes(vendorFilterVal)) vendorFilterEl.value = vendorFilterVal;
+  }
+  const selectedVendor = vendorFilterEl ? vendorFilterEl.value : '';
+  const outs = selectedVendor ? periodOuts.filter(o => (o.vendor || 'その他') === selectedVendor) : periodOuts;
+
+  const sortMode = (document.getElementById('galilei-outsource-sort') || {}).value || 'date_desc';
+  const itemSorters = {
+    date_desc:   (a,b) => (b.date||'').localeCompare(a.date||''),
+    date_asc:    (a,b) => (a.date||'').localeCompare(b.date||''),
+    vendor_asc:  (a,b) => (a.vendor||'').localeCompare(b.vendor||'','ja') || (b.date||'').localeCompare(a.date||''),
+    amount_desc: (a,b) => b.amount - a.amount,
+    amount_asc:  (a,b) => a.amount - b.amount,
+  };
+
   const totalAmount = outs.reduce((a,o)=>a+o.amount,0);
   const totalCount = outs.length;
 
@@ -4072,7 +4106,7 @@ function renderGalileiOutsource() {
 
   document.getElementById('galilei-outsource-monthly-list').innerHTML = monthKeysSorted.map(k => {
     const g = monthGroups[k];
-    const itemsHtml = [...g.items].sort((a,b)=>(b.date||'').localeCompare(a.date||'')).map(o => `
+    const itemsHtml = [...g.items].sort(itemSorters[sortMode]).map(o => `
       <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 12px;border-bottom:0.5px solid var(--bg);font-size:12px">
         <div style="display:flex;gap:12px;flex:1;min-width:0">
           <span style="color:var(--text-muted);white-space:nowrap">${o.date}</span>
