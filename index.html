@@ -2951,6 +2951,7 @@ function getGalileiSheetNames(onlyLastFy=false) {
 }
 
 let galileiLastFyLoaded = false;
+const galileiOutsourceExpanded = new Set();
 
 function setGalileiPreset(key, el, autoApply=false) {
   document.querySelectorAll('#page-galilei .preset-btn').forEach(b => b.classList.remove('active'));
@@ -4121,17 +4122,18 @@ function renderGalileiOutsource() {
         </div>
         <span style="font-weight:600;white-space:nowrap;margin-left:8px">¥${fmtYen(o.amount)}</span>
       </div>`).join('');
+    const isOpen = galileiOutsourceExpanded.has(k);
     return `
       <div style="border:1px solid var(--border);border-radius:8px;margin-bottom:8px;overflow:hidden">
         <div onclick="toggleGalileiOutsourceMonth('${k}')" style="cursor:pointer;display:flex;justify-content:space-between;align-items:center;padding:10px 12px;background:var(--bg)">
           <div style="display:flex;align-items:center;gap:8px">
-            <span id="galilei-outsource-arrow-${k}" style="font-size:11px;color:var(--text-muted);transition:transform .2s">▶</span>
+            <span id="galilei-outsource-arrow-${k}" style="font-size:11px;color:var(--text-muted);transition:transform .2s;display:inline-block;transform:rotate(${isOpen?90:0}deg)">▶</span>
             <span style="font-weight:600;font-size:13px">${g.label}</span>
             <span style="font-size:11px;color:var(--text-muted)">${g.count}件</span>
           </div>
           <span style="font-weight:700;color:var(--text-primary)">¥${fmtYen(g.amount)}</span>
         </div>
-        <div id="galilei-outsource-detail-${k}" style="display:none">
+        <div id="galilei-outsource-detail-${k}" style="display:${isOpen?'block':'none'}">
           ${itemsHtml}
         </div>
       </div>`;
@@ -4145,6 +4147,7 @@ function toggleGalileiOutsourceMonth(key) {
   const isOpen = detail.style.display === 'block';
   detail.style.display = isOpen ? 'none' : 'block';
   if (arrow) arrow.style.transform = isOpen ? 'rotate(0deg)' : 'rotate(90deg)';
+  if (isOpen) galileiOutsourceExpanded.delete(key); else galileiOutsourceExpanded.add(key);
 }
 
 // 経費一覧
