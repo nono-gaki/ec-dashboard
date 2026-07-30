@@ -3100,7 +3100,13 @@ async function loadGalileiData(onlyLastFy=false) {
   console.log('ガリレイ取得成功シート数:', successCount, '現場件数:', allGalileiSites.length);
 
   if (successCount === 0) {
-    document.getElementById('galilei-error-area').innerHTML = `<div class="error-msg">⚠ ガリレイ工事データを取得できませんでした。スプシの共有設定・シート名（「年」「月」を含む形式）を確認してください。</div>`;
+    // 前年度分の取得は、単にその期間のシートがまだ存在しないだけの場合が多いため、
+    // 今年度分の初回取得が失敗した時だけエラーバナーを表示する
+    if (!onlyLastFy) {
+      document.getElementById('galilei-error-area').innerHTML = `<div class="error-msg">⚠ ガリレイ工事データを取得できませんでした。スプシの共有設定・シート名（「年」「月」を含む形式）を確認してください。</div>`;
+    } else {
+      console.log('前年度分のシートが見つかりませんでした（データがまだ存在しない可能性があります）');
+    }
     return;
   }
 
