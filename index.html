@@ -365,7 +365,7 @@ body { font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans','Yu Gothic UI',sa
   <div class="header-right">
     <span class="updated" id="updated-at">読み込み中...</span>
     <button class="btn btn-gray" onclick="toggleConfig()">⚙<span class="btn-label"> 設定</span></button>
-    <button class="btn btn-blue" onclick="applyFilter()">↻ 更新</button>
+    <button class="btn btn-blue" id="refresh-btn" onclick="refreshAllData()">↻ 更新</button>
   </div>
 </div>
 
@@ -1513,7 +1513,7 @@ body { font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans','Yu Gothic UI',sa
         <div style="font-weight:700;font-size:15px">🤖 AI分析（今年度の状況診断）</div>
         <div style="font-size:11px;color:var(--text-muted);margin-top:2px" id="ai-period-label">読み込み中...</div>
       </div>
-      <button class="apply-btn" onclick="renderAiAnalysis()">再分析</button>
+      <button class="apply-btn" onclick="refreshAllData()">再分析</button>
     </div>
     <div id="ai-analysis-body"></div>
   </div><!-- /page-ai -->
@@ -1552,6 +1552,7 @@ const DEFAULT_CONFIG = {
 let allSales = [];
 let filterFrom = '';
 let filterTo = '';
+let ecLoaded = false;
 
 function getConfig() {
   try { const s = localStorage.getItem('kpi_config'); return s ? {...DEFAULT_CONFIG,...JSON.parse(s)} : {...DEFAULT_CONFIG}; }
@@ -1747,8 +1748,9 @@ async function loadData() {
 
     document.getElementById('updated-at').textContent = 'データ更新: ' + new Date().toLocaleString('ja-JP',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'});
 
-    // デフォルト今年度にセット
-    setPreset('this_fy');
+    // 初回のみデフォルト今年度にセット。再読み込み時は選択中の期間を維持
+    if (!ecLoaded) setPreset('this_fy');
+    ecLoaded = true;
     filterFrom = (document.querySelector('#page-ec .ec-date-from')||{}).value||'';
     filterTo   = (document.querySelector('#page-ec .ec-date-to')||{}).value||'';
     renderDashboard();
@@ -2553,8 +2555,10 @@ async function loadSalesData() {
       note:      String(r[11]||'').trim(),
     }));
 
+    // 初回のみデフォルト今年度にセット。再読み込み時は選択中の期間を維持
+    const isFirstSalesLoad = !salesLoaded;
     salesLoaded = true;
-    setSalesPreset('this_fy', document.querySelector('#page-sales .preset-btn[onclick*="this_fy"]'));
+    if (isFirstSalesLoad) setSalesPreset('this_fy', document.querySelector('#page-sales .preset-btn[onclick*="this_fy"]'));
     salesFilterFrom = (document.querySelector('#page-sales .sales-date-from')||{}).value||'';
     salesFilterTo   = (document.querySelector('#page-sales .sales-date-to')||{}).value||'';
     try {
@@ -2782,8 +2786,10 @@ async function loadConstructionData() {
       profitRate:parseFloat(String(r[8]||'0').replace(/[%,]/g,''))||0,
     }));
 
+    // 初回のみデフォルト今年度にセット。再読み込み時は選択中の期間を維持
+    const isFirstConstructionLoad = !constructionLoaded;
     constructionLoaded = true;
-    setConstructionPreset('this_fy', document.querySelector('#page-construction .preset-btn[onclick*="this_fy"]'));
+    if (isFirstConstructionLoad) setConstructionPreset('this_fy', document.querySelector('#page-construction .preset-btn[onclick*="this_fy"]'));
     constructionFilterFrom = (document.querySelector('#page-construction .construction-date-from')||{}).value||'';
     constructionFilterTo   = (document.querySelector('#page-construction .construction-date-to')||{}).value||'';
     try {
@@ -3111,8 +3117,10 @@ async function loadGalileiData(onlyLastFy=false) {
     return;
   }
 
+  // 初回のみデフォルト今年度にセット。再読み込み・前年度分取得時は選択中の期間を維持
+  const isFirstGalileiLoad = !galileiLoaded && !onlyLastFy;
   galileiLoaded = true;
-  setGalileiPreset('this_fy', document.querySelector('#page-galilei .preset-btn[onclick*="this_fy"]'));
+  if (isFirstGalileiLoad) setGalileiPreset('this_fy', document.querySelector('#page-galilei .preset-btn[onclick*="this_fy"]'));
   galileiFilterFrom = (document.querySelector('#page-galilei .galilei-date-from')||{}).value||'';
   galileiFilterTo   = (document.querySelector('#page-galilei .galilei-date-to')||{}).value||'';
   try {
@@ -4179,12 +4187,30 @@ function renderGalileiExpense() {
   })() : '');
 }
 
+// 全データ再取得（ヘッダーの「更新」ボタン、および初回読み込みで使用）
+// 各loadXxxDataは自分のタブを自動で再描画するため、ここでは
+// 個別ローダーが担当しない「予算進捗」「AI分析」タブだけ明示的に再描画する
+function refreshAllData() {
+  const btn = document.getElementById('refresh-btn');
+  const originalLabel = btn ? btn.innerHTML : '';
+  if (btn) { btn.disabled = true; btn.innerHTML = '↻ 更新中...'; }
+  const tasks = [loadData(), loadStockData(), loadPurchaseData(), loadSalesData(), loadConstructionData(), loadGalileiData()];
+  if (galileiLastFyLoaded) tasks.push(loadGalileiData(true));
+  return Promise.all(tasks).then(() => {
+    if (budgetFilterFrom || budgetFilterTo) {
+      renderBudgetDashboard();
+    } else {
+      setBudgetPreset('this_fy', document.querySelector('#page-budget .preset-btn[onclick*="this_fy"]'));
+    }
+    if (!document.getElementById('page-ai').hidden) renderAiAnalysis();
+  }).finally(() => {
+    if (btn) { btn.disabled = false; btn.innerHTML = originalLabel; }
+  });
+}
+
 // INIT
 setPreset('this_fy', document.querySelector('.preset-btn[onclick*="this_fy"]'));
-Promise.all([loadData(), loadStockData(), loadPurchaseData(), loadSalesData(), loadConstructionData(), loadGalileiData()]).then(() => {
-  setBudgetPreset('this_fy', document.querySelector('#page-budget .preset-btn[onclick*="this_fy"]'));
-  if (!document.getElementById('page-ai').hidden) renderAiAnalysis();
-});
+refreshAllData();
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
