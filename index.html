@@ -376,6 +376,7 @@ body { font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans','Yu Gothic UI',sa
   <div class="tab" onclick="switchTab('construction',this)">その他工事</div>
   <div class="tab" onclick="switchTab('galilei',this)">ガリレイ工事</div>
   <div class="tab" onclick="switchTab('ec',this)">EC</div>
+  <div class="tab" onclick="switchTab('hrmos',this)">⏱ 残業</div>
 </div>
 
 <div class="main">
@@ -418,6 +419,13 @@ body { font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans','Yu Gothic UI',sa
       <div class="config-item"><label>年間売上高目標（税別・円）</label><input type="number" id="cfg-galilei-annual-sales"></div>
       <div class="config-item"><label>年間粗利目標（税別・円）</label><input type="number" id="cfg-galilei-annual-profit"></div>
     </div>
+
+    <div style="font-size:12px;font-weight:600;color:var(--blue);margin:16px 0 4px;border-top:1px solid var(--border);padding-top:12px">勤怠 設定（HRMOS連携）</div>
+    <div class="config-grid">
+      <div class="config-item"><label>月間残業上限（36協定・時:分）</label><input type="text" id="cfg-hrmos-monthly-limit" placeholder="45:00"></div>
+      <div class="config-item"><label>年間残業上限（36協定・時:分）</label><input type="text" id="cfg-hrmos-yearly-limit" placeholder="360:00"></div>
+    </div>
+    <div style="font-size:11px;color:var(--text-muted);margin-top:6px">※HRMOSのAPIキーはここではなく、Netlifyの環境変数（HRMOS_SECRET_KEY / HRMOS_COMPANY_URL）で管理しています。</div>
 
     <button class="config-save" onclick="saveConfig()" style="margin-top:16px">保存して再読み込み</button>
   </div>
@@ -1518,6 +1526,65 @@ body { font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans','Yu Gothic UI',sa
     <div id="ai-analysis-body"></div>
   </div><!-- /page-ai -->
 
+  <!-- ======================== 残業（HRMOS連携）ページ ======================== -->
+  <div id="page-hrmos" hidden>
+    <div id="hrmos-error-area"></div>
+    <div class="date-filter-bar">
+      <label>期間</label>
+      <input type="month" id="hrmos-date-from" class="date-input">
+      <span class="date-sep">〜</span>
+      <input type="month" id="hrmos-date-to" class="date-input">
+      <div class="filter-sep"></div>
+      <div class="preset-btns">
+        <button class="preset-btn" onclick="setHrmosPreset('this_month',this,true)">今月</button>
+        <button class="preset-btn" onclick="setHrmosPreset('last_month',this,true)">前月</button>
+        <button class="preset-btn" onclick="setHrmosPreset('last3',this,true)">直近3ヶ月</button>
+        <button class="preset-btn" onclick="setHrmosPreset('last6',this,true)">直近6ヶ月</button>
+        <button class="preset-btn active" onclick="setHrmosPreset('this_fy',this,true)">今年度</button>
+        <button class="preset-btn" onclick="setHrmosPreset('last_fy',this,true)">前年度</button>
+      </div>
+      <button class="apply-btn" onclick="applyHrmosFilter()">適用</button>
+      <span class="period-label" id="hrmos-period-label"></span>
+    </div>
+
+    <div class="kpi-row" id="hrmos-kpi-row" style="grid-template-columns:repeat(3,1fr);margin-bottom:16px"></div>
+
+    <div class="table-card" style="margin-bottom:16px">
+      <div class="chart-title">🤖 残業アラート</div>
+      <div id="hrmos-alerts-body" style="margin-top:6px"></div>
+    </div>
+
+    <div class="table-card">
+      <div class="chart-title" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+        <span>従業員別 残業一覧</span>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <select id="hrmos-dept-filter" onchange="renderHrmosDashboard()" class="filter-select" style="font-size:11px">
+            <option value="">全部門</option>
+          </select>
+          <select id="hrmos-sort" onchange="renderHrmosDashboard()" class="filter-select" style="font-size:11px">
+            <option value="over36_desc">36協定残業（多い順）</option>
+            <option value="over36_asc">36協定残業（少ない順）</option>
+            <option value="name_asc">氏名順</option>
+          </select>
+        </div>
+      </div>
+      <div style="overflow-x:auto;margin-top:10px">
+        <table style="width:100%;border-collapse:collapse;font-size:12px" id="hrmos-employee-table">
+          <thead>
+            <tr style="border-bottom:1px solid var(--border)">
+              <th style="text-align:left;padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500">氏名</th>
+              <th style="text-align:left;padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500">部門</th>
+              <th style="text-align:right;padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500">期間累計（36協定分）</th>
+              <th style="text-align:right;padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500">月平均（36協定分）</th>
+              <th style="text-align:right;padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500">総残業（参考）</th>
+            </tr>
+          </thead>
+          <tbody id="hrmos-employee-table-body"></tbody>
+        </table>
+      </div>
+    </div>
+  </div><!-- /page-hrmos -->
+
 </div><!-- /main -->
 
 <script>
@@ -1547,6 +1614,8 @@ const DEFAULT_CONFIG = {
   galileiSheetId: '1-Twac-Kb3EOb9jSMbI5vPZkXbw_0wm5VhYe2iJTbgc0',
   galileiAnnualSalesTarget: 63750000,
   galileiAnnualProfitTarget: 46970000,
+  hrmosMonthlyLimitMin: 45 * 60,
+  hrmosYearlyLimitMin: 360 * 60,
 };
 
 let allSales = [];
@@ -1579,6 +1648,8 @@ function saveConfig() {
     galileiSheetId: document.getElementById('cfg-galilei-sheetid').value || DEFAULT_CONFIG.galileiSheetId,
     galileiAnnualSalesTarget: Number(document.getElementById('cfg-galilei-annual-sales').value) || DEFAULT_CONFIG.galileiAnnualSalesTarget,
     galileiAnnualProfitTarget: Number(document.getElementById('cfg-galilei-annual-profit').value) || DEFAULT_CONFIG.galileiAnnualProfitTarget,
+    hrmosMonthlyLimitMin: hmToMin(document.getElementById('cfg-hrmos-monthly-limit').value) || DEFAULT_CONFIG.hrmosMonthlyLimitMin,
+    hrmosYearlyLimitMin: hmToMin(document.getElementById('cfg-hrmos-yearly-limit').value) || DEFAULT_CONFIG.hrmosYearlyLimitMin,
   };
   localStorage.setItem('kpi_config', JSON.stringify(cfg));
   toggleConfig();
@@ -1586,6 +1657,7 @@ function saveConfig() {
   loadSalesData();
   loadConstructionData();
   loadGalileiData();
+  if (typeof hrmosLoaded !== 'undefined' && hrmosLoaded) renderHrmosDashboard();
 }
 function toggleConfig() {
   const p = document.getElementById('config-panel');
@@ -1611,6 +1683,8 @@ function toggleConfig() {
     document.getElementById('cfg-galilei-sheetid').value = cfg.galileiSheetId;
     document.getElementById('cfg-galilei-annual-sales').value = cfg.galileiAnnualSalesTarget;
     document.getElementById('cfg-galilei-annual-profit').value = cfg.galileiAnnualProfitTarget;
+    document.getElementById('cfg-hrmos-monthly-limit').value = minToHm(cfg.hrmosMonthlyLimitMin);
+    document.getElementById('cfg-hrmos-yearly-limit').value = minToHm(cfg.hrmosYearlyLimitMin);
   }
 }
 
@@ -1717,6 +1791,8 @@ function destroyChart(id) { if (charts[id]) { charts[id].destroy(); delete chart
 const fmtYen = n => Math.round(n).toLocaleString('ja-JP');
 const fmtPct = n => (Math.round(n*10)/10).toFixed(1) + '%';
 const shortDate = d => (d && /^\d{4}\//.test(d)) ? d.slice(2) : (d||'');
+const hmToMin = hm => { const m = String(hm||'').match(/^(-?\d+):(\d{2})$/); if(!m) return 0; const sign = m[1].startsWith('-')?-1:1; return sign*(Math.abs(parseInt(m[1],10))*60+parseInt(m[2],10)); };
+const minToHm = min => { const v = Math.round(min||0); const sign = v<0?'-':''; const abs = Math.abs(v); return `${sign}${Math.floor(abs/60)}:${String(abs%60).padStart(2,'0')}`; };
 const achCls = p => p >= 100 ? 'good' : p >= 80 ? 'warn' : 'bad';
 const parseNum = v => parseFloat(String(v||'0').replace(/[¥,\s]/g,'')) || 0;
 
@@ -2446,6 +2522,7 @@ function switchTab(key, el) {
   document.getElementById('page-galilei').hidden = (key !== 'galilei');
   document.getElementById('page-budget').hidden = (key !== 'budget');
   document.getElementById('page-ai').hidden = (key !== 'ai');
+  document.getElementById('page-hrmos').hidden = (key !== 'hrmos');
   if (key === 'budget') {
     if (!budgetFilterFrom && !budgetFilterTo) {
       setBudgetPreset('this_fy', document.querySelector('#page-budget .preset-btn[onclick*="this_fy"]'));
@@ -2462,6 +2539,9 @@ function switchTab(key, el) {
   }
   if (key === 'galilei' && !galileiLoaded) {
     loadGalileiData();
+  }
+  if (key === 'hrmos' && !hrmosLoaded) {
+    setHrmosPreset('this_fy', document.querySelector('#page-hrmos .preset-btn[onclick*="this_fy"]'), true);
   }
 }
 
@@ -4187,6 +4267,159 @@ function renderGalileiExpense() {
   })() : '');
 }
 
+// ==================== 残業（HRMOS勤怠連携） ====================
+let hrmosLoaded = false;
+let hrmosEmployees = [];
+let hrmosMonthly = [];
+let hrmosFilterFrom = '';
+let hrmosFilterTo = '';
+
+function setHrmosPreset(key, el, autoApply=false) {
+  document.querySelectorAll('#page-hrmos .preset-btn').forEach(b => b.classList.remove('active'));
+  if (el) el.classList.add('active');
+  const now = new Date();
+  const y = now.getFullYear(), m = now.getMonth();
+  let from, to;
+  if (key === 'this_month')      { from = to = ym(now); }
+  else if (key === 'last_month') { const d = new Date(y, m-1, 1); from = to = ym(d); }
+  else if (key === 'last3')      { from = ym(new Date(y, m-2, 1)); to = ym(now); }
+  else if (key === 'last6')      { from = ym(new Date(y, m-5, 1)); to = ym(now); }
+  else if (key === 'this_fy')    { const fy = m>=9?y:y-1; from = fy+'-10'; to = ym(now); }
+  else if (key === 'last_fy')    { const fy = (m>=9?y:y-1)-1; from = fy+'-10'; to = ym(new Date(fy+1,8,1)); }
+  else { from = ''; to = ''; }
+  document.getElementById('hrmos-date-from').value = from || '';
+  document.getElementById('hrmos-date-to').value   = to   || '';
+  hrmosFilterFrom = from || '';
+  hrmosFilterTo   = to   || '';
+  if (autoApply) applyHrmosFilter();
+}
+
+function applyHrmosFilter() {
+  hrmosFilterFrom = document.getElementById('hrmos-date-from').value;
+  hrmosFilterTo   = document.getElementById('hrmos-date-to').value;
+  if (!hrmosFilterFrom || !hrmosFilterTo) return;
+  loadHrmosData(hrmosFilterFrom, hrmosFilterTo);
+}
+
+async function loadHrmosData(from, to) {
+  const errorArea = document.getElementById('hrmos-error-area');
+  const labelEl = document.getElementById('hrmos-period-label');
+  errorArea.innerHTML = '';
+  labelEl.textContent = '読み込み中...';
+  try {
+    const res = await fetch(`/.netlify/functions/hrmos-overtime?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`);
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || `HTTPエラー: ${res.status}`);
+    hrmosEmployees = data.employees || [];
+    hrmosMonthly   = data.monthly || [];
+    hrmosLoaded = true;
+    labelEl.textContent = `${from} 〜 ${to}`;
+    renderHrmosDashboard();
+  } catch (e) {
+    labelEl.textContent = '';
+    errorArea.innerHTML = `<div class="error-msg">⚠ 残業データを取得できませんでした: ${e.message}</div>`;
+  }
+}
+
+function renderHrmosDashboard() {
+  const cfg = getConfig();
+
+  // 部門フィルタのプルダウンを更新（選択中の値は維持）
+  const deptFilterEl = document.getElementById('hrmos-dept-filter');
+  const deptFilterVal = deptFilterEl ? deptFilterEl.value : '';
+  const deptNames = [...new Set(hrmosEmployees.map(e => e.department || '未設定'))].sort((a,b)=>a.localeCompare(b,'ja'));
+  if (deptFilterEl) {
+    deptFilterEl.innerHTML = '<option value="">全部門</option>' + deptNames.map(d => `<option value="${d}">${d}</option>`).join('');
+    if (deptNames.includes(deptFilterVal)) deptFilterEl.value = deptFilterVal;
+  }
+  const selectedDept = deptFilterEl ? deptFilterEl.value : '';
+
+  const monthsInPeriod = [...new Set(hrmosMonthly.map(m => m.month))].sort();
+  const monthCount = monthsInPeriod.length || 1;
+
+  // 従業員ごとに期間内の残業を集計（月別の内訳も保持してトレンド判定に使う）
+  const byUser = {};
+  hrmosMonthly.forEach(m => {
+    if (!byUser[m.userId]) byUser[m.userId] = { over36:0, over:0, months:{} };
+    byUser[m.userId].over36 += m.overWorkMin36;
+    byUser[m.userId].over   += m.overWorkMin;
+    byUser[m.userId].months[m.month] = (byUser[m.userId].months[m.month]||0) + m.overWorkMin36;
+  });
+
+  const scaledMonthlyLimit = cfg.hrmosMonthlyLimitMin;
+  const scaledYearlyLimit  = Math.round(cfg.hrmosYearlyLimitMin / 12 * monthCount);
+
+  let employees = hrmosEmployees
+    .filter(e => !selectedDept || (e.department || '未設定') === selectedDept)
+    .map(e => {
+      const agg = byUser[e.id] || { over36:0, over:0, months:{} };
+      const avg36 = agg.over36 / monthCount;
+      const isOver = avg36 >= scaledMonthlyLimit || agg.over36 >= scaledYearlyLimit;
+      return { ...e, over36:agg.over36, over:agg.over, avg36, months:agg.months, isOver };
+    });
+
+  // KPIカード
+  const totalEmployees = employees.length;
+  const avgAcross = totalEmployees>0 ? employees.reduce((a,e)=>a+e.avg36,0)/totalEmployees : 0;
+  const overCount = employees.filter(e => e.isOver).length;
+
+  document.getElementById('hrmos-kpi-row').innerHTML =
+    kpiCard('対象人数', totalEmployees+'人', 0, '', false, true) +
+    kpiCard('平均残業（月・36協定分）', minToHm(avgAcross), 0, '上限: '+minToHm(scaledMonthlyLimit), false, true) +
+    kpiCard('36協定 超過/注意 人数', overCount+'人', 0, '全'+totalEmployees+'人中', false, true);
+
+  // ソート
+  const sortMode = (document.getElementById('hrmos-sort')||{}).value || 'over36_desc';
+  const sorters = {
+    over36_desc: (a,b) => b.over36 - a.over36,
+    over36_asc:  (a,b) => a.over36 - b.over36,
+    name_asc:    (a,b) => (a.name||'').localeCompare(b.name||'','ja'),
+  };
+  employees = [...employees].sort(sorters[sortMode]);
+
+  // 従業員一覧テーブル
+  document.getElementById('hrmos-employee-table-body').innerHTML = employees.map(e => `
+    <tr style="border-bottom:0.5px solid var(--bg);${e.isOver?'background:#FEF2F2':''}">
+      <td style="padding:6px 8px;font-weight:500">${e.name || '(氏名未設定)'}</td>
+      <td style="padding:6px 8px;color:var(--text-secondary)">${e.department || '-'}</td>
+      <td style="padding:6px 8px;text-align:right;font-weight:600;color:${e.isOver?'#DC2626':'var(--text-primary)'}">${minToHm(e.over36)}</td>
+      <td style="padding:6px 8px;text-align:right">${minToHm(e.avg36)}</td>
+      <td style="padding:6px 8px;text-align:right;color:var(--text-muted)">${minToHm(e.over)}</td>
+    </tr>`).join('') || '<tr><td colspan="5" style="padding:12px;color:var(--text-muted)">データがありません</td></tr>';
+
+  renderHrmosAlerts(employees, monthsInPeriod, scaledMonthlyLimit, scaledYearlyLimit);
+}
+
+// ルールベースの残業アラート（外部AIは使わず、しきい値・前月比から自動生成）
+function renderHrmosAlerts(employees, monthsInPeriod, monthlyLimit, yearlyLimit) {
+  const alerts = [];
+
+  employees.forEach(e => {
+    if (yearlyLimit>0 && e.over36 >= yearlyLimit) {
+      alerts.push({ severity: e.over36 - yearlyLimit + 100000, text: `「${e.name}」の期間累計残業（36協定分）が ${minToHm(e.over36)} で、期間按分の上限 ${minToHm(yearlyLimit)} を超過しています。` });
+    } else if (monthlyLimit>0 && e.avg36 >= monthlyLimit) {
+      alerts.push({ severity: e.avg36 - monthlyLimit, text: `「${e.name}」の月平均残業（36協定分）が ${minToHm(e.avg36)} で、月間上限 ${minToHm(monthlyLimit)} を超えています。` });
+    }
+
+    if (monthsInPeriod.length >= 2) {
+      const last = monthsInPeriod[monthsInPeriod.length-1];
+      const prev = monthsInPeriod[monthsInPeriod.length-2];
+      const lastVal = e.months[last] || 0;
+      const prevVal = e.months[prev] || 0;
+      if (prevVal > 0 && (lastVal - prevVal) / prevVal >= 0.5 && lastVal - prevVal >= 300) {
+        alerts.push({ severity: lastVal - prevVal, text: `「${e.name}」の残業が前月比で急増しています（${minToHm(prevVal)} → ${minToHm(lastVal)}）。業務量を確認してください。` });
+      }
+    }
+  });
+
+  alerts.sort((a,b) => b.severity - a.severity);
+  const top = alerts.slice(0, 8);
+
+  document.getElementById('hrmos-alerts-body').innerHTML = top.length
+    ? `<ul style="margin:0;padding-left:18px;font-size:12px;line-height:1.8;color:var(--text-primary)">${top.map(a=>`<li>${a.text}</li>`).join('')}</ul>`
+    : `<div style="font-size:12px;color:var(--text-muted)">現在、閾値超過や急増している従業員はいません。</div>`;
+}
+
 // 全データ再取得（ヘッダーの「更新」ボタン、および初回読み込みで使用）
 // 各loadXxxDataは自分のタブを自動で再描画するため、ここでは
 // 個別ローダーが担当しない「予算進捗」「AI分析」タブだけ明示的に再描画する
@@ -4196,6 +4429,7 @@ function refreshAllData() {
   if (btn) { btn.disabled = true; btn.innerHTML = '↻ 更新中...'; }
   const tasks = [loadData(), loadStockData(), loadPurchaseData(), loadSalesData(), loadConstructionData(), loadGalileiData()];
   if (galileiLastFyLoaded) tasks.push(loadGalileiData(true));
+  if (hrmosLoaded && hrmosFilterFrom && hrmosFilterTo) tasks.push(loadHrmosData(hrmosFilterFrom, hrmosFilterTo));
   return Promise.all(tasks).then(() => {
     if (budgetFilterFrom || budgetFilterTo) {
       renderBudgetDashboard();
