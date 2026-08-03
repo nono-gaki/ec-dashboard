@@ -1554,32 +1554,62 @@ body { font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans','Yu Gothic UI',sa
       <div id="hrmos-alerts-body" style="margin-top:6px"></div>
     </div>
 
-    <div class="table-card">
+    <div class="table-card" style="margin-bottom:16px">
       <div class="chart-title" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
         <span>従業員別 残業一覧</span>
-        <div style="display:flex;gap:8px;flex-wrap:wrap">
-          <select id="hrmos-dept-filter" onchange="renderHrmosDashboard()" class="filter-select" style="font-size:11px">
-            <option value="">全部門</option>
-          </select>
-          <select id="hrmos-sort" onchange="renderHrmosDashboard()" class="filter-select" style="font-size:11px">
-            <option value="over36_desc">36協定残業（多い順）</option>
-            <option value="over36_asc">36協定残業（少ない順）</option>
-            <option value="name_asc">氏名順</option>
-          </select>
-        </div>
+        <select id="hrmos-dept-filter" onchange="renderHrmosDashboard()" class="filter-select" style="font-size:11px">
+          <option value="">全部門</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="table-card" style="margin-bottom:16px">
+      <div class="chart-title" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+        <span>📋 36協定 残業時間</span>
+        <select id="hrmos-sort-36" onchange="renderHrmosDashboard()" class="filter-select" style="font-size:11px">
+          <option value="over36_desc">期間累計（多い順）</option>
+          <option value="over36_asc">期間累計（少ない順）</option>
+          <option value="avg36_desc">月平均（多い順）</option>
+          <option value="name_asc">氏名順</option>
+        </select>
       </div>
       <div style="overflow-x:auto;margin-top:10px">
-        <table style="width:100%;border-collapse:collapse;font-size:12px" id="hrmos-employee-table">
+        <table style="width:100%;border-collapse:collapse;font-size:12px" id="hrmos-36-table">
           <thead>
             <tr style="border-bottom:1px solid var(--border)">
               <th style="text-align:left;padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500">氏名</th>
               <th style="text-align:left;padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500">部門</th>
               <th style="text-align:right;padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500">期間累計（36協定分）</th>
               <th style="text-align:right;padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500">月平均（36協定分）</th>
-              <th style="text-align:right;padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500">総残業（参考）</th>
             </tr>
           </thead>
-          <tbody id="hrmos-employee-table-body"></tbody>
+          <tbody id="hrmos-36-table-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="table-card">
+      <div class="chart-title" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+        <span>🕐 実勤務時間</span>
+        <select id="hrmos-sort-work" onchange="renderHrmosDashboard()" class="filter-select" style="font-size:11px">
+          <option value="total_desc">総労働時間（多い順）</option>
+          <option value="over_desc">残業時間（多い順）</option>
+          <option value="name_asc">氏名順</option>
+        </select>
+      </div>
+      <div style="overflow-x:auto;margin-top:10px">
+        <table style="width:100%;border-collapse:collapse;font-size:12px" id="hrmos-work-table">
+          <thead>
+            <tr style="border-bottom:1px solid var(--border)">
+              <th style="text-align:left;padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500">氏名</th>
+              <th style="text-align:left;padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500">部門</th>
+              <th style="text-align:right;padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500">所定時間</th>
+              <th style="text-align:right;padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500">総労働時間</th>
+              <th style="text-align:right;padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500">実働時間</th>
+              <th style="text-align:right;padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500">残業時間</th>
+            </tr>
+          </thead>
+          <tbody id="hrmos-work-table-body"></tbody>
         </table>
       </div>
     </div>
@@ -4337,13 +4367,17 @@ function renderHrmosDashboard() {
   const monthsInPeriod = [...new Set(hrmosMonthly.map(m => m.month))].sort();
   const monthCount = monthsInPeriod.length || 1;
 
-  // 従業員ごとに期間内の残業を集計（月別の内訳も保持してトレンド判定に使う）
+  // 従業員ごとに期間内の勤怠を集計（月別の36協定内訳も保持してトレンド判定に使う）
   const byUser = {};
   hrmosMonthly.forEach(m => {
-    if (!byUser[m.userId]) byUser[m.userId] = { over36:0, over:0, months:{} };
-    byUser[m.userId].over36 += m.overWorkMin36;
-    byUser[m.userId].over   += m.overWorkMin;
-    byUser[m.userId].months[m.month] = (byUser[m.userId].months[m.month]||0) + m.overWorkMin36;
+    if (!byUser[m.userId]) byUser[m.userId] = { over36:0, over:0, total:0, actual:0, prescribed:0, months:{} };
+    const u = byUser[m.userId];
+    u.over36     += m.overWorkMin36;
+    u.over       += m.overWorkMin;
+    u.total      += m.totalWorkingMin;
+    u.actual     += m.actualWorkingMin;
+    u.prescribed += m.prescribedWorkingMin;
+    u.months[m.month] = (u.months[m.month]||0) + m.overWorkMin36;
   });
 
   const scaledMonthlyLimit = cfg.hrmosMonthlyLimitMin;
@@ -4352,10 +4386,10 @@ function renderHrmosDashboard() {
   let employees = hrmosEmployees
     .filter(e => !selectedDept || (e.department || '未設定') === selectedDept)
     .map(e => {
-      const agg = byUser[e.id] || { over36:0, over:0, months:{} };
+      const agg = byUser[e.id] || { over36:0, over:0, total:0, actual:0, prescribed:0, months:{} };
       const avg36 = agg.over36 / monthCount;
       const isOver = avg36 >= scaledMonthlyLimit || agg.over36 >= scaledYearlyLimit;
-      return { ...e, over36:agg.over36, over:agg.over, avg36, months:agg.months, isOver };
+      return { ...e, over36:agg.over36, over:agg.over, total:agg.total, actual:agg.actual, prescribed:agg.prescribed, avg36, months:agg.months, isOver };
     });
 
   // KPIカード
@@ -4368,24 +4402,42 @@ function renderHrmosDashboard() {
     kpiCard('平均残業（月・36協定分）', minToHm(avgAcross), 0, '上限: '+minToHm(scaledMonthlyLimit), false, true) +
     kpiCard('36協定 超過/注意 人数', overCount+'人', 0, '全'+totalEmployees+'人中', false, true);
 
-  // ソート
-  const sortMode = (document.getElementById('hrmos-sort')||{}).value || 'over36_desc';
-  const sorters = {
+  // 36協定テーブル
+  const sortMode36 = (document.getElementById('hrmos-sort-36')||{}).value || 'over36_desc';
+  const sorters36 = {
     over36_desc: (a,b) => b.over36 - a.over36,
     over36_asc:  (a,b) => a.over36 - b.over36,
+    avg36_desc:  (a,b) => b.avg36 - a.avg36,
     name_asc:    (a,b) => (a.name||'').localeCompare(b.name||'','ja'),
   };
-  employees = [...employees].sort(sorters[sortMode]);
+  const employees36 = [...employees].sort(sorters36[sortMode36]);
 
-  // 従業員一覧テーブル
-  document.getElementById('hrmos-employee-table-body').innerHTML = employees.map(e => `
+  document.getElementById('hrmos-36-table-body').innerHTML = employees36.map(e => `
     <tr style="border-bottom:0.5px solid var(--bg);${e.isOver?'background:#FEF2F2':''}">
       <td style="padding:6px 8px;font-weight:500">${e.name || '(氏名未設定)'}</td>
       <td style="padding:6px 8px;color:var(--text-secondary)">${e.department || '-'}</td>
       <td style="padding:6px 8px;text-align:right;font-weight:600;color:${e.isOver?'#DC2626':'var(--text-primary)'}">${minToHm(e.over36)}</td>
       <td style="padding:6px 8px;text-align:right">${minToHm(e.avg36)}</td>
-      <td style="padding:6px 8px;text-align:right;color:var(--text-muted)">${minToHm(e.over)}</td>
-    </tr>`).join('') || '<tr><td colspan="5" style="padding:12px;color:var(--text-muted)">データがありません</td></tr>';
+    </tr>`).join('') || '<tr><td colspan="4" style="padding:12px;color:var(--text-muted)">データがありません</td></tr>';
+
+  // 実勤務時間テーブル
+  const sortModeWork = (document.getElementById('hrmos-sort-work')||{}).value || 'total_desc';
+  const sortersWork = {
+    total_desc: (a,b) => b.total - a.total,
+    over_desc:  (a,b) => b.over - a.over,
+    name_asc:   (a,b) => (a.name||'').localeCompare(b.name||'','ja'),
+  };
+  const employeesWork = [...employees].sort(sortersWork[sortModeWork]);
+
+  document.getElementById('hrmos-work-table-body').innerHTML = employeesWork.map(e => `
+    <tr style="border-bottom:0.5px solid var(--bg)">
+      <td style="padding:6px 8px;font-weight:500">${e.name || '(氏名未設定)'}</td>
+      <td style="padding:6px 8px;color:var(--text-secondary)">${e.department || '-'}</td>
+      <td style="padding:6px 8px;text-align:right;color:var(--text-muted)">${minToHm(e.prescribed)}</td>
+      <td style="padding:6px 8px;text-align:right">${minToHm(e.total)}</td>
+      <td style="padding:6px 8px;text-align:right">${minToHm(e.actual)}</td>
+      <td style="padding:6px 8px;text-align:right;font-weight:600">${minToHm(e.over)}</td>
+    </tr>`).join('') || '<tr><td colspan="6" style="padding:12px;color:var(--text-muted)">データがありません</td></tr>';
 
   renderHrmosAlerts(employees, monthsInPeriod, scaledMonthlyLimit, scaledYearlyLimit);
 }

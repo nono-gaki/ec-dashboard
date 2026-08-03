@@ -94,14 +94,16 @@ exports.handler = async (event) => {
     const deptMap = {};
     departments.forEach((d) => { deptMap[d.id] = d.name; });
 
-    const employees = users.map((u) => ({
-      id: u.id,
-      number: u.number,
-      name: `${u.last_name || ''}${u.first_name || ''}`.trim(),
-      departmentId: u.department_id,
-      department: deptMap[u.department_id] || '',
-      agreement36Id: u.agreement36_id,
-    }));
+    const employees = users
+      .filter((u) => !u.end_date) // 退職者（退社日が設定されている社員）は除外
+      .map((u) => ({
+        id: u.id,
+        number: u.number,
+        name: `${u.last_name || ''}${u.first_name || ''}`.trim(),
+        departmentId: u.department_id,
+        department: deptMap[u.department_id] || '',
+        agreement36Id: u.agreement36_id,
+      }));
 
     const monthlyResults = await Promise.all(
       months.map(async (month) => {
@@ -112,6 +114,12 @@ exports.handler = async (event) => {
           overWorkMin36: hmToMinutes(r.over_work_time_36),
           overWorkMin: hmToMinutes(r.over_work_time),
           totalWorkingMin: hmToMinutes(r.total_working_hours),
+          actualWorkingMin: hmToMinutes(r.actual_working_hours),
+          prescribedWorkingMin: hmToMinutes(r.prescribed_working_hours),
+          inPrescribedWorkingMin: hmToMinutes(r.hours_in_prescribed_working_hours),
+          legalHolidayOvertimeMin: hmToMinutes(r.excess_of_statutory_working_hours_in_holidays),
+          statutoryHolidayWorkMin: hmToMinutes(r.working_hours_in_statutory_holidays),
+          lateNightOvertimeMin: hmToMinutes(r.late_night_overtime_working_hours),
         }));
       })
     );
