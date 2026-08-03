@@ -52,6 +52,8 @@ body { font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans','Yu Gothic UI',sa
 .subtab { padding:10px 16px; font-size:12px; color:var(--text-secondary); cursor:pointer; border-bottom:2px solid transparent; transition:all .15s; flex-shrink:0; }
 .subtab.active { color:var(--blue); border-bottom-color:var(--blue); font-weight:500; }
 .subtab:hover:not(.active) { color:var(--text-primary); }
+.sub-tabs { background:var(--surface); border-bottom:1px solid var(--border); padding:0 24px; display:flex; }
+.sub-tabs[hidden] { display:none; }
 
 /* MAIN */
 .main { padding:16px 24px; max-width:1440px; margin:0 auto; }
@@ -218,6 +220,8 @@ body { font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans','Yu Gothic UI',sa
   /* TABS: 横スクロール可能に */
   .tabs { position:sticky; top:0; padding:0 8px; overflow-x:auto; -webkit-overflow-scrolling:touch; white-space:nowrap; z-index:99; }
   .tab { padding:10px 14px; font-size:12px; flex-shrink:0; }
+  .sub-tabs { padding:0 8px; overflow-x:auto; -webkit-overflow-scrolling:touch; white-space:nowrap; }
+  .subtab { padding:8px 12px; }
 
   /* MAIN: パディング縮小 */
   .main { padding:10px 10px; max-width:100%; }
@@ -372,11 +376,15 @@ body { font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans','Yu Gothic UI',sa
 <div class="tabs">
   <div class="tab active" onclick="switchTab('budget',this)">📊 予算進捗</div>
   <div class="tab" onclick="switchTab('ai',this)">🤖 AI分析</div>
-  <div class="tab" onclick="switchTab('sales',this)">営業</div>
-  <div class="tab" onclick="switchTab('construction',this)">その他工事</div>
-  <div class="tab" onclick="switchTab('galilei',this)">ガリレイ工事</div>
-  <div class="tab" onclick="switchTab('ec',this)">EC</div>
   <div class="tab" onclick="switchTab('hrmos',this)">⏱ 残業</div>
+</div>
+
+<div class="sub-tabs" id="budget-sub-tabs">
+  <div class="subtab active" onclick="switchBudgetSub('overview',this)">全体</div>
+  <div class="subtab" onclick="switchBudgetSub('sales',this)">営業</div>
+  <div class="subtab" onclick="switchBudgetSub('construction',this)">その他工事</div>
+  <div class="subtab" onclick="switchBudgetSub('galilei',this)">ガリレイ工事</div>
+  <div class="subtab" onclick="switchBudgetSub('ec',this)">EC</div>
 </div>
 
 <div class="main">
@@ -430,6 +438,7 @@ body { font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans','Yu Gothic UI',sa
     <button class="config-save" onclick="saveConfig()" style="margin-top:16px">保存して再読み込み</button>
   </div>
 
+  <div id="page-budget-group">
   <div id="page-ec" hidden>
   <div id="error-area"></div>
 
@@ -477,11 +486,11 @@ body { font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans','Yu Gothic UI',sa
           <input type="month" class="date-input ec-date-to">
           <div class="filter-sep"></div>
           <div class="preset-btns">
-            <button class="preset-btn" onclick="setPreset('this_month',this,true)">今月</button>
+            <button class="preset-btn active" onclick="setPreset('this_month',this,true)">今月</button>
               <button class="preset-btn" onclick="setPreset('last_month',this,true)">前月</button>
             <button class="preset-btn" onclick="setPreset('last3',this,true)">直近3ヶ月</button>
             <button class="preset-btn" onclick="setPreset('last6',this,true)">直近6ヶ月</button>
-            <button class="preset-btn active" onclick="setPreset('this_fy',this,true)">今年度</button>
+            <button class="preset-btn" onclick="setPreset('this_fy',this,true)">今年度</button>
             <button class="preset-btn" onclick="setPreset('last_fy',this,true)">前年度</button>
             <button class="preset-btn" onclick="setPreset('all',this,true)">全期間</button>
           </div>
@@ -505,11 +514,11 @@ body { font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans','Yu Gothic UI',sa
           <input type="month" class="date-input ec-date-to">
           <div class="filter-sep"></div>
           <div class="preset-btns">
-            <button class="preset-btn" onclick="setPreset('this_month',this,true)">今月</button>
+            <button class="preset-btn active" onclick="setPreset('this_month',this,true)">今月</button>
               <button class="preset-btn" onclick="setPreset('last_month',this,true)">前月</button>
             <button class="preset-btn" onclick="setPreset('last3',this,true)">直近3ヶ月</button>
             <button class="preset-btn" onclick="setPreset('last6',this,true)">直近6ヶ月</button>
-            <button class="preset-btn active" onclick="setPreset('this_fy',this,true)">今年度</button>
+            <button class="preset-btn" onclick="setPreset('this_fy',this,true)">今年度</button>
             <button class="preset-btn" onclick="setPreset('last_fy',this,true)">前年度</button>
             <button class="preset-btn" onclick="setPreset('all',this,true)">全期間</button>
           </div>
@@ -558,11 +567,11 @@ body { font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans','Yu Gothic UI',sa
           <input type="month" class="date-input ec-date-to">
           <div class="filter-sep"></div>
           <div class="preset-btns">
-            <button class="preset-btn" onclick="setPreset('this_month',this,true)">今月</button>
+            <button class="preset-btn active" onclick="setPreset('this_month',this,true)">今月</button>
               <button class="preset-btn" onclick="setPreset('last_month',this,true)">前月</button>
             <button class="preset-btn" onclick="setPreset('last3',this,true)">直近3ヶ月</button>
             <button class="preset-btn" onclick="setPreset('last6',this,true)">直近6ヶ月</button>
-            <button class="preset-btn active" onclick="setPreset('this_fy',this,true)">今年度</button>
+            <button class="preset-btn" onclick="setPreset('this_fy',this,true)">今年度</button>
             <button class="preset-btn" onclick="setPreset('last_fy',this,true)">前年度</button>
             <button class="preset-btn" onclick="setPreset('all',this,true)">全期間</button>
           </div>
@@ -602,11 +611,11 @@ body { font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans','Yu Gothic UI',sa
           <input type="month" class="date-input ec-date-to">
           <div class="filter-sep"></div>
           <div class="preset-btns">
-            <button class="preset-btn" onclick="setPreset('this_month',this,true)">今月</button>
+            <button class="preset-btn active" onclick="setPreset('this_month',this,true)">今月</button>
               <button class="preset-btn" onclick="setPreset('last_month',this,true)">前月</button>
             <button class="preset-btn" onclick="setPreset('last3',this,true)">直近3ヶ月</button>
             <button class="preset-btn" onclick="setPreset('last6',this,true)">直近6ヶ月</button>
-            <button class="preset-btn active" onclick="setPreset('this_fy',this,true)">今年度</button>
+            <button class="preset-btn" onclick="setPreset('this_fy',this,true)">今年度</button>
             <button class="preset-btn" onclick="setPreset('last_fy',this,true)">前年度</button>
             <button class="preset-btn" onclick="setPreset('all',this,true)">全期間</button>
           </div>
@@ -642,10 +651,10 @@ body { font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans','Yu Gothic UI',sa
           <input type="month" id="stock-date-to" class="date-input">
           <div class="filter-sep"></div>
           <div class="preset-btns">
-            <button class="preset-btn" onclick="setStockPreset('this_month',this,true)">今月</button>
+            <button class="preset-btn active" onclick="setStockPreset('this_month',this,true)">今月</button>
             <button class="preset-btn" onclick="setStockPreset('last3',this,true)">直近3ヶ月</button>
             <button class="preset-btn" onclick="setStockPreset('last6',this,true)">直近6ヶ月</button>
-            <button class="preset-btn active" onclick="setStockPreset('this_fy',this,true)">今年度</button>
+            <button class="preset-btn" onclick="setStockPreset('this_fy',this,true)">今年度</button>
             <button class="preset-btn" onclick="setStockPreset('last_fy',this,true)">前年度</button>
             <button class="preset-btn" onclick="setStockPreset('all',this,true)">全期間</button>
           </div>
@@ -720,10 +729,10 @@ body { font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans','Yu Gothic UI',sa
           <input type="month" id="purchase-date-to" class="date-input">
           <div class="filter-sep"></div>
           <div class="preset-btns">
-            <button class="preset-btn" onclick="setPurchasePreset('this_month',this,true)">今月</button>
+            <button class="preset-btn active" onclick="setPurchasePreset('this_month',this,true)">今月</button>
             <button class="preset-btn" onclick="setPurchasePreset('last3',this,true)">直近3ヶ月</button>
             <button class="preset-btn" onclick="setPurchasePreset('last6',this,true)">直近6ヶ月</button>
-            <button class="preset-btn active" onclick="setPurchasePreset('this_fy',this,true)">今年度</button>
+            <button class="preset-btn" onclick="setPurchasePreset('this_fy',this,true)">今年度</button>
             <button class="preset-btn" onclick="setPurchasePreset('last_fy',this,true)">前年度</button>
             <button class="preset-btn" onclick="setPurchasePreset('all',this,true)">全期間</button>
           </div>
@@ -813,11 +822,11 @@ body { font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans','Yu Gothic UI',sa
             <input type="month" class="date-input sales-date-to">
             <div class="filter-sep"></div>
             <div class="preset-btns">
-              <button class="preset-btn" onclick="setSalesPreset('this_month',this,true)">今月</button>
+              <button class="preset-btn active" onclick="setSalesPreset('this_month',this,true)">今月</button>
               <button class="preset-btn" onclick="setSalesPreset('last_month',this,true)">前月</button>
               <button class="preset-btn" onclick="setSalesPreset('last3',this,true)">直近3ヶ月</button>
               <button class="preset-btn" onclick="setSalesPreset('last6',this,true)">直近6ヶ月</button>
-              <button class="preset-btn active" onclick="setSalesPreset('this_fy',this,true)">今年度</button>
+              <button class="preset-btn" onclick="setSalesPreset('this_fy',this,true)">今年度</button>
               <button class="preset-btn" onclick="setSalesPreset('last_fy',this,true)">前年度</button>
               <button class="preset-btn" onclick="setSalesPreset('all',this,true)">全期間</button>
             </div>
@@ -838,11 +847,11 @@ body { font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans','Yu Gothic UI',sa
             <input type="month" class="date-input sales-date-to">
             <div class="filter-sep"></div>
             <div class="preset-btns">
-              <button class="preset-btn" onclick="setSalesPreset('this_month',this,true)">今月</button>
+              <button class="preset-btn active" onclick="setSalesPreset('this_month',this,true)">今月</button>
               <button class="preset-btn" onclick="setSalesPreset('last_month',this,true)">前月</button>
               <button class="preset-btn" onclick="setSalesPreset('last3',this,true)">直近3ヶ月</button>
               <button class="preset-btn" onclick="setSalesPreset('last6',this,true)">直近6ヶ月</button>
-              <button class="preset-btn active" onclick="setSalesPreset('this_fy',this,true)">今年度</button>
+              <button class="preset-btn" onclick="setSalesPreset('this_fy',this,true)">今年度</button>
               <button class="preset-btn" onclick="setSalesPreset('last_fy',this,true)">前年度</button>
               <button class="preset-btn" onclick="setSalesPreset('all',this,true)">全期間</button>
             </div>
@@ -872,11 +881,11 @@ body { font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans','Yu Gothic UI',sa
             <input type="month" class="date-input sales-date-to">
             <div class="filter-sep"></div>
             <div class="preset-btns">
-              <button class="preset-btn" onclick="setSalesPreset('this_month',this,true)">今月</button>
+              <button class="preset-btn active" onclick="setSalesPreset('this_month',this,true)">今月</button>
               <button class="preset-btn" onclick="setSalesPreset('last_month',this,true)">前月</button>
               <button class="preset-btn" onclick="setSalesPreset('last3',this,true)">直近3ヶ月</button>
               <button class="preset-btn" onclick="setSalesPreset('last6',this,true)">直近6ヶ月</button>
-              <button class="preset-btn active" onclick="setSalesPreset('this_fy',this,true)">今年度</button>
+              <button class="preset-btn" onclick="setSalesPreset('this_fy',this,true)">今年度</button>
               <button class="preset-btn" onclick="setSalesPreset('last_fy',this,true)">前年度</button>
               <button class="preset-btn" onclick="setSalesPreset('all',this,true)">全期間</button>
             </div>
@@ -910,11 +919,11 @@ body { font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans','Yu Gothic UI',sa
             <input type="month" class="date-input sales-date-to">
             <div class="filter-sep"></div>
             <div class="preset-btns">
-              <button class="preset-btn" onclick="setSalesPreset('this_month',this,true)">今月</button>
+              <button class="preset-btn active" onclick="setSalesPreset('this_month',this,true)">今月</button>
               <button class="preset-btn" onclick="setSalesPreset('last_month',this,true)">前月</button>
               <button class="preset-btn" onclick="setSalesPreset('last3',this,true)">直近3ヶ月</button>
               <button class="preset-btn" onclick="setSalesPreset('last6',this,true)">直近6ヶ月</button>
-              <button class="preset-btn active" onclick="setSalesPreset('this_fy',this,true)">今年度</button>
+              <button class="preset-btn" onclick="setSalesPreset('this_fy',this,true)">今年度</button>
               <button class="preset-btn" onclick="setSalesPreset('last_fy',this,true)">前年度</button>
               <button class="preset-btn" onclick="setSalesPreset('all',this,true)">全期間</button>
             </div>
@@ -986,11 +995,11 @@ body { font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans','Yu Gothic UI',sa
             <input type="month" class="date-input construction-date-to">
             <div class="filter-sep"></div>
             <div class="preset-btns">
-              <button class="preset-btn" onclick="setConstructionPreset('this_month',this,true)">今月</button>
+              <button class="preset-btn active" onclick="setConstructionPreset('this_month',this,true)">今月</button>
               <button class="preset-btn" onclick="setConstructionPreset('last_month',this,true)">前月</button>
               <button class="preset-btn" onclick="setConstructionPreset('last3',this,true)">直近3ヶ月</button>
               <button class="preset-btn" onclick="setConstructionPreset('last6',this,true)">直近6ヶ月</button>
-              <button class="preset-btn active" onclick="setConstructionPreset('this_fy',this,true)">今年度</button>
+              <button class="preset-btn" onclick="setConstructionPreset('this_fy',this,true)">今年度</button>
               <button class="preset-btn" onclick="setConstructionPreset('last_fy',this,true)">前年度</button>
               <button class="preset-btn" onclick="setConstructionPreset('all',this,true)">全期間</button>
             </div>
@@ -1011,11 +1020,11 @@ body { font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans','Yu Gothic UI',sa
             <input type="month" class="date-input construction-date-to">
             <div class="filter-sep"></div>
             <div class="preset-btns">
-              <button class="preset-btn" onclick="setConstructionPreset('this_month',this,true)">今月</button>
+              <button class="preset-btn active" onclick="setConstructionPreset('this_month',this,true)">今月</button>
               <button class="preset-btn" onclick="setConstructionPreset('last_month',this,true)">前月</button>
               <button class="preset-btn" onclick="setConstructionPreset('last3',this,true)">直近3ヶ月</button>
               <button class="preset-btn" onclick="setConstructionPreset('last6',this,true)">直近6ヶ月</button>
-              <button class="preset-btn active" onclick="setConstructionPreset('this_fy',this,true)">今年度</button>
+              <button class="preset-btn" onclick="setConstructionPreset('this_fy',this,true)">今年度</button>
               <button class="preset-btn" onclick="setConstructionPreset('last_fy',this,true)">前年度</button>
               <button class="preset-btn" onclick="setConstructionPreset('all',this,true)">全期間</button>
             </div>
@@ -1045,11 +1054,11 @@ body { font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans','Yu Gothic UI',sa
             <input type="month" class="date-input construction-date-to">
             <div class="filter-sep"></div>
             <div class="preset-btns">
-              <button class="preset-btn" onclick="setConstructionPreset('this_month',this,true)">今月</button>
+              <button class="preset-btn active" onclick="setConstructionPreset('this_month',this,true)">今月</button>
               <button class="preset-btn" onclick="setConstructionPreset('last_month',this,true)">前月</button>
               <button class="preset-btn" onclick="setConstructionPreset('last3',this,true)">直近3ヶ月</button>
               <button class="preset-btn" onclick="setConstructionPreset('last6',this,true)">直近6ヶ月</button>
-              <button class="preset-btn active" onclick="setConstructionPreset('this_fy',this,true)">今年度</button>
+              <button class="preset-btn" onclick="setConstructionPreset('this_fy',this,true)">今年度</button>
               <button class="preset-btn" onclick="setConstructionPreset('last_fy',this,true)">前年度</button>
               <button class="preset-btn" onclick="setConstructionPreset('all',this,true)">全期間</button>
             </div>
@@ -1083,11 +1092,11 @@ body { font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans','Yu Gothic UI',sa
             <input type="month" class="date-input construction-date-to">
             <div class="filter-sep"></div>
             <div class="preset-btns">
-              <button class="preset-btn" onclick="setConstructionPreset('this_month',this,true)">今月</button>
+              <button class="preset-btn active" onclick="setConstructionPreset('this_month',this,true)">今月</button>
               <button class="preset-btn" onclick="setConstructionPreset('last_month',this,true)">前月</button>
               <button class="preset-btn" onclick="setConstructionPreset('last3',this,true)">直近3ヶ月</button>
               <button class="preset-btn" onclick="setConstructionPreset('last6',this,true)">直近6ヶ月</button>
-              <button class="preset-btn active" onclick="setConstructionPreset('this_fy',this,true)">今年度</button>
+              <button class="preset-btn" onclick="setConstructionPreset('this_fy',this,true)">今年度</button>
               <button class="preset-btn" onclick="setConstructionPreset('last_fy',this,true)">前年度</button>
               <button class="preset-btn" onclick="setConstructionPreset('all',this,true)">全期間</button>
             </div>
@@ -1171,11 +1180,11 @@ body { font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans','Yu Gothic UI',sa
             <input type="month" class="date-input galilei-date-to">
             <div class="filter-sep"></div>
             <div class="preset-btns">
-              <button class="preset-btn" onclick="setGalileiPreset('this_month',this,true)">今月</button>
+              <button class="preset-btn active" onclick="setGalileiPreset('this_month',this,true)">今月</button>
               <button class="preset-btn" onclick="setGalileiPreset('last_month',this,true)">前月</button>
               <button class="preset-btn" onclick="setGalileiPreset('last3',this,true)">直近3ヶ月</button>
               <button class="preset-btn" onclick="setGalileiPreset('last6',this,true)">直近6ヶ月</button>
-              <button class="preset-btn active" onclick="setGalileiPreset('this_fy',this,true)">今年度</button>
+              <button class="preset-btn" onclick="setGalileiPreset('this_fy',this,true)">今年度</button>
               <button class="preset-btn" onclick="setGalileiPreset('last_fy',this,true)">前年度</button>
               <button class="preset-btn" onclick="setGalileiPreset('all',this,true)">全期間</button>
             </div>
@@ -1196,11 +1205,11 @@ body { font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans','Yu Gothic UI',sa
             <input type="month" class="date-input galilei-date-to">
             <div class="filter-sep"></div>
             <div class="preset-btns">
-              <button class="preset-btn" onclick="setGalileiPreset('this_month',this,true)">今月</button>
+              <button class="preset-btn active" onclick="setGalileiPreset('this_month',this,true)">今月</button>
               <button class="preset-btn" onclick="setGalileiPreset('last_month',this,true)">前月</button>
               <button class="preset-btn" onclick="setGalileiPreset('last3',this,true)">直近3ヶ月</button>
               <button class="preset-btn" onclick="setGalileiPreset('last6',this,true)">直近6ヶ月</button>
-              <button class="preset-btn active" onclick="setGalileiPreset('this_fy',this,true)">今年度</button>
+              <button class="preset-btn" onclick="setGalileiPreset('this_fy',this,true)">今年度</button>
               <button class="preset-btn" onclick="setGalileiPreset('last_fy',this,true)">前年度</button>
               <button class="preset-btn" onclick="setGalileiPreset('all',this,true)">全期間</button>
             </div>
@@ -1230,11 +1239,11 @@ body { font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans','Yu Gothic UI',sa
             <input type="month" class="date-input galilei-date-to">
             <div class="filter-sep"></div>
             <div class="preset-btns">
-              <button class="preset-btn" onclick="setGalileiPreset('this_month',this,true)">今月</button>
+              <button class="preset-btn active" onclick="setGalileiPreset('this_month',this,true)">今月</button>
               <button class="preset-btn" onclick="setGalileiPreset('last_month',this,true)">前月</button>
               <button class="preset-btn" onclick="setGalileiPreset('last3',this,true)">直近3ヶ月</button>
               <button class="preset-btn" onclick="setGalileiPreset('last6',this,true)">直近6ヶ月</button>
-              <button class="preset-btn active" onclick="setGalileiPreset('this_fy',this,true)">今年度</button>
+              <button class="preset-btn" onclick="setGalileiPreset('this_fy',this,true)">今年度</button>
               <button class="preset-btn" onclick="setGalileiPreset('last_fy',this,true)">前年度</button>
               <button class="preset-btn" onclick="setGalileiPreset('all',this,true)">全期間</button>
             </div>
@@ -1268,11 +1277,11 @@ body { font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans','Yu Gothic UI',sa
             <input type="month" class="date-input galilei-date-to">
             <div class="filter-sep"></div>
             <div class="preset-btns">
-              <button class="preset-btn" onclick="setGalileiPreset('this_month',this,true)">今月</button>
+              <button class="preset-btn active" onclick="setGalileiPreset('this_month',this,true)">今月</button>
               <button class="preset-btn" onclick="setGalileiPreset('last_month',this,true)">前月</button>
               <button class="preset-btn" onclick="setGalileiPreset('last3',this,true)">直近3ヶ月</button>
               <button class="preset-btn" onclick="setGalileiPreset('last6',this,true)">直近6ヶ月</button>
-              <button class="preset-btn active" onclick="setGalileiPreset('this_fy',this,true)">今年度</button>
+              <button class="preset-btn" onclick="setGalileiPreset('this_fy',this,true)">今年度</button>
               <button class="preset-btn" onclick="setGalileiPreset('last_fy',this,true)">前年度</button>
               <button class="preset-btn" onclick="setGalileiPreset('all',this,true)">全期間</button>
             </div>
@@ -1320,11 +1329,11 @@ body { font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans','Yu Gothic UI',sa
             <input type="month" class="date-input galilei-date-to">
             <div class="filter-sep"></div>
             <div class="preset-btns">
-              <button class="preset-btn" onclick="setGalileiPreset('this_month',this,true)">今月</button>
+              <button class="preset-btn active" onclick="setGalileiPreset('this_month',this,true)">今月</button>
               <button class="preset-btn" onclick="setGalileiPreset('last_month',this,true)">前月</button>
               <button class="preset-btn" onclick="setGalileiPreset('last3',this,true)">直近3ヶ月</button>
               <button class="preset-btn" onclick="setGalileiPreset('last6',this,true)">直近6ヶ月</button>
-              <button class="preset-btn active" onclick="setGalileiPreset('this_fy',this,true)">今年度</button>
+              <button class="preset-btn" onclick="setGalileiPreset('this_fy',this,true)">今年度</button>
               <button class="preset-btn" onclick="setGalileiPreset('last_fy',this,true)">前年度</button>
               <button class="preset-btn" onclick="setGalileiPreset('all',this,true)">全期間</button>
             </div>
@@ -1372,11 +1381,11 @@ body { font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans','Yu Gothic UI',sa
             <input type="month" class="date-input galilei-date-to">
             <div class="filter-sep"></div>
             <div class="preset-btns">
-              <button class="preset-btn" onclick="setGalileiPreset('this_month',this,true)">今月</button>
+              <button class="preset-btn active" onclick="setGalileiPreset('this_month',this,true)">今月</button>
               <button class="preset-btn" onclick="setGalileiPreset('last_month',this,true)">前月</button>
               <button class="preset-btn" onclick="setGalileiPreset('last3',this,true)">直近3ヶ月</button>
               <button class="preset-btn" onclick="setGalileiPreset('last6',this,true)">直近6ヶ月</button>
-              <button class="preset-btn active" onclick="setGalileiPreset('this_fy',this,true)">今年度</button>
+              <button class="preset-btn" onclick="setGalileiPreset('this_fy',this,true)">今年度</button>
               <button class="preset-btn" onclick="setGalileiPreset('last_fy',this,true)">前年度</button>
               <button class="preset-btn" onclick="setGalileiPreset('all',this,true)">全期間</button>
             </div>
@@ -1420,11 +1429,11 @@ body { font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans','Yu Gothic UI',sa
             <input type="month" class="date-input galilei-date-to">
             <div class="filter-sep"></div>
             <div class="preset-btns">
-              <button class="preset-btn" onclick="setGalileiPreset('this_month',this,true)">今月</button>
+              <button class="preset-btn active" onclick="setGalileiPreset('this_month',this,true)">今月</button>
               <button class="preset-btn" onclick="setGalileiPreset('last_month',this,true)">前月</button>
               <button class="preset-btn" onclick="setGalileiPreset('last3',this,true)">直近3ヶ月</button>
               <button class="preset-btn" onclick="setGalileiPreset('last6',this,true)">直近6ヶ月</button>
-              <button class="preset-btn active" onclick="setGalileiPreset('this_fy',this,true)">今年度</button>
+              <button class="preset-btn" onclick="setGalileiPreset('this_fy',this,true)">今年度</button>
               <button class="preset-btn" onclick="setGalileiPreset('last_fy',this,true)">前年度</button>
               <button class="preset-btn" onclick="setGalileiPreset('all',this,true)">全期間</button>
             </div>
@@ -1465,11 +1474,11 @@ body { font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans','Yu Gothic UI',sa
       <input type="month" id="budget-date-to" class="date-input">
       <div class="filter-sep"></div>
       <div class="preset-btns">
-        <button class="preset-btn" onclick="setBudgetPreset('this_month',this)">今月</button>
+        <button class="preset-btn active" onclick="setBudgetPreset('this_month',this)">今月</button>
         <button class="preset-btn" onclick="setBudgetPreset('last_month',this)">前月</button>
         <button class="preset-btn" onclick="setBudgetPreset('last3',this)">直近3ヶ月</button>
         <button class="preset-btn" onclick="setBudgetPreset('last6',this)">直近6ヶ月</button>
-        <button class="preset-btn active" onclick="setBudgetPreset('this_fy',this)">今年度</button>
+        <button class="preset-btn" onclick="setBudgetPreset('this_fy',this)">今年度</button>
         <button class="preset-btn" onclick="setBudgetPreset('last_fy',this)">前年度</button>
         <button class="preset-btn" onclick="setBudgetPreset('all',this)">全期間</button>
       </div>
@@ -1513,6 +1522,7 @@ body { font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans','Yu Gothic UI',sa
       </div>
     </div>
   </div><!-- /page-budget -->
+  </div><!-- /page-budget-group -->
 
   <!-- ======================== AI分析ページ ======================== -->
   <div id="page-ai" hidden>
@@ -1536,11 +1546,11 @@ body { font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans','Yu Gothic UI',sa
       <input type="month" id="hrmos-date-to" class="date-input">
       <div class="filter-sep"></div>
       <div class="preset-btns">
-        <button class="preset-btn" onclick="setHrmosPreset('this_month',this,true)">今月</button>
+        <button class="preset-btn active" onclick="setHrmosPreset('this_month',this,true)">今月</button>
         <button class="preset-btn" onclick="setHrmosPreset('last_month',this,true)">前月</button>
         <button class="preset-btn" onclick="setHrmosPreset('last3',this,true)">直近3ヶ月</button>
         <button class="preset-btn" onclick="setHrmosPreset('last6',this,true)">直近6ヶ月</button>
-        <button class="preset-btn active" onclick="setHrmosPreset('this_fy',this,true)">今年度</button>
+        <button class="preset-btn" onclick="setHrmosPreset('this_fy',this,true)">今年度</button>
         <button class="preset-btn" onclick="setHrmosPreset('last_fy',this,true)">前年度</button>
       </div>
       <button class="apply-btn" onclick="applyHrmosFilter()">適用</button>
@@ -1556,60 +1566,41 @@ body { font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans','Yu Gothic UI',sa
 
     <div class="table-card" style="margin-bottom:16px">
       <div class="chart-title" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
-        <span>従業員別 残業一覧</span>
+        <span>🕐 実勤務時間</span>
         <select id="hrmos-dept-filter" onchange="renderHrmosDashboard()" class="filter-select" style="font-size:11px">
           <option value="">全部門</option>
-        </select>
-      </div>
-    </div>
-
-    <div class="table-card" style="margin-bottom:16px">
-      <div class="chart-title" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
-        <span>📋 36協定 残業時間</span>
-        <select id="hrmos-sort-36" onchange="renderHrmosDashboard()" class="filter-select" style="font-size:11px">
-          <option value="over36_desc">期間累計（多い順）</option>
-          <option value="over36_asc">期間累計（少ない順）</option>
-          <option value="avg36_desc">月平均（多い順）</option>
-          <option value="name_asc">氏名順</option>
-        </select>
-      </div>
-      <div style="overflow-x:auto;margin-top:10px">
-        <table style="width:100%;border-collapse:collapse;font-size:12px" id="hrmos-36-table">
-          <thead>
-            <tr style="border-bottom:1px solid var(--border)">
-              <th style="text-align:left;padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500">氏名</th>
-              <th style="text-align:left;padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500">部門</th>
-              <th style="text-align:right;padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500">期間累計（36協定分）</th>
-              <th style="text-align:right;padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500">月平均（36協定分）</th>
-            </tr>
-          </thead>
-          <tbody id="hrmos-36-table-body"></tbody>
-        </table>
-      </div>
-    </div>
-
-    <div class="table-card">
-      <div class="chart-title" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
-        <span>🕐 実勤務時間</span>
-        <select id="hrmos-sort-work" onchange="renderHrmosDashboard()" class="filter-select" style="font-size:11px">
-          <option value="total_desc">総労働時間（多い順）</option>
-          <option value="over_desc">残業時間（多い順）</option>
-          <option value="name_asc">氏名順</option>
         </select>
       </div>
       <div style="overflow-x:auto;margin-top:10px">
         <table style="width:100%;border-collapse:collapse;font-size:12px" id="hrmos-work-table">
           <thead>
             <tr style="border-bottom:1px solid var(--border)">
-              <th style="text-align:left;padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500">氏名</th>
+              <th style="text-align:left;padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500;cursor:pointer;user-select:none" onclick="toggleHrmosSort('work','name')">氏名<span id="hrmos-arrow-work-name"></span></th>
               <th style="text-align:left;padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500">部門</th>
-              <th style="text-align:right;padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500">所定時間</th>
-              <th style="text-align:right;padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500">総労働時間</th>
-              <th style="text-align:right;padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500">実働時間</th>
-              <th style="text-align:right;padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500">残業時間</th>
+              <th style="text-align:right;padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500;cursor:pointer;user-select:none" onclick="toggleHrmosSort('work','prescribed')">所定時間<span id="hrmos-arrow-work-prescribed"></span></th>
+              <th style="text-align:right;padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500;cursor:pointer;user-select:none" onclick="toggleHrmosSort('work','total')">総労働時間<span id="hrmos-arrow-work-total"></span></th>
+              <th style="text-align:right;padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500;cursor:pointer;user-select:none" onclick="toggleHrmosSort('work','actual')">実働時間<span id="hrmos-arrow-work-actual"></span></th>
+              <th style="text-align:right;padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500;cursor:pointer;user-select:none" onclick="toggleHrmosSort('work','over')">残業時間<span id="hrmos-arrow-work-over"></span></th>
             </tr>
           </thead>
           <tbody id="hrmos-work-table-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="table-card">
+      <div class="chart-title">📋 36協定 残業時間</div>
+      <div style="overflow-x:auto;margin-top:10px">
+        <table style="width:100%;border-collapse:collapse;font-size:12px" id="hrmos-36-table">
+          <thead>
+            <tr style="border-bottom:1px solid var(--border)">
+              <th style="text-align:left;padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500;cursor:pointer;user-select:none" onclick="toggleHrmosSort('agreement36','name')">氏名<span id="hrmos-arrow-agreement36-name"></span></th>
+              <th style="text-align:left;padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500">部門</th>
+              <th style="text-align:right;padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500;cursor:pointer;user-select:none" onclick="toggleHrmosSort('agreement36','over36')">期間累計（36協定分）<span id="hrmos-arrow-agreement36-over36"></span></th>
+              <th style="text-align:right;padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500;cursor:pointer;user-select:none" onclick="toggleHrmosSort('agreement36','avg36')">月平均（36協定分）<span id="hrmos-arrow-agreement36-avg36"></span></th>
+            </tr>
+          </thead>
+          <tbody id="hrmos-36-table-body"></tbody>
         </table>
       </div>
     </div>
@@ -1854,8 +1845,8 @@ async function loadData() {
 
     document.getElementById('updated-at').textContent = 'データ更新: ' + new Date().toLocaleString('ja-JP',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'});
 
-    // 初回のみデフォルト今年度にセット。再読み込み時は選択中の期間を維持
-    if (!ecLoaded) setPreset('this_fy');
+    // 初回のみデフォルト今月にセット。再読み込み時は選択中の期間を維持
+    if (!ecLoaded) setPreset('this_month');
     ecLoaded = true;
     filterFrom = (document.querySelector('#page-ec .ec-date-from')||{}).value||'';
     filterTo   = (document.querySelector('#page-ec .ec-date-to')||{}).value||'';
@@ -2219,7 +2210,7 @@ async function loadStockData() {
     }));
 
     stockLoaded = true;
-    setStockPreset('this_fy', document.querySelector('#ec-section-stock .preset-btn[onclick*="this_fy"]'));
+    setStockPreset('this_month', document.querySelector('#ec-section-stock .preset-btn[onclick*="this_month"]'));
     stockFilterFrom = document.getElementById('stock-date-from').value;
     stockFilterTo   = document.getElementById('stock-date-to').value;
     console.log('renderStockDashboard呼び出し直前');
@@ -2408,7 +2399,7 @@ async function loadPurchaseData() {
     }));
 
     console.log('renderPurchaseDashboard呼び出し直前');
-    setPurchasePreset('this_fy', document.querySelector('#ec-section-purchase .preset-btn[onclick*="this_fy"]'));
+    setPurchasePreset('this_month', document.querySelector('#ec-section-purchase .preset-btn[onclick*="this_month"]'));
     purchaseFilterFrom = document.getElementById('purchase-date-from').value;
     purchaseFilterTo   = document.getElementById('purchase-date-to').value;
     try {
@@ -2543,35 +2534,52 @@ adjustTabsStickyPosition();
 setTimeout(adjustTabsStickyPosition, 300);
 
 // ==================== TAB SWITCH ====================
+let budgetSubKey = 'overview';
+
 function switchTab(key, el) {
-  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tabs > .tab').forEach(t => t.classList.remove('active'));
   if(el) el.classList.add('active');
-  document.getElementById('page-ec').hidden = (key !== 'ec');
-  document.getElementById('page-sales').hidden = (key !== 'sales');
-  document.getElementById('page-construction').hidden = (key !== 'construction');
-  document.getElementById('page-galilei').hidden = (key !== 'galilei');
-  document.getElementById('page-budget').hidden = (key !== 'budget');
+  document.getElementById('page-budget-group').hidden = (key !== 'budget');
+  document.getElementById('budget-sub-tabs').hidden = (key !== 'budget');
   document.getElementById('page-ai').hidden = (key !== 'ai');
   document.getElementById('page-hrmos').hidden = (key !== 'hrmos');
   if (key === 'budget') {
-    if (!budgetFilterFrom && !budgetFilterTo) {
-      setBudgetPreset('this_fy', document.querySelector('#page-budget .preset-btn[onclick*="this_fy"]'));
-    } else { renderBudgetDashboard(); }
+    switchBudgetSub(budgetSubKey);
   }
   if (key === 'ai') {
     renderAiAnalysis();
   }
-  if (key === 'sales' && !salesLoaded) {
+  if (key === 'hrmos' && !hrmosLoaded) {
+    setHrmosPreset('this_month', document.querySelector('#page-hrmos .preset-btn[onclick*="this_month"]'), true);
+  }
+}
+
+// 「予算進捗」タブ内のサブ切り替え（全体・営業・その他工事・ガリレイ工事・EC）
+function switchBudgetSub(subKey, el) {
+  budgetSubKey = subKey;
+  document.querySelectorAll('#budget-sub-tabs .subtab').forEach(t => t.classList.remove('active'));
+  const activeEl = el || document.querySelector(`#budget-sub-tabs .subtab[onclick*="'${subKey}'"]`);
+  if (activeEl) activeEl.classList.add('active');
+
+  document.getElementById('page-budget').hidden = (subKey !== 'overview');
+  document.getElementById('page-sales').hidden = (subKey !== 'sales');
+  document.getElementById('page-construction').hidden = (subKey !== 'construction');
+  document.getElementById('page-galilei').hidden = (subKey !== 'galilei');
+  document.getElementById('page-ec').hidden = (subKey !== 'ec');
+
+  if (subKey === 'overview') {
+    if (!budgetFilterFrom && !budgetFilterTo) {
+      setBudgetPreset('this_month', document.querySelector('#page-budget .preset-btn[onclick*="this_month"]'));
+    } else { renderBudgetDashboard(); }
+  }
+  if (subKey === 'sales' && !salesLoaded) {
     loadSalesData();
   }
-  if (key === 'construction' && !constructionLoaded) {
+  if (subKey === 'construction' && !constructionLoaded) {
     loadConstructionData();
   }
-  if (key === 'galilei' && !galileiLoaded) {
+  if (subKey === 'galilei' && !galileiLoaded) {
     loadGalileiData();
-  }
-  if (key === 'hrmos' && !hrmosLoaded) {
-    setHrmosPreset('this_fy', document.querySelector('#page-hrmos .preset-btn[onclick*="this_fy"]'), true);
   }
 }
 
@@ -2665,10 +2673,10 @@ async function loadSalesData() {
       note:      String(r[11]||'').trim(),
     }));
 
-    // 初回のみデフォルト今年度にセット。再読み込み時は選択中の期間を維持
+    // 初回のみデフォルト今月にセット。再読み込み時は選択中の期間を維持
     const isFirstSalesLoad = !salesLoaded;
     salesLoaded = true;
-    if (isFirstSalesLoad) setSalesPreset('this_fy', document.querySelector('#page-sales .preset-btn[onclick*="this_fy"]'));
+    if (isFirstSalesLoad) setSalesPreset('this_month', document.querySelector('#page-sales .preset-btn[onclick*="this_month"]'));
     salesFilterFrom = (document.querySelector('#page-sales .sales-date-from')||{}).value||'';
     salesFilterTo   = (document.querySelector('#page-sales .sales-date-to')||{}).value||'';
     try {
@@ -2896,10 +2904,10 @@ async function loadConstructionData() {
       profitRate:parseFloat(String(r[8]||'0').replace(/[%,]/g,''))||0,
     }));
 
-    // 初回のみデフォルト今年度にセット。再読み込み時は選択中の期間を維持
+    // 初回のみデフォルト今月にセット。再読み込み時は選択中の期間を維持
     const isFirstConstructionLoad = !constructionLoaded;
     constructionLoaded = true;
-    if (isFirstConstructionLoad) setConstructionPreset('this_fy', document.querySelector('#page-construction .preset-btn[onclick*="this_fy"]'));
+    if (isFirstConstructionLoad) setConstructionPreset('this_month', document.querySelector('#page-construction .preset-btn[onclick*="this_month"]'));
     constructionFilterFrom = (document.querySelector('#page-construction .construction-date-from')||{}).value||'';
     constructionFilterTo   = (document.querySelector('#page-construction .construction-date-to')||{}).value||'';
     try {
@@ -3227,10 +3235,10 @@ async function loadGalileiData(onlyLastFy=false) {
     return;
   }
 
-  // 初回のみデフォルト今年度にセット。再読み込み・前年度分取得時は選択中の期間を維持
+  // 初回のみデフォルト今月にセット。再読み込み・前年度分取得時は選択中の期間を維持
   const isFirstGalileiLoad = !galileiLoaded && !onlyLastFy;
   galileiLoaded = true;
-  if (isFirstGalileiLoad) setGalileiPreset('this_fy', document.querySelector('#page-galilei .preset-btn[onclick*="this_fy"]'));
+  if (isFirstGalileiLoad) setGalileiPreset('this_month', document.querySelector('#page-galilei .preset-btn[onclick*="this_month"]'));
   galileiFilterFrom = (document.querySelector('#page-galilei .galilei-date-from')||{}).value||'';
   galileiFilterTo   = (document.querySelector('#page-galilei .galilei-date-to')||{}).value||'';
   try {
@@ -4303,6 +4311,25 @@ let hrmosEmployees = [];
 let hrmosMonthly = [];
 let hrmosFilterFrom = '';
 let hrmosFilterTo = '';
+let hrmosSortState = {
+  work: { field: 'total', dir: 'desc' },
+  agreement36: { field: 'over36', dir: 'desc' },
+};
+
+function toggleHrmosSort(table, field) {
+  const s = hrmosSortState[table];
+  if (s.field === field) s.dir = (s.dir === 'desc') ? 'asc' : 'desc';
+  else { s.field = field; s.dir = (field === 'name') ? 'asc' : 'desc'; }
+  renderHrmosDashboard();
+}
+
+function updateHrmosSortArrows(table, fields) {
+  const s = hrmosSortState[table];
+  fields.forEach(f => {
+    const el = document.getElementById(`hrmos-arrow-${table}-${f}`);
+    if (el) el.textContent = (s.field === f) ? (s.dir === 'desc' ? ' ▼' : ' ▲') : '';
+  });
+}
 
 function setHrmosPreset(key, el, autoApply=false) {
   document.querySelectorAll('#page-hrmos .preset-btn').forEach(b => b.classList.remove('active'));
@@ -4402,32 +4429,15 @@ function renderHrmosDashboard() {
     kpiCard('平均残業（月・36協定分）', minToHm(avgAcross), 0, '上限: '+minToHm(scaledMonthlyLimit), false, true) +
     kpiCard('36協定 超過/注意 人数', overCount+'人', 0, '全'+totalEmployees+'人中', false, true);
 
-  // 36協定テーブル
-  const sortMode36 = (document.getElementById('hrmos-sort-36')||{}).value || 'over36_desc';
-  const sorters36 = {
-    over36_desc: (a,b) => b.over36 - a.over36,
-    over36_asc:  (a,b) => a.over36 - b.over36,
-    avg36_desc:  (a,b) => b.avg36 - a.avg36,
-    name_asc:    (a,b) => (a.name||'').localeCompare(b.name||'','ja'),
-  };
-  const employees36 = [...employees].sort(sorters36[sortMode36]);
-
-  document.getElementById('hrmos-36-table-body').innerHTML = employees36.map(e => `
-    <tr style="border-bottom:0.5px solid var(--bg);${e.isOver?'background:#FEF2F2':''}">
-      <td style="padding:6px 8px;font-weight:500">${e.name || '(氏名未設定)'}</td>
-      <td style="padding:6px 8px;color:var(--text-secondary)">${e.department || '-'}</td>
-      <td style="padding:6px 8px;text-align:right;font-weight:600;color:${e.isOver?'#DC2626':'var(--text-primary)'}">${minToHm(e.over36)}</td>
-      <td style="padding:6px 8px;text-align:right">${minToHm(e.avg36)}</td>
-    </tr>`).join('') || '<tr><td colspan="4" style="padding:12px;color:var(--text-muted)">データがありません</td></tr>';
-
   // 実勤務時間テーブル
-  const sortModeWork = (document.getElementById('hrmos-sort-work')||{}).value || 'total_desc';
-  const sortersWork = {
-    total_desc: (a,b) => b.total - a.total,
-    over_desc:  (a,b) => b.over - a.over,
-    name_asc:   (a,b) => (a.name||'').localeCompare(b.name||'','ja'),
-  };
-  const employeesWork = [...employees].sort(sortersWork[sortModeWork]);
+  const workFieldGetters = { name: e=>e.name||'', prescribed: e=>e.prescribed, total: e=>e.total, actual: e=>e.actual, over: e=>e.over };
+  const workState = hrmosSortState.work;
+  const employeesWork = [...employees].sort((a,b) => {
+    const [va, vb] = [workFieldGetters[workState.field](a), workFieldGetters[workState.field](b)];
+    const cmp = (typeof va === 'string') ? va.localeCompare(vb, 'ja') : va - vb;
+    return workState.dir === 'desc' ? -cmp : cmp;
+  });
+  updateHrmosSortArrows('work', ['name','prescribed','total','actual','over']);
 
   document.getElementById('hrmos-work-table-body').innerHTML = employeesWork.map(e => `
     <tr style="border-bottom:0.5px solid var(--bg)">
@@ -4438,6 +4448,24 @@ function renderHrmosDashboard() {
       <td style="padding:6px 8px;text-align:right">${minToHm(e.actual)}</td>
       <td style="padding:6px 8px;text-align:right;font-weight:600">${minToHm(e.over)}</td>
     </tr>`).join('') || '<tr><td colspan="6" style="padding:12px;color:var(--text-muted)">データがありません</td></tr>';
+
+  // 36協定テーブル
+  const agreement36FieldGetters = { name: e=>e.name||'', over36: e=>e.over36, avg36: e=>e.avg36 };
+  const agreement36State = hrmosSortState.agreement36;
+  const employees36 = [...employees].sort((a,b) => {
+    const [va, vb] = [agreement36FieldGetters[agreement36State.field](a), agreement36FieldGetters[agreement36State.field](b)];
+    const cmp = (typeof va === 'string') ? va.localeCompare(vb, 'ja') : va - vb;
+    return agreement36State.dir === 'desc' ? -cmp : cmp;
+  });
+  updateHrmosSortArrows('agreement36', ['name','over36','avg36']);
+
+  document.getElementById('hrmos-36-table-body').innerHTML = employees36.map(e => `
+    <tr style="border-bottom:0.5px solid var(--bg);${e.isOver?'background:#FEF2F2':''}">
+      <td style="padding:6px 8px;font-weight:500">${e.name || '(氏名未設定)'}</td>
+      <td style="padding:6px 8px;color:var(--text-secondary)">${e.department || '-'}</td>
+      <td style="padding:6px 8px;text-align:right;font-weight:600;color:${e.isOver?'#DC2626':'var(--text-primary)'}">${minToHm(e.over36)}</td>
+      <td style="padding:6px 8px;text-align:right">${minToHm(e.avg36)}</td>
+    </tr>`).join('') || '<tr><td colspan="4" style="padding:12px;color:var(--text-muted)">データがありません</td></tr>';
 
   renderHrmosAlerts(employees, monthsInPeriod, scaledMonthlyLimit, scaledYearlyLimit);
 }
@@ -4486,7 +4514,7 @@ function refreshAllData() {
     if (budgetFilterFrom || budgetFilterTo) {
       renderBudgetDashboard();
     } else {
-      setBudgetPreset('this_fy', document.querySelector('#page-budget .preset-btn[onclick*="this_fy"]'));
+      setBudgetPreset('this_month', document.querySelector('#page-budget .preset-btn[onclick*="this_month"]'));
     }
     if (!document.getElementById('page-ai').hidden) renderAiAnalysis();
   }).finally(() => {
@@ -4495,7 +4523,7 @@ function refreshAllData() {
 }
 
 // INIT
-setPreset('this_fy', document.querySelector('.preset-btn[onclick*="this_fy"]'));
+setPreset('this_month', document.querySelector('.preset-btn[onclick*="this_month"]'));
 refreshAllData();
 
 if ('serviceWorker' in navigator) {
