@@ -55,6 +55,16 @@ body { font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans','Yu Gothic UI',sa
 .sub-tabs { background:var(--surface); border-bottom:1px solid var(--border); padding:0 24px; display:flex; }
 .sub-tabs[hidden] { display:none; }
 
+/* HRMOS 残業テーブルのモバイル用カード表示 */
+.hrmos-card-list { display:none; flex-direction:column; gap:8px; margin-top:10px; }
+.hrmos-emp-card { border:1px solid var(--border); border-radius:8px; padding:10px 12px; }
+.hrmos-emp-card.hrmos-emp-card-over { background:#FEF2F2; border-color:#FCA5A5; }
+.hrmos-emp-card-title { font-weight:600; font-size:13px; margin-bottom:6px; }
+.hrmos-emp-card-dept { font-weight:400; color:var(--text-secondary); font-size:11px; margin-left:6px; }
+.hrmos-emp-card-grid { display:grid; grid-template-columns:1fr 1fr; gap:6px 12px; }
+.hrmos-emp-card-field .label { display:block; font-size:10px; color:var(--text-muted); }
+.hrmos-emp-card-field .value { display:block; font-size:13px; font-weight:500; }
+
 /* MAIN */
 .main { padding:16px 24px; max-width:1440px; margin:0 auto; }
 
@@ -142,6 +152,9 @@ body { font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans','Yu Gothic UI',sa
 .budget-cat-inner { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
 @media(max-width:700px){
   .budget-cat-grid { grid-template-columns:1fr; }
+  .hrmos-table-wrap { display:none; }
+  .hrmos-card-list { display:flex; }
+  .hrmos-emp-card-grid { grid-template-columns:1fr 1fr; }
 }
 
 /* CHARTS */
@@ -1571,7 +1584,7 @@ body { font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans','Yu Gothic UI',sa
           <option value="">全部門</option>
         </select>
       </div>
-      <div style="overflow-x:auto;margin-top:10px">
+      <div class="hrmos-table-wrap" style="overflow-x:auto;margin-top:10px">
         <table style="width:100%;border-collapse:collapse;font-size:12px" id="hrmos-work-table">
           <thead>
             <tr style="border-bottom:1px solid var(--border)">
@@ -1586,23 +1599,34 @@ body { font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans','Yu Gothic UI',sa
           <tbody id="hrmos-work-table-body"></tbody>
         </table>
       </div>
+      <div class="hrmos-card-list" id="hrmos-work-cards"></div>
     </div>
 
     <div class="table-card">
       <div class="chart-title">📋 36協定 残業時間</div>
-      <div style="overflow-x:auto;margin-top:10px">
+      <div class="hrmos-table-wrap" style="overflow-x:auto;margin-top:10px">
         <table style="width:100%;border-collapse:collapse;font-size:12px" id="hrmos-36-table">
           <thead>
             <tr style="border-bottom:1px solid var(--border)">
-              <th style="text-align:left;padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500;cursor:pointer;user-select:none" onclick="toggleHrmosSort('agreement36','name')">氏名<span id="hrmos-arrow-agreement36-name"></span></th>
-              <th style="text-align:left;padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500">部門</th>
-              <th style="text-align:right;padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500;cursor:pointer;user-select:none" onclick="toggleHrmosSort('agreement36','over36')">期間累計（36協定分）<span id="hrmos-arrow-agreement36-over36"></span></th>
-              <th style="text-align:right;padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500;cursor:pointer;user-select:none" onclick="toggleHrmosSort('agreement36','avg36')">月平均（36協定分）<span id="hrmos-arrow-agreement36-avg36"></span></th>
+              <th rowspan="2" style="text-align:left;padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500;cursor:pointer;user-select:none;vertical-align:bottom" onclick="toggleHrmosSort('agreement36','name')">氏名<span id="hrmos-arrow-agreement36-name"></span></th>
+              <th rowspan="2" style="text-align:left;padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500;vertical-align:bottom">部門</th>
+              <th colspan="2" style="text-align:center;padding:4px 8px;font-size:11px;color:var(--text-muted);font-weight:500;border-bottom:1px solid var(--border)">残業時間（36協定）</th>
+              <th colspan="2" style="text-align:center;padding:4px 8px;font-size:11px;color:var(--text-muted);font-weight:500;border-bottom:1px solid var(--border)">法定休日出勤</th>
+              <th colspan="2" style="text-align:center;padding:4px 8px;font-size:11px;color:var(--text-muted);font-weight:500;border-bottom:1px solid var(--border)">特別条項</th>
+            </tr>
+            <tr style="border-bottom:1px solid var(--border)">
+              <th style="text-align:right;padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500;cursor:pointer;user-select:none" onclick="toggleHrmosSort('agreement36','avg36')">月平均<span id="hrmos-arrow-agreement36-avg36"></span></th>
+              <th style="text-align:right;padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500;cursor:pointer;user-select:none" onclick="toggleHrmosSort('agreement36','over36')">期間累計<span id="hrmos-arrow-agreement36-over36"></span></th>
+              <th style="text-align:right;padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500;cursor:pointer;user-select:none" onclick="toggleHrmosSort('agreement36','statutoryHolidayMin')">時間<span id="hrmos-arrow-agreement36-statutoryHolidayMin"></span></th>
+              <th style="text-align:right;padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500;cursor:pointer;user-select:none" onclick="toggleHrmosSort('agreement36','statutoryHolidayDays')">日数<span id="hrmos-arrow-agreement36-statutoryHolidayDays"></span></th>
+              <th style="text-align:right;padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500;cursor:pointer;user-select:none" onclick="toggleHrmosSort('agreement36','specialClauseMonths')">適用回数<span id="hrmos-arrow-agreement36-specialClauseMonths"></span></th>
+              <th style="text-align:right;padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500;cursor:pointer;user-select:none" onclick="toggleHrmosSort('agreement36','specialClauseMin')">該当時間<span id="hrmos-arrow-agreement36-specialClauseMin"></span></th>
             </tr>
           </thead>
           <tbody id="hrmos-36-table-body"></tbody>
         </table>
       </div>
+      <div class="hrmos-card-list" id="hrmos-36-cards"></div>
     </div>
   </div><!-- /page-hrmos -->
 
@@ -4394,29 +4418,41 @@ function renderHrmosDashboard() {
   const monthsInPeriod = [...new Set(hrmosMonthly.map(m => m.month))].sort();
   const monthCount = monthsInPeriod.length || 1;
 
-  // 従業員ごとに期間内の勤怠を集計（月別の36協定内訳も保持してトレンド判定に使う）
+  // 従業員ごとに期間内の勤怠を集計（月別の36協定内訳も保持してトレンド判定・特別条項判定に使う）
   const byUser = {};
   hrmosMonthly.forEach(m => {
-    if (!byUser[m.userId]) byUser[m.userId] = { over36:0, over:0, total:0, actual:0, prescribed:0, months:{} };
+    if (!byUser[m.userId]) byUser[m.userId] = { over36:0, over:0, total:0, actual:0, prescribed:0, statutoryHolidayMin:0, statutoryHolidayDays:0, months:{} };
     const u = byUser[m.userId];
-    u.over36     += m.overWorkMin36;
-    u.over       += m.overWorkMin;
-    u.total      += m.totalWorkingMin;
-    u.actual     += m.actualWorkingMin;
-    u.prescribed += m.prescribedWorkingMin;
+    u.over36              += m.overWorkMin36;
+    u.over                += m.overWorkMin;
+    u.total                += m.totalWorkingMin;
+    u.actual                += m.actualWorkingMin;
+    u.prescribed            += m.prescribedWorkingMin;
+    u.statutoryHolidayMin   += m.statutoryHolidayWorkMin;
+    u.statutoryHolidayDays  += m.statutoryHolidayWorkDays;
     u.months[m.month] = (u.months[m.month]||0) + m.overWorkMin36;
   });
 
   const scaledMonthlyLimit = cfg.hrmosMonthlyLimitMin;
   const scaledYearlyLimit  = Math.round(cfg.hrmosYearlyLimitMin / 12 * monthCount);
+  const SPECIAL_CLAUSE_MAX_MONTHS = 6; // 労基法上、特別条項（月45時間超）は年6回まで
 
   let employees = hrmosEmployees
     .filter(e => !selectedDept || (e.department || '未設定') === selectedDept)
     .map(e => {
-      const agg = byUser[e.id] || { over36:0, over:0, total:0, actual:0, prescribed:0, months:{} };
+      const agg = byUser[e.id] || { over36:0, over:0, total:0, actual:0, prescribed:0, statutoryHolidayMin:0, statutoryHolidayDays:0, months:{} };
       const avg36 = agg.over36 / monthCount;
       const isOver = avg36 >= scaledMonthlyLimit || agg.over36 >= scaledYearlyLimit;
-      return { ...e, over36:agg.over36, over:agg.over, total:agg.total, actual:agg.actual, prescribed:agg.prescribed, avg36, months:agg.months, isOver };
+      // 特別条項: 月45時間（設定値）を超えた月＝適用月として回数・超過時間を集計
+      const overMonths = Object.values(agg.months).filter(v => v > scaledMonthlyLimit);
+      const specialClauseMonths = overMonths.length;
+      const specialClauseMin = overMonths.reduce((s,v) => s + (v - scaledMonthlyLimit), 0);
+      return {
+        ...e, over36:agg.over36, over:agg.over, total:agg.total, actual:agg.actual, prescribed:agg.prescribed,
+        statutoryHolidayMin:agg.statutoryHolidayMin, statutoryHolidayDays:agg.statutoryHolidayDays,
+        specialClauseMonths, specialClauseMin,
+        avg36, months:agg.months, isOver,
+      };
     });
 
   // KPIカード
@@ -4449,29 +4485,64 @@ function renderHrmosDashboard() {
       <td style="padding:6px 8px;text-align:right;font-weight:600">${minToHm(e.over)}</td>
     </tr>`).join('') || '<tr><td colspan="6" style="padding:12px;color:var(--text-muted)">データがありません</td></tr>';
 
+  renderHrmosCards('hrmos-work-cards', employeesWork, [
+    { label:'所定時間', value: e=>minToHm(e.prescribed) },
+    { label:'総労働時間', value: e=>minToHm(e.total) },
+    { label:'実働時間', value: e=>minToHm(e.actual) },
+    { label:'残業時間', value: e=>minToHm(e.over) },
+  ]);
+
   // 36協定テーブル
-  const agreement36FieldGetters = { name: e=>e.name||'', over36: e=>e.over36, avg36: e=>e.avg36 };
+  const agreement36FieldGetters = {
+    name: e=>e.name||'', over36: e=>e.over36, avg36: e=>e.avg36,
+    statutoryHolidayMin: e=>e.statutoryHolidayMin, statutoryHolidayDays: e=>e.statutoryHolidayDays,
+    specialClauseMonths: e=>e.specialClauseMonths, specialClauseMin: e=>e.specialClauseMin,
+  };
   const agreement36State = hrmosSortState.agreement36;
   const employees36 = [...employees].sort((a,b) => {
     const [va, vb] = [agreement36FieldGetters[agreement36State.field](a), agreement36FieldGetters[agreement36State.field](b)];
     const cmp = (typeof va === 'string') ? va.localeCompare(vb, 'ja') : va - vb;
     return agreement36State.dir === 'desc' ? -cmp : cmp;
   });
-  updateHrmosSortArrows('agreement36', ['name','over36','avg36']);
+  updateHrmosSortArrows('agreement36', ['name','over36','avg36','statutoryHolidayMin','statutoryHolidayDays','specialClauseMonths','specialClauseMin']);
 
   document.getElementById('hrmos-36-table-body').innerHTML = employees36.map(e => `
     <tr style="border-bottom:0.5px solid var(--bg);${e.isOver?'background:#FEF2F2':''}">
       <td style="padding:6px 8px;font-weight:500">${e.name || '(氏名未設定)'}</td>
       <td style="padding:6px 8px;color:var(--text-secondary)">${e.department || '-'}</td>
-      <td style="padding:6px 8px;text-align:right;font-weight:600;color:${e.isOver?'#DC2626':'var(--text-primary)'}">${minToHm(e.over36)}</td>
       <td style="padding:6px 8px;text-align:right">${minToHm(e.avg36)}</td>
-    </tr>`).join('') || '<tr><td colspan="4" style="padding:12px;color:var(--text-muted)">データがありません</td></tr>';
+      <td style="padding:6px 8px;text-align:right;font-weight:600;color:${e.isOver?'#DC2626':'var(--text-primary)'}">${minToHm(e.over36)}</td>
+      <td style="padding:6px 8px;text-align:right">${minToHm(e.statutoryHolidayMin)}</td>
+      <td style="padding:6px 8px;text-align:right">${Math.round(e.statutoryHolidayDays*10)/10}日</td>
+      <td style="padding:6px 8px;text-align:right;color:${e.specialClauseMonths>SPECIAL_CLAUSE_MAX_MONTHS?'#DC2626':'var(--text-primary)'}">${e.specialClauseMonths}回</td>
+      <td style="padding:6px 8px;text-align:right">${minToHm(e.specialClauseMin)}</td>
+    </tr>`).join('') || '<tr><td colspan="8" style="padding:12px;color:var(--text-muted)">データがありません</td></tr>';
 
-  renderHrmosAlerts(employees, monthsInPeriod, scaledMonthlyLimit, scaledYearlyLimit);
+  renderHrmosCards('hrmos-36-cards', employees36, [
+    { label:'月平均（36協定）', value: e=>minToHm(e.avg36) },
+    { label:'期間累計（36協定）', value: e=>minToHm(e.over36), color: e=>e.isOver?'#DC2626':null },
+    { label:'法定休日出勤', value: e=>`${minToHm(e.statutoryHolidayMin)}（${Math.round(e.statutoryHolidayDays*10)/10}日）` },
+    { label:'特別条項', value: e=>`${e.specialClauseMonths}回 / ${minToHm(e.specialClauseMin)}`, color: e=>e.specialClauseMonths>SPECIAL_CLAUSE_MAX_MONTHS?'#DC2626':null },
+  ], e => e.isOver);
+
+  renderHrmosAlerts(employees, monthsInPeriod, scaledMonthlyLimit, scaledYearlyLimit, SPECIAL_CLAUSE_MAX_MONTHS);
+}
+
+// 従業員別の残業データをモバイル用カードとして描画（fieldDefsは表の列に対応）
+function renderHrmosCards(containerId, employees, fieldDefs, isOverFn) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  el.innerHTML = employees.map(e => `
+    <div class="hrmos-emp-card${isOverFn && isOverFn(e) ? ' hrmos-emp-card-over' : ''}">
+      <div class="hrmos-emp-card-title">${e.name || '(氏名未設定)'}<span class="hrmos-emp-card-dept">${e.department || '-'}</span></div>
+      <div class="hrmos-emp-card-grid">
+        ${fieldDefs.map(f => `<div class="hrmos-emp-card-field"><span class="label">${f.label}</span><span class="value" style="${f.color && f.color(e) ? 'color:'+f.color(e) : ''}">${f.value(e)}</span></div>`).join('')}
+      </div>
+    </div>`).join('') || '<div style="padding:12px;color:var(--text-muted);font-size:12px">データがありません</div>';
 }
 
 // ルールベースの残業アラート（外部AIは使わず、しきい値・前月比から自動生成）
-function renderHrmosAlerts(employees, monthsInPeriod, monthlyLimit, yearlyLimit) {
+function renderHrmosAlerts(employees, monthsInPeriod, monthlyLimit, yearlyLimit, specialClauseMaxMonths) {
   const alerts = [];
 
   employees.forEach(e => {
@@ -4479,6 +4550,10 @@ function renderHrmosAlerts(employees, monthsInPeriod, monthlyLimit, yearlyLimit)
       alerts.push({ severity: e.over36 - yearlyLimit + 100000, text: `「${e.name}」の期間累計残業（36協定分）が ${minToHm(e.over36)} で、期間按分の上限 ${minToHm(yearlyLimit)} を超過しています。` });
     } else if (monthlyLimit>0 && e.avg36 >= monthlyLimit) {
       alerts.push({ severity: e.avg36 - monthlyLimit, text: `「${e.name}」の月平均残業（36協定分）が ${minToHm(e.avg36)} で、月間上限 ${minToHm(monthlyLimit)} を超えています。` });
+    }
+
+    if (specialClauseMaxMonths>0 && e.specialClauseMonths > specialClauseMaxMonths) {
+      alerts.push({ severity: (e.specialClauseMonths - specialClauseMaxMonths) * 10000, text: `「${e.name}」の特別条項適用が期間内で ${e.specialClauseMonths}回 に達し、年間上限の${specialClauseMaxMonths}回を超えています。` });
     }
 
     if (monthsInPeriod.length >= 2) {

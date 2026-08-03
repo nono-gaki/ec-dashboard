@@ -119,6 +119,7 @@ exports.handler = async (event) => {
           inPrescribedWorkingMin: hmToMinutes(r.hours_in_prescribed_working_hours),
           legalHolidayOvertimeMin: hmToMinutes(r.excess_of_statutory_working_hours_in_holidays),
           statutoryHolidayWorkMin: hmToMinutes(r.working_hours_in_statutory_holidays),
+          statutoryHolidayWorkDays: parseFloat(r.working_days_in_statutory_holidays) || 0,
           lateNightOvertimeMin: hmToMinutes(r.late_night_overtime_working_hours),
         }));
       })
