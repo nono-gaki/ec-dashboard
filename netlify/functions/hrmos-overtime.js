@@ -86,13 +86,16 @@ exports.handler = async (event) => {
     const token = await getToken(companyUrl, secretKey);
     const base = hrmosBase(companyUrl);
 
-    const [users, departments] = await Promise.all([
+    const [users, departments, employments] = await Promise.all([
       fetchAllPages(`${base}/users`, token),
       fetchAllPages(`${base}/departments`, token),
+      fetchAllPages(`${base}/employments`, token),
     ]);
 
     const deptMap = {};
     departments.forEach((d) => { deptMap[d.id] = d.name; });
+    const employmentMap = {};
+    employments.forEach((emp) => { employmentMap[emp.id] = emp.name; });
 
     const employees = users
       .filter((u) => !u.end_date) // 退職者（退社日が設定されている社員）は除外
@@ -102,6 +105,8 @@ exports.handler = async (event) => {
         name: `${u.last_name || ''}${u.first_name || ''}`.trim(),
         departmentId: u.department_id,
         department: deptMap[u.department_id] || '',
+        employmentId: u.employment_id,
+        employment: employmentMap[u.employment_id] || '',
         agreement36Id: u.agreement36_id,
       }));
 

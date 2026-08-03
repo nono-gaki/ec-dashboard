@@ -445,6 +445,7 @@ body { font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans','Yu Gothic UI',sa
     <div class="config-grid">
       <div class="config-item"><label>月間残業上限（36協定・時:分）</label><input type="text" id="cfg-hrmos-monthly-limit" placeholder="45:00"></div>
       <div class="config-item"><label>年間残業上限（36協定・時:分）</label><input type="text" id="cfg-hrmos-yearly-limit" placeholder="360:00"></div>
+      <div class="config-item"><label>非表示にする雇用形態（カンマ区切り）</label><input type="text" id="cfg-hrmos-exclude-employments" placeholder="取締役"></div>
     </div>
     <div style="font-size:11px;color:var(--text-muted);margin-top:6px">※HRMOSのAPIキーはここではなく、Netlifyの環境変数（HRMOS_SECRET_KEY / HRMOS_COMPANY_URL）で管理しています。</div>
 
@@ -1604,6 +1605,7 @@ body { font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans','Yu Gothic UI',sa
 
     <div class="table-card">
       <div class="chart-title">📋 36協定 残業時間</div>
+      <div style="font-size:11px;color:var(--text-muted);margin-top:-6px">※「特別条項」は期間フィルタに関わらず、常に今年度（<span id="hrmos-fy-range-label"></span>）の実績で算出しています</div>
       <div class="hrmos-table-wrap" style="overflow-x:auto;margin-top:10px">
         <table style="width:100%;border-collapse:collapse;font-size:12px" id="hrmos-36-table">
           <thead>
@@ -1661,6 +1663,7 @@ const DEFAULT_CONFIG = {
   galileiAnnualProfitTarget: 46970000,
   hrmosMonthlyLimitMin: 45 * 60,
   hrmosYearlyLimitMin: 360 * 60,
+  hrmosExcludeEmployments: '取締役',
 };
 
 let allSales = [];
@@ -1695,6 +1698,7 @@ function saveConfig() {
     galileiAnnualProfitTarget: Number(document.getElementById('cfg-galilei-annual-profit').value) || DEFAULT_CONFIG.galileiAnnualProfitTarget,
     hrmosMonthlyLimitMin: hmToMin(document.getElementById('cfg-hrmos-monthly-limit').value) || DEFAULT_CONFIG.hrmosMonthlyLimitMin,
     hrmosYearlyLimitMin: hmToMin(document.getElementById('cfg-hrmos-yearly-limit').value) || DEFAULT_CONFIG.hrmosYearlyLimitMin,
+    hrmosExcludeEmployments: document.getElementById('cfg-hrmos-exclude-employments').value,
   };
   localStorage.setItem('kpi_config', JSON.stringify(cfg));
   toggleConfig();
@@ -1730,6 +1734,7 @@ function toggleConfig() {
     document.getElementById('cfg-galilei-annual-profit').value = cfg.galileiAnnualProfitTarget;
     document.getElementById('cfg-hrmos-monthly-limit').value = minToHm(cfg.hrmosMonthlyLimitMin);
     document.getElementById('cfg-hrmos-yearly-limit').value = minToHm(cfg.hrmosYearlyLimitMin);
+    document.getElementById('cfg-hrmos-exclude-employments').value = cfg.hrmosExcludeEmployments != null ? cfg.hrmosExcludeEmployments : DEFAULT_CONFIG.hrmosExcludeEmployments;
   }
 }
 
@@ -2575,6 +2580,9 @@ function switchTab(key, el) {
   }
   if (key === 'hrmos' && !hrmosLoaded) {
     setHrmosPreset('this_month', document.querySelector('#page-hrmos .preset-btn[onclick*="this_month"]'), true);
+  }
+  if (key === 'hrmos' && !hrmosFyLoaded) {
+    loadHrmosFyData();
   }
 }
 
@@ -4335,6 +4343,11 @@ let hrmosEmployees = [];
 let hrmosMonthly = [];
 let hrmosFilterFrom = '';
 let hrmosFilterTo = '';
+// 特別条項（月45時間超えの適用回数）は、画面の期間フィルタに関係なく
+// 実際の36協定年度（10月始まり）で数えないとHRMOS本体の回数と一致しないため、
+// 表示用フィルタとは独立して常に「今年度（10月〜現在）」のデータを別途保持する
+let hrmosFyMonthly = [];
+let hrmosFyLoaded = false;
 let hrmosSortState = {
   work: { field: 'total', dir: 'desc' },
   agreement36: { field: 'over36', dir: 'desc' },
@@ -4402,8 +4415,37 @@ async function loadHrmosData(from, to) {
   }
 }
 
+// 現在の36協定年度（10月始まり）のfrom/toを返す
+function currentHrmosFyRange() {
+  const now = new Date();
+  const y = now.getFullYear(), m = now.getMonth();
+  const fy = m >= 9 ? y : y - 1;
+  return { from: fy + '-10', to: ym(now) };
+}
+
+// 特別条項の適用回数はフィルタ期間と無関係に、常に実際の36協定年度で算出する
+async function loadHrmosFyData() {
+  const { from, to } = currentHrmosFyRange();
+  try {
+    const res = await fetch(`/.netlify/functions/hrmos-overtime?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`);
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) return;
+    hrmosFyMonthly = data.monthly || [];
+    hrmosFyLoaded = true;
+    if (hrmosLoaded) renderHrmosDashboard();
+  } catch (e) {
+    // 特別条項は参考値のため、取得に失敗してもメイン表示は継続する
+  }
+}
+
 function renderHrmosDashboard() {
   const cfg = getConfig();
+
+  const fyRangeLabelEl = document.getElementById('hrmos-fy-range-label');
+  if (fyRangeLabelEl) {
+    const fyRange = currentHrmosFyRange();
+    fyRangeLabelEl.textContent = `${fyRange.from} 〜 ${fyRange.to}`;
+  }
 
   // 部門フィルタのプルダウンを更新（選択中の値は維持）
   const deptFilterEl = document.getElementById('hrmos-dept-filter');
@@ -4437,16 +4479,28 @@ function renderHrmosDashboard() {
   const scaledYearlyLimit  = Math.round(cfg.hrmosYearlyLimitMin / 12 * monthCount);
   const SPECIAL_CLAUSE_MAX_MONTHS = 6; // 労基法上、特別条項（月45時間超）は年6回まで
 
+  // 特別条項の適用回数は、表示フィルタとは独立して常に「今年度（10月〜現在）」で算出する
+  const fyByUserMonths = {};
+  hrmosFyMonthly.forEach(m => {
+    if (!fyByUserMonths[m.userId]) fyByUserMonths[m.userId] = {};
+    fyByUserMonths[m.userId][m.month] = (fyByUserMonths[m.userId][m.month]||0) + m.overWorkMin36;
+  });
+
+  const excludeEmployments = (cfg.hrmosExcludeEmployments || '')
+    .split(',').map(s => s.trim()).filter(Boolean);
+
   let employees = hrmosEmployees
     .filter(e => !selectedDept || (e.department || '未設定') === selectedDept)
+    .filter(e => !excludeEmployments.some(x => (e.employment||'').includes(x)))
     .map(e => {
       const agg = byUser[e.id] || { over36:0, over:0, total:0, actual:0, prescribed:0, statutoryHolidayMin:0, statutoryHolidayDays:0, months:{} };
       const avg36 = agg.over36 / monthCount;
       const isOver = avg36 >= scaledMonthlyLimit || agg.over36 >= scaledYearlyLimit;
-      // 特別条項: 月45時間（設定値）を超えた月＝適用月として回数・超過時間を集計
-      const overMonths = Object.values(agg.months).filter(v => v > scaledMonthlyLimit);
-      const specialClauseMonths = overMonths.length;
-      const specialClauseMin = overMonths.reduce((s,v) => s + (v - scaledMonthlyLimit), 0);
+      // 特別条項: 今年度（10月〜現在）で月45時間（設定値）を超えた月＝適用月として回数・超過時間を集計
+      const fyMonths = fyByUserMonths[e.id] || {};
+      const overFyMonths = Object.values(fyMonths).filter(v => v > scaledMonthlyLimit);
+      const specialClauseMonths = overFyMonths.length;
+      const specialClauseMin = overFyMonths.reduce((s,v) => s + (v - scaledMonthlyLimit), 0);
       return {
         ...e, over36:agg.over36, over:agg.over, total:agg.total, actual:agg.actual, prescribed:agg.prescribed,
         statutoryHolidayMin:agg.statutoryHolidayMin, statutoryHolidayDays:agg.statutoryHolidayDays,
@@ -4585,6 +4639,7 @@ function refreshAllData() {
   const tasks = [loadData(), loadStockData(), loadPurchaseData(), loadSalesData(), loadConstructionData(), loadGalileiData()];
   if (galileiLastFyLoaded) tasks.push(loadGalileiData(true));
   if (hrmosLoaded && hrmosFilterFrom && hrmosFilterTo) tasks.push(loadHrmosData(hrmosFilterFrom, hrmosFilterTo));
+  if (hrmosFyLoaded) tasks.push(loadHrmosFyData());
   return Promise.all(tasks).then(() => {
     if (budgetFilterFrom || budgetFilterTo) {
       renderBudgetDashboard();
