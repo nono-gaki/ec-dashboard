@@ -1584,13 +1584,7 @@ body { font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans','Yu Gothic UI',sa
       <div class="chart-title">📊 残業サマリー</div>
       <div style="overflow-x:auto;margin-top:10px">
         <table class="tbl-fit-mobile" style="width:100%;border-collapse:collapse;font-size:14px;table-layout:fixed" id="hrmos-summary-table">
-          <thead>
-            <tr style="border-bottom:1px solid var(--border)">
-              <th style="width:40%;text-align:left;padding:10px 6px;font-size:12px;color:var(--text-muted);font-weight:500;cursor:pointer;user-select:none" onclick="toggleHrmosSort('summary','name')">氏名<span id="hrmos-arrow-summary-name"></span></th>
-              <th style="width:30%;text-align:right;padding:10px 6px;font-size:12px;color:var(--text-muted);font-weight:500;cursor:pointer;user-select:none" onclick="toggleHrmosSort('summary','avgPerMonth')">月平均<span id="hrmos-arrow-summary-avgPerMonth"></span></th>
-              <th style="width:30%;text-align:right;padding:10px 6px;font-size:12px;color:var(--text-muted);font-weight:500;cursor:pointer;user-select:none" onclick="toggleHrmosSort('summary','over')">期間累計<span id="hrmos-arrow-summary-over"></span></th>
-            </tr>
-          </thead>
+          <thead id="hrmos-summary-thead"></thead>
           <tbody id="hrmos-summary-table-body"></tbody>
         </table>
       </div>
@@ -4485,21 +4479,32 @@ function renderHrmosDashboard() {
     kpiCard('36協定超過人数', over36Count+'人', 0, '全'+totalEmployees+'人中', false, true);
 
   // 残業サマリーテーブル（月平均・期間累計のみのシンプルな表。スマホでも横スクロールなしで収まる列数）
+  // 単月表示のときは月平均＝期間累計と同じ値になるため、月平均列は出さない
+  const summaryShowAvg = monthCount > 1;
   const summaryFieldGetters = { name: e=>e.name||'', avgPerMonth: e=>e.avgPerMonth, over: e=>e.over };
   const summaryState = hrmosSortState.summary;
+  // 単月表示で月平均列が非表示の間は、内部的なソートキーが avgPerMonth でも見た目上は期間累計（＝同値）で並んでいるとみなす
+  const summaryArrowField = (!summaryShowAvg && summaryState.field === 'avgPerMonth') ? 'over' : summaryState.field;
   const employeesSummary = [...employees].sort((a,b) => {
     const [va, vb] = [summaryFieldGetters[summaryState.field](a), summaryFieldGetters[summaryState.field](b)];
     const cmp = (typeof va === 'string') ? va.localeCompare(vb, 'ja') : va - vb;
     return summaryState.dir === 'desc' ? -cmp : cmp;
   });
-  updateHrmosSortArrows('summary', ['name','avgPerMonth','over']);
+
+  const summaryArrow = (key) => summaryArrowField === key ? (summaryState.dir === 'desc' ? ' ▼' : ' ▲') : '';
+  document.getElementById('hrmos-summary-thead').innerHTML = `
+    <tr style="border-bottom:1px solid var(--border)">
+      <th style="width:${summaryShowAvg?40:60}%;text-align:left;padding:10px 6px;font-size:12px;color:var(--text-muted);font-weight:500;cursor:pointer;user-select:none" onclick="toggleHrmosSort('summary','name')">氏名${summaryArrow('name')}</th>
+      ${summaryShowAvg ? `<th style="width:30%;text-align:right;padding:10px 6px;font-size:12px;color:var(--text-muted);font-weight:500;cursor:pointer;user-select:none" onclick="toggleHrmosSort('summary','avgPerMonth')">月平均${summaryArrow('avgPerMonth')}</th>` : ''}
+      <th style="width:${summaryShowAvg?30:40}%;text-align:right;padding:10px 6px;font-size:12px;color:var(--text-muted);font-weight:500;cursor:pointer;user-select:none" onclick="toggleHrmosSort('summary','over')">${summaryShowAvg?'期間累計':'残業時間'}${summaryArrow('over')}</th>
+    </tr>`;
 
   document.getElementById('hrmos-summary-table-body').innerHTML = employeesSummary.map(e => `
     <tr style="border-bottom:0.5px solid var(--bg);${e.level==='danger'?'background:#FEF2F2':''}">
       <td style="padding:10px 6px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${e.name || '(氏名未設定)'}</td>
-      <td style="padding:10px 6px;text-align:right;font-weight:600;font-size:16px;color:${HRMOS_LEVEL_COLOR[e.level]||'var(--text-primary)'}">${minToHm(e.avgPerMonth)}</td>
-      <td style="padding:10px 6px;text-align:right;color:var(--text-secondary)">${minToHm(e.over)}</td>
-    </tr>`).join('') || '<tr><td colspan="3" style="padding:12px;color:var(--text-muted)">データがありません</td></tr>';
+      ${summaryShowAvg ? `<td style="padding:10px 6px;text-align:right;font-weight:600;font-size:16px;color:${HRMOS_LEVEL_COLOR[e.level]||'var(--text-primary)'}">${minToHm(e.avgPerMonth)}</td>` : ''}
+      <td style="padding:10px 6px;text-align:right;${summaryShowAvg?'color:var(--text-secondary)':'font-weight:600;font-size:16px;color:'+(HRMOS_LEVEL_COLOR[e.level]||'var(--text-primary)')}">${minToHm(e.over)}</td>
+    </tr>`).join('') || `<tr><td colspan="${summaryShowAvg?3:2}" style="padding:12px;color:var(--text-muted)">データがありません</td></tr>`;
 
   // 残業一覧テーブル
   const workFieldGetters = {
