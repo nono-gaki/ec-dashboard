@@ -235,6 +235,8 @@ body { font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans','Yu Gothic UI',sa
   .tab { padding:10px 14px; font-size:12px; flex-shrink:0; }
   .sub-tabs { padding:0 8px; overflow-x:auto; -webkit-overflow-scrolling:touch; white-space:nowrap; }
   .subtab { padding:8px 12px; }
+  /* 残業サマリーは3列のみで余裕があるため、.tbl-fit-mobileの縮小フォントを上書きして大きく見せる */
+  #hrmos-summary-table th, #hrmos-summary-table td { font-size:13px !important; padding:10px 6px !important; }
 
   /* MAIN: パディング縮小 */
   .main { padding:10px 10px; max-width:100%; }
@@ -1581,12 +1583,12 @@ body { font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans','Yu Gothic UI',sa
     <div class="table-card" style="margin-bottom:16px">
       <div class="chart-title">📊 残業サマリー</div>
       <div style="overflow-x:auto;margin-top:10px">
-        <table class="tbl-fit-mobile" style="width:100%;border-collapse:collapse;font-size:12px;table-layout:fixed" id="hrmos-summary-table">
+        <table class="tbl-fit-mobile" style="width:100%;border-collapse:collapse;font-size:14px;table-layout:fixed" id="hrmos-summary-table">
           <thead>
             <tr style="border-bottom:1px solid var(--border)">
-              <th style="width:40%;text-align:left;padding:6px 4px;font-size:11px;color:var(--text-muted);font-weight:500;cursor:pointer;user-select:none" onclick="toggleHrmosSort('summary','name')">氏名<span id="hrmos-arrow-summary-name"></span></th>
-              <th style="width:30%;text-align:right;padding:6px 4px;font-size:11px;color:var(--text-muted);font-weight:500;cursor:pointer;user-select:none" onclick="toggleHrmosSort('summary','avgPerMonth')">月平均<span id="hrmos-arrow-summary-avgPerMonth"></span></th>
-              <th style="width:30%;text-align:right;padding:6px 4px;font-size:11px;color:var(--text-muted);font-weight:500;cursor:pointer;user-select:none" onclick="toggleHrmosSort('summary','over')">期間累計<span id="hrmos-arrow-summary-over"></span></th>
+              <th style="width:40%;text-align:left;padding:10px 6px;font-size:12px;color:var(--text-muted);font-weight:500;cursor:pointer;user-select:none" onclick="toggleHrmosSort('summary','name')">氏名<span id="hrmos-arrow-summary-name"></span></th>
+              <th style="width:30%;text-align:right;padding:10px 6px;font-size:12px;color:var(--text-muted);font-weight:500;cursor:pointer;user-select:none" onclick="toggleHrmosSort('summary','avgPerMonth')">月平均<span id="hrmos-arrow-summary-avgPerMonth"></span></th>
+              <th style="width:30%;text-align:right;padding:10px 6px;font-size:12px;color:var(--text-muted);font-weight:500;cursor:pointer;user-select:none" onclick="toggleHrmosSort('summary','over')">期間累計<span id="hrmos-arrow-summary-over"></span></th>
             </tr>
           </thead>
           <tbody id="hrmos-summary-table-body"></tbody>
@@ -4494,9 +4496,9 @@ function renderHrmosDashboard() {
 
   document.getElementById('hrmos-summary-table-body').innerHTML = employeesSummary.map(e => `
     <tr style="border-bottom:0.5px solid var(--bg);${e.level==='danger'?'background:#FEF2F2':''}">
-      <td style="padding:6px 4px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${e.name || '(氏名未設定)'}</td>
-      <td style="padding:6px 4px;text-align:right;font-weight:600;color:${HRMOS_LEVEL_COLOR[e.level]||'var(--text-primary)'}">${minToHm(e.avgPerMonth)}</td>
-      <td style="padding:6px 4px;text-align:right;color:var(--text-secondary)">${minToHm(e.over)}</td>
+      <td style="padding:10px 6px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${e.name || '(氏名未設定)'}</td>
+      <td style="padding:10px 6px;text-align:right;font-weight:600;font-size:16px;color:${HRMOS_LEVEL_COLOR[e.level]||'var(--text-primary)'}">${minToHm(e.avgPerMonth)}</td>
+      <td style="padding:10px 6px;text-align:right;color:var(--text-secondary)">${minToHm(e.over)}</td>
     </tr>`).join('') || '<tr><td colspan="3" style="padding:12px;color:var(--text-muted)">データがありません</td></tr>';
 
   // 残業一覧テーブル
