@@ -443,10 +443,11 @@ body { font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans','Yu Gothic UI',sa
 
     <div style="font-size:12px;font-weight:600;color:var(--blue);margin:16px 0 4px;border-top:1px solid var(--border);padding-top:12px">勤怠 設定（HRMOS連携）</div>
     <div class="config-grid">
-      <div class="config-item"><label>残業時間 警告ライン（時:分）</label><input type="text" id="cfg-hrmos-monthly-limit" placeholder="30:00"></div>
+      <div class="config-item"><label>早期注意ライン（時:分・月換算）</label><input type="text" id="cfg-hrmos-monthly-limit" placeholder="30:00"></div>
       <div class="config-item"><label>非表示にする氏名・雇用形態（カンマ区切り）</label><input type="text" id="cfg-hrmos-exclude-employments" placeholder="取締役,野々垣,渡辺"></div>
     </div>
-    <div style="font-size:11px;color:var(--text-muted);margin-top:6px">※HRMOSのAPIキーはここではなく、Netlifyの環境変数（HRMOS_SECRET_KEY / HRMOS_COMPANY_URL）で管理しています。</div>
+    <div style="font-size:11px;color:var(--text-muted);margin-top:6px">※上記は早期注意ラインのみの設定です。36協定の原則上限（月45時間換算）と過労死ライン（単月100時間 / 2〜6ヶ月平均80時間）は労基法の基準として自動判定されます。</div>
+    <div style="font-size:11px;color:var(--text-muted);margin-top:2px">※HRMOSのAPIキーはここではなく、Netlifyの環境変数（HRMOS_SECRET_KEY / HRMOS_COMPANY_URL）で管理しています。</div>
 
     <button class="config-save" onclick="saveConfig()" style="margin-top:16px">保存して再読み込み</button>
   </div>
@@ -4378,6 +4379,29 @@ async function loadHrmosData(from, to) {
   }
 }
 
+// 労基法上の固定ライン（会社設定に関わらず一律）
+const HRMOS_LEGAL_MONTHLY_LIMIT = 45 * 60;   // 36協定の原則上限（月45時間）
+const HRMOS_KAROSHI_SINGLE_MONTH = 100 * 60; // 過労死ライン（単月100時間）
+const HRMOS_KAROSHI_AVG_WINDOW = 80 * 60;    // 過労死ライン（2〜6ヶ月平均80時間）
+
+// 従業員の残業レベルを判定（danger: 過労死ライン相当 / warn: 36協定原則超過 / caution: 早期注意ライン超過 / normal）
+function hrmosOvertimeLevel(monthsObj, sortedMonthKeys, periodOverMin, monthCount, cautionLimit) {
+  const anyMonthOver100 = sortedMonthKeys.some(mk => (monthsObj[mk]||0) >= HRMOS_KAROSHI_SINGLE_MONTH);
+  let avgOver80 = false;
+  for (let w = 2; w <= 6 && !avgOver80; w++) {
+    for (let i = 0; i + w <= sortedMonthKeys.length; i++) {
+      const sum = sortedMonthKeys.slice(i, i+w).reduce((s,mk) => s + (monthsObj[mk]||0), 0);
+      if (sum / w >= HRMOS_KAROSHI_AVG_WINDOW) { avgOver80 = true; break; }
+    }
+  }
+  if (anyMonthOver100 || avgOver80) return 'danger';
+  if (periodOverMin >= HRMOS_LEGAL_MONTHLY_LIMIT * monthCount) return 'warn';
+  if (periodOverMin >= cautionLimit * monthCount) return 'caution';
+  return 'normal';
+}
+
+const HRMOS_LEVEL_COLOR = { danger:'#DC2626', warn:'#EA580C', caution:'#D97706', normal:null };
+
 function renderHrmosDashboard() {
   const cfg = getConfig();
 
@@ -4417,26 +4441,27 @@ function renderHrmosDashboard() {
     u.months[m.month] = (u.months[m.month]||0) + m.overWorkMin;
   });
 
-  // 警告ラインは「月30時間」が基準のため、選択期間の月数分だけ按分する
-  const warnLimit = cfg.hrmosMonthlyLimitMin * monthCount;
+  // 早期注意ラインは「月30時間」が基準のため、選択期間の月数分だけ按分する
+  const cautionLimit = cfg.hrmosMonthlyLimitMin;
+  const warnLimit = cautionLimit * monthCount;
 
   let employees = visibleEmployees
     .filter(e => !selectedDept || (e.department || '未設定') === selectedDept)
     .map(e => {
       const agg = byUser[e.id] || { over:0, total:0, actual:0, prescribed:0, inPrescribed:0, legalHolidayOvertime:0, statutoryHoliday:0, lateNight:0, months:{} };
-      const isOver = agg.over >= warnLimit;
-      return { ...e, ...agg, isOver };
+      const level = hrmosOvertimeLevel(agg.months, monthsInPeriod, agg.over, monthCount, cautionLimit);
+      return { ...e, ...agg, level, isOver: level !== 'normal' };
     });
 
   // KPIカード
   const totalEmployees = employees.length;
   const avgOver = totalEmployees>0 ? employees.reduce((a,e)=>a+e.over,0)/totalEmployees : 0;
-  const overCount = employees.filter(e => e.isOver).length;
+  const dangerCount = employees.filter(e => e.level === 'danger').length;
 
   document.getElementById('hrmos-kpi-row').innerHTML =
     kpiCard('対象人数', totalEmployees+'人', 0, '', false, true) +
-    kpiCard('平均残業時間', minToHm(avgOver), 0, '警告ライン: '+minToHm(warnLimit), false, true) +
-    kpiCard('警告ライン超過人数', overCount+'人', 0, '全'+totalEmployees+'人中', false, true);
+    kpiCard('平均残業時間', minToHm(avgOver), 0, '注意ライン: '+minToHm(warnLimit), false, true) +
+    kpiCard('危険レベル人数（過労死ライン）', dangerCount+'人', 0, '全'+totalEmployees+'人中', false, true);
 
   // 残業一覧テーブル
   const workFieldGetters = {
@@ -4453,7 +4478,7 @@ function renderHrmosDashboard() {
   updateHrmosSortArrows('work', ['name','prescribed','inPrescribed','legalHolidayOvertime','statutoryHoliday','lateNight','total','actual','over']);
 
   document.getElementById('hrmos-work-table-body').innerHTML = employeesWork.map(e => `
-    <tr style="border-bottom:0.5px solid var(--bg)">
+    <tr style="border-bottom:0.5px solid var(--bg);${e.level==='danger'?'background:#FEF2F2':''}">
       <td style="padding:6px 8px;font-weight:500">${e.name || '(氏名未設定)'}</td>
       <td style="padding:6px 8px;color:var(--text-secondary)">${e.department || '-'}</td>
       <td style="padding:6px 8px;text-align:right;color:var(--text-muted)">${minToHm(e.prescribed)}</td>
@@ -4463,7 +4488,7 @@ function renderHrmosDashboard() {
       <td style="padding:6px 8px;text-align:right">${minToHm(e.lateNight)}</td>
       <td style="padding:6px 8px;text-align:right">${minToHm(e.total)}</td>
       <td style="padding:6px 8px;text-align:right">${minToHm(e.actual)}</td>
-      <td style="padding:6px 8px;text-align:right;font-weight:600;color:${e.isOver?'#DC2626':'var(--text-primary)'}">${minToHm(e.over)}</td>
+      <td style="padding:6px 8px;text-align:right;font-weight:600;color:${HRMOS_LEVEL_COLOR[e.level]||'var(--text-primary)'}">${minToHm(e.over)}</td>
     </tr>`).join('') || '<tr><td colspan="10" style="padding:12px;color:var(--text-muted)">データがありません</td></tr>';
 
   renderHrmosCards('hrmos-work-cards', employeesWork, [
@@ -4474,18 +4499,18 @@ function renderHrmosDashboard() {
     { label:'深夜労働時間', value: e=>minToHm(e.lateNight) },
     { label:'総労働時間', value: e=>minToHm(e.total) },
     { label:'実働時間', value: e=>minToHm(e.actual) },
-    { label:'残業時間', value: e=>minToHm(e.over), color: e=>e.isOver?'#DC2626':null },
+    { label:'残業時間', value: e=>minToHm(e.over), color: e=>HRMOS_LEVEL_COLOR[e.level] },
   ]);
 
-  renderHrmosAlerts(employees, monthsInPeriod, warnLimit);
+  renderHrmosAlerts(employees, monthsInPeriod, cautionLimit);
 }
 
 // 従業員別の残業データをモバイル用カードとして描画（fieldDefsは表の列に対応）
-function renderHrmosCards(containerId, employees, fieldDefs, isOverFn) {
+function renderHrmosCards(containerId, employees, fieldDefs) {
   const el = document.getElementById(containerId);
   if (!el) return;
   el.innerHTML = employees.map(e => `
-    <div class="hrmos-emp-card${isOverFn && isOverFn(e) ? ' hrmos-emp-card-over' : ''}">
+    <div class="hrmos-emp-card${e.level==='danger' ? ' hrmos-emp-card-over' : ''}">
       <div class="hrmos-emp-card-title">${e.name || '(氏名未設定)'}<span class="hrmos-emp-card-dept">${e.department || '-'}</span></div>
       <div class="hrmos-emp-card-grid">
         ${fieldDefs.map(f => `<div class="hrmos-emp-card-field"><span class="label">${f.label}</span><span class="value" style="${f.color && f.color(e) ? 'color:'+f.color(e) : ''}">${f.value(e)}</span></div>`).join('')}
@@ -4494,21 +4519,47 @@ function renderHrmosCards(containerId, employees, fieldDefs, isOverFn) {
 }
 
 // ルールベースの残業アラート（外部AIは使わず、しきい値・前月比から自動生成）
-function renderHrmosAlerts(employees, monthsInPeriod, warnLimit) {
+// severityは danger > warn > caution > 前月急増 の順で並ぶよう帯を分けて計算する
+function renderHrmosAlerts(employees, monthsInPeriod, cautionLimit) {
   const alerts = [];
+  const sortedMonths = monthsInPeriod;
 
   employees.forEach(e => {
-    if (warnLimit>0 && e.over >= warnLimit) {
-      alerts.push({ severity: e.over - warnLimit, text: `「${e.name}」の残業時間が ${minToHm(e.over)} で、警告ライン ${minToHm(warnLimit)} を超えています。` });
+    const anyMonthOver100 = sortedMonths.some(mk => (e.months[mk]||0) >= HRMOS_KAROSHI_SINGLE_MONTH);
+    if (anyMonthOver100) {
+      const worstMonth = [...sortedMonths].sort((a,b)=>(e.months[b]||0)-(e.months[a]||0))[0];
+      alerts.push({ severity: 3000000 + (e.months[worstMonth]||0), text: `⚠「${e.name}」の残業時間が単月100時間を超えました（${worstMonth}: ${minToHm(e.months[worstMonth]||0)}）。過労死ラインに該当するため最優先で確認してください。` });
+    } else {
+      for (let w = 2; w <= 6; w++) {
+        let found = false;
+        for (let i = 0; i + w <= sortedMonths.length; i++) {
+          const windowKeys = sortedMonths.slice(i, i+w);
+          const sum = windowKeys.reduce((s,mk) => s + (e.months[mk]||0), 0);
+          const avg = sum / w;
+          if (avg >= HRMOS_KAROSHI_AVG_WINDOW) {
+            alerts.push({ severity: 2500000 + avg, text: `⚠「${e.name}」の直近${w}ヶ月平均残業が ${minToHm(avg)} で、過労死ラインの月平均80時間を超えています（${windowKeys[0]}〜${windowKeys[windowKeys.length-1]}）。` });
+            found = true;
+            break;
+          }
+        }
+        if (found) break;
+      }
     }
 
-    if (monthsInPeriod.length >= 2) {
-      const last = monthsInPeriod[monthsInPeriod.length-1];
-      const prev = monthsInPeriod[monthsInPeriod.length-2];
+    const monthCount = sortedMonths.length || 1;
+    if (e.over >= HRMOS_LEGAL_MONTHLY_LIMIT * monthCount) {
+      alerts.push({ severity: 1500000 + e.over, text: `「${e.name}」の残業時間が ${minToHm(e.over)} で、36協定の原則上限（月45時間換算 ${minToHm(HRMOS_LEGAL_MONTHLY_LIMIT * monthCount)}）を超えています。` });
+    } else if (cautionLimit>0 && e.over >= cautionLimit * monthCount) {
+      alerts.push({ severity: e.over, text: `「${e.name}」の残業時間が ${minToHm(e.over)} で、注意ライン ${minToHm(cautionLimit * monthCount)} を超えています。` });
+    }
+
+    if (sortedMonths.length >= 2) {
+      const last = sortedMonths[sortedMonths.length-1];
+      const prev = sortedMonths[sortedMonths.length-2];
       const lastVal = e.months[last] || 0;
       const prevVal = e.months[prev] || 0;
       if (prevVal > 0 && (lastVal - prevVal) / prevVal >= 0.5 && lastVal - prevVal >= 300) {
-        alerts.push({ severity: lastVal - prevVal, text: `「${e.name}」の残業が前月比で急増しています（${minToHm(prevVal)} → ${minToHm(lastVal)}）。業務量を確認してください。` });
+        alerts.push({ severity: 1000000 + (lastVal - prevVal), text: `「${e.name}」の残業が前月比で急増しています（${minToHm(prevVal)} → ${minToHm(lastVal)}）。業務量を確認してください。` });
       }
     }
   });
