@@ -1578,6 +1578,23 @@ body { font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans','Yu Gothic UI',sa
       <div id="hrmos-alerts-body" style="margin-top:6px"></div>
     </div>
 
+    <div class="table-card" style="margin-bottom:16px">
+      <div class="chart-title">📊 残業サマリー</div>
+      <div style="overflow-x:auto;margin-top:10px">
+        <table class="tbl-fit-mobile" style="width:100%;border-collapse:collapse;font-size:12px;table-layout:fixed" id="hrmos-summary-table">
+          <thead>
+            <tr style="border-bottom:1px solid var(--border)">
+              <th style="width:32%;text-align:left;padding:6px 4px;font-size:11px;color:var(--text-muted);font-weight:500;cursor:pointer;user-select:none" onclick="toggleHrmosSort('summary','name')">氏名<span id="hrmos-arrow-summary-name"></span></th>
+              <th style="width:24%;text-align:left;padding:6px 4px;font-size:11px;color:var(--text-muted);font-weight:500">部門</th>
+              <th style="width:22%;text-align:right;padding:6px 4px;font-size:11px;color:var(--text-muted);font-weight:500;cursor:pointer;user-select:none" onclick="toggleHrmosSort('summary','avgPerMonth')">月平均<span id="hrmos-arrow-summary-avgPerMonth"></span></th>
+              <th style="width:22%;text-align:right;padding:6px 4px;font-size:11px;color:var(--text-muted);font-weight:500;cursor:pointer;user-select:none" onclick="toggleHrmosSort('summary','over')">期間累計<span id="hrmos-arrow-summary-over"></span></th>
+            </tr>
+          </thead>
+          <tbody id="hrmos-summary-table-body"></tbody>
+        </table>
+      </div>
+    </div>
+
     <div class="table-card">
       <div class="chart-title" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
         <span>🕐 残業一覧</span>
@@ -4315,6 +4332,7 @@ let hrmosFilterFrom = '';
 let hrmosFilterTo = '';
 let hrmosSortState = {
   work: { field: 'total', dir: 'desc' },
+  summary: { field: 'avgPerMonth', dir: 'desc' },
 };
 
 function toggleHrmosSort(table, field) {
@@ -4450,18 +4468,38 @@ function renderHrmosDashboard() {
     .map(e => {
       const agg = byUser[e.id] || { over:0, total:0, actual:0, prescribed:0, inPrescribed:0, legalHolidayOvertime:0, statutoryHoliday:0, lateNight:0, months:{} };
       const level = hrmosOvertimeLevel(agg.months, monthsInPeriod, agg.over, monthCount, cautionLimit);
-      return { ...e, ...agg, level, isOver: level !== 'normal' };
+      const avgPerMonth = agg.over / monthCount;
+      return { ...e, ...agg, level, isOver: level !== 'normal', avgPerMonth };
     });
 
-  // KPIカード
+  // KPIカード（平均残業時間は「期間累計の平均」ではなく、常に月あたりの平均で出す）
   const totalEmployees = employees.length;
-  const avgOver = totalEmployees>0 ? employees.reduce((a,e)=>a+e.over,0)/totalEmployees : 0;
-  const dangerCount = employees.filter(e => e.level === 'danger').length;
+  const totalOverAllMonths = employees.reduce((a,e)=>a+e.over,0);
+  const avgOverPerMonth = totalEmployees>0 ? totalOverAllMonths / totalEmployees / monthCount : 0;
+  const over36Count = employees.filter(e => e.level === 'warn' || e.level === 'danger').length;
 
   document.getElementById('hrmos-kpi-row').innerHTML =
     kpiCard('対象人数', totalEmployees+'人', 0, '', false, true) +
-    kpiCard('平均残業時間', minToHm(avgOver), 0, '注意ライン: '+minToHm(warnLimit), false, true) +
-    kpiCard('危険レベル人数（過労死ライン）', dangerCount+'人', 0, '全'+totalEmployees+'人中', false, true);
+    kpiCard('月平均残業時間（全員）', minToHm(avgOverPerMonth), 0, '注意ライン: '+minToHm(cautionLimit)+'/月', false, true) +
+    kpiCard('36協定超過人数', over36Count+'人', 0, '全'+totalEmployees+'人中', false, true);
+
+  // 残業サマリーテーブル（月平均・期間累計のみのシンプルな表。スマホでも横スクロールなしで収まる列数）
+  const summaryFieldGetters = { name: e=>e.name||'', avgPerMonth: e=>e.avgPerMonth, over: e=>e.over };
+  const summaryState = hrmosSortState.summary;
+  const employeesSummary = [...employees].sort((a,b) => {
+    const [va, vb] = [summaryFieldGetters[summaryState.field](a), summaryFieldGetters[summaryState.field](b)];
+    const cmp = (typeof va === 'string') ? va.localeCompare(vb, 'ja') : va - vb;
+    return summaryState.dir === 'desc' ? -cmp : cmp;
+  });
+  updateHrmosSortArrows('summary', ['name','avgPerMonth','over']);
+
+  document.getElementById('hrmos-summary-table-body').innerHTML = employeesSummary.map(e => `
+    <tr style="border-bottom:0.5px solid var(--bg);${e.level==='danger'?'background:#FEF2F2':''}">
+      <td style="padding:6px 4px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${e.name || '(氏名未設定)'}</td>
+      <td style="padding:6px 4px;color:var(--text-secondary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${e.department || '-'}</td>
+      <td style="padding:6px 4px;text-align:right;font-weight:600;color:${HRMOS_LEVEL_COLOR[e.level]||'var(--text-primary)'}">${minToHm(e.avgPerMonth)}</td>
+      <td style="padding:6px 4px;text-align:right;color:var(--text-secondary)">${minToHm(e.over)}</td>
+    </tr>`).join('') || '<tr><td colspan="4" style="padding:12px;color:var(--text-muted)">データがありません</td></tr>';
 
   // 残業一覧テーブル
   const workFieldGetters = {
