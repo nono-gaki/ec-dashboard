@@ -4381,10 +4381,17 @@ async function loadHrmosData(from, to) {
 function renderHrmosDashboard() {
   const cfg = getConfig();
 
+  // 非表示にする氏名・雇用形態を先に除外してから、部門フィルタの選択肢を作る
+  // （取締役などを除外リストに入れていても、部門プルダウンにその部門が残ってしまうのを防ぐ）
+  const excludeList = (cfg.hrmosExcludeEmployments || '')
+    .split(',').map(s => s.trim()).filter(Boolean);
+  const visibleEmployees = hrmosEmployees
+    .filter(e => !excludeList.some(x => (e.name||'').includes(x) || (e.employment||'').includes(x)));
+
   // 部門フィルタのプルダウンを更新（選択中の値は維持）
   const deptFilterEl = document.getElementById('hrmos-dept-filter');
   const deptFilterVal = deptFilterEl ? deptFilterEl.value : '';
-  const deptNames = [...new Set(hrmosEmployees.map(e => e.department || '未設定'))].sort((a,b)=>a.localeCompare(b,'ja'));
+  const deptNames = [...new Set(visibleEmployees.map(e => e.department || '未設定'))].sort((a,b)=>a.localeCompare(b,'ja'));
   if (deptFilterEl) {
     deptFilterEl.innerHTML = '<option value="">全部門</option>' + deptNames.map(d => `<option value="${d}">${d}</option>`).join('');
     if (deptNames.includes(deptFilterVal)) deptFilterEl.value = deptFilterVal;
@@ -4392,6 +4399,7 @@ function renderHrmosDashboard() {
   const selectedDept = deptFilterEl ? deptFilterEl.value : '';
 
   const monthsInPeriod = [...new Set(hrmosMonthly.map(m => m.month))].sort();
+  const monthCount = monthsInPeriod.length || 1;
 
   // 従業員ごとに期間内の勤怠を集計（月別の内訳も保持してトレンド判定に使う）
   const byUser = {};
@@ -4409,14 +4417,11 @@ function renderHrmosDashboard() {
     u.months[m.month] = (u.months[m.month]||0) + m.overWorkMin;
   });
 
-  const warnLimit = cfg.hrmosMonthlyLimitMin;
+  // 警告ラインは「月30時間」が基準のため、選択期間の月数分だけ按分する
+  const warnLimit = cfg.hrmosMonthlyLimitMin * monthCount;
 
-  const excludeList = (cfg.hrmosExcludeEmployments || '')
-    .split(',').map(s => s.trim()).filter(Boolean);
-
-  let employees = hrmosEmployees
+  let employees = visibleEmployees
     .filter(e => !selectedDept || (e.department || '未設定') === selectedDept)
-    .filter(e => !excludeList.some(x => (e.name||'').includes(x) || (e.employment||'').includes(x)))
     .map(e => {
       const agg = byUser[e.id] || { over:0, total:0, actual:0, prescribed:0, inPrescribed:0, legalHolidayOvertime:0, statutoryHoliday:0, lateNight:0, months:{} };
       const isOver = agg.over >= warnLimit;
