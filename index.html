@@ -126,6 +126,8 @@ body { font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans','Yu Gothic UI',sa
 .config-item input { width:100%; font-size:13px; border:1px solid var(--border); border-radius:6px; padding:6px 10px; font-family:inherit; color:var(--text-primary); outline:none; }
 .config-item input:focus { border-color:var(--blue); }
 .config-save { margin-top:12px; font-size:12px; background:var(--blue); color:#fff; border:none; padding:7px 18px; border-radius:6px; cursor:pointer; font-family:inherit; }
+.fy-add-btn { font-size:11px; padding:4px 12px; border:1px dashed var(--border); background:transparent; color:var(--text-muted); border-radius:6px; cursor:pointer; font-family:inherit; margin-bottom:10px; }
+.fy-add-btn:hover { border-color:var(--blue); color:var(--blue); }
 
 /* KPI CARDS */
 .kpi-row { display:grid; grid-template-columns:repeat(6,1fr); gap:12px; margin-bottom:16px; }
@@ -410,10 +412,10 @@ body { font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans','Yu Gothic UI',sa
     <div class="config-item" style="max-width:400px;margin-bottom:12px"><label>Google Sheets APIキー（共通）</label><input type="password" id="cfg-apikey"></div>
 
     <div style="font-size:12px;font-weight:600;color:var(--blue);margin:12px 0 4px;border-top:1px solid var(--border);padding-top:12px">EC事業 設定</div>
-    <div class="config-grid">
-      <div class="config-item"><label>スプレッドシートID（EC実績）</label><input type="text" id="cfg-sheetid"></div>
-      <div class="config-item"><label>①実績シート名</label><input type="text" id="cfg-sheet1"></div>
-      <div class="config-item"><label>②目標シート名</label><input type="text" id="cfg-sheet2"></div>
+    <div style="font-size:11px;color:var(--text-muted);margin-bottom:8px">年度ごとにスプレッドシートIDを登録します。空欄の年度はスキップされます。</div>
+    <div id="cfg-ec-sheets-list"></div>
+    <button type="button" onclick="addFyRow('ec')" class="fy-add-btn">＋ 年度を追加</button>
+    <div class="config-grid" style="margin-top:8px">
       <div class="config-item"><label>年間粗利目標（税別・円）</label><input type="number" id="cfg-annual-profit"></div>
       <div class="config-item"><label>年間販売数目標（点）</label><input type="number" id="cfg-annual-sales"></div>
       <div class="config-item"><label>在庫点数目標（点）</label><input type="number" id="cfg-stock"></div>
@@ -421,24 +423,28 @@ body { font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans','Yu Gothic UI',sa
     </div>
 
     <div style="font-size:12px;font-weight:600;color:var(--blue);margin:16px 0 4px;border-top:1px solid var(--border);padding-top:12px">営業 設定</div>
-    <div class="config-grid">
-      <div class="config-item"><label>スプレッドシートID（営業実績）</label><input type="text" id="cfg-sales-sheetid"></div>
-      <div class="config-item"><label>実績シート名</label><input type="text" id="cfg-sales-sheet"></div>
+    <div style="font-size:11px;color:var(--text-muted);margin-bottom:8px">年度ごとにスプレッドシートIDを登録します。空欄の年度はスキップされます。</div>
+    <div id="cfg-sales-sheets-list"></div>
+    <button type="button" onclick="addFyRow('sales')" class="fy-add-btn">＋ 年度を追加</button>
+    <div class="config-grid" style="margin-top:8px">
       <div class="config-item"><label>年間売上高目標（税抜・円）</label><input type="number" id="cfg-sales-annual-sales"></div>
       <div class="config-item"><label>年間粗利目標（税抜・円）</label><input type="number" id="cfg-sales-annual-profit"></div>
     </div>
 
     <div style="font-size:12px;font-weight:600;color:var(--blue);margin:16px 0 4px;border-top:1px solid var(--border);padding-top:12px">その他工事 設定</div>
-    <div class="config-grid">
-      <div class="config-item"><label>スプレッドシートID（その他工事実績）</label><input type="text" id="cfg-construction-sheetid"></div>
-      <div class="config-item"><label>実績シート名</label><input type="text" id="cfg-construction-sheet"></div>
+    <div style="font-size:11px;color:var(--text-muted);margin-bottom:8px">年度ごとにスプレッドシートIDを登録します。空欄の年度はスキップされます。</div>
+    <div id="cfg-construction-sheets-list"></div>
+    <button type="button" onclick="addFyRow('construction')" class="fy-add-btn">＋ 年度を追加</button>
+    <div class="config-grid" style="margin-top:8px">
       <div class="config-item"><label>年間売上高目標（税抜・円）</label><input type="number" id="cfg-construction-annual-sales"></div>
       <div class="config-item"><label>年間粗利目標（税抜・円）</label><input type="number" id="cfg-construction-annual-profit"></div>
     </div>
 
     <div style="font-size:12px;font-weight:600;color:var(--blue);margin:16px 0 4px;border-top:1px solid var(--border);padding-top:12px">ガリレイ工事 設定</div>
-    <div class="config-grid">
-      <div class="config-item"><label>スプレッドシートID（ガリレイ工事実績）</label><input type="text" id="cfg-galilei-sheetid"></div>
+    <div style="font-size:11px;color:var(--text-muted);margin-bottom:8px">年度ごとにスプレッドシートIDを登録します。空欄の年度はスキップされます。</div>
+    <div id="cfg-galilei-sheets-list"></div>
+    <button type="button" onclick="addFyRow('galilei')" class="fy-add-btn">＋ 年度を追加</button>
+    <div class="config-grid" style="margin-top:8px">
       <div class="config-item"><label>年間売上高目標（税別・円）</label><input type="number" id="cfg-galilei-annual-sales"></div>
       <div class="config-item"><label>年間粗利目標（税別・円）</label><input type="number" id="cfg-galilei-annual-profit"></div>
     </div>
@@ -1649,6 +1655,25 @@ const DEFAULT_CONFIG = {
   galileiSheetId: '1-Twac-Kb3EOb9jSMbI5vPZkXbw_0wm5VhYe2iJTbgc0',
   galileiAnnualSalesTarget: 63750000,
   galileiAnnualProfitTarget: 46970000,
+  // ── 年度別スプレッドシートリスト（来期以降ここに追加） ──
+  // fy: 会計年度ラベル（例: "2025" = 2025年10月〜2026年9月）
+  // sheetId: 空文字列のまま = 未設定・スキップ
+  ec_sheets: [
+    { fy: '2025', sheetId: '13gcnyBhGn1_jU_dCBy8FUUJ4X4mqxwJUwLi0LmZgO_s', sheet1: '売上実績', sheet2: '【2026年度】EC' },
+    { fy: '2026', sheetId: '', sheet1: '売上実績', sheet2: '【2027年度】EC' },
+  ],
+  sales_sheets: [
+    { fy: '2025', sheetId: '1kWAvrWPzsKxajmcpzSnoAnc0A8aISZ72JwKS5jqu5YQ', sheet: '売上管理表' },
+    { fy: '2026', sheetId: '', sheet: '売上管理表' },
+  ],
+  construction_sheets: [
+    { fy: '2025', sheetId: '1lA1glCzhkl3bazoAhvQ2xmp6cG_0EiO3wzaFl8x8wHs', sheet: '売上管理表' },
+    { fy: '2026', sheetId: '', sheet: '売上管理表' },
+  ],
+  galilei_sheets: [
+    { fy: '2025', sheetId: '1-Twac-Kb3EOb9jSMbI5vPZkXbw_0wm5VhYe2iJTbgc0' },
+    { fy: '2026', sheetId: '' },
+  ],
   hrmosMonthlyLimitMin: 30 * 60,
   hrmosExcludeEmployments: '取締役,野々垣,渡辺',
 };
@@ -1659,28 +1684,113 @@ let filterTo = '';
 let ecLoaded = false;
 
 function getConfig() {
-  try { const s = localStorage.getItem('kpi_config'); return s ? {...DEFAULT_CONFIG,...JSON.parse(s)} : {...DEFAULT_CONFIG}; }
+  try {
+    const s = localStorage.getItem('kpi_config');
+    if (!s) return {...DEFAULT_CONFIG};
+    const stored = JSON.parse(s);
+    const merged = {...DEFAULT_CONFIG, ...stored};
+    // FYリストはDEFAULTとマージ（storedが空配列なら DEFAULT で補完）
+    ['ec_sheets','sales_sheets','construction_sheets','galilei_sheets'].forEach(key => {
+      if (!stored[key] || !stored[key].length) merged[key] = DEFAULT_CONFIG[key];
+    });
+    return merged;
+  }
   catch(e) { return {...DEFAULT_CONFIG}; }
 }
+
+// ==================== 年度別シートリスト UI ====================
+const FY_FIELDS = {
+  ec:           [{ key:'sheetId', label:'スプレッドシートID', wide:true }, { key:'sheet1', label:'実績シート名' }, { key:'sheet2', label:'目標シート名' }],
+  sales:        [{ key:'sheetId', label:'スプレッドシートID', wide:true }, { key:'sheet',  label:'シート名' }],
+  construction: [{ key:'sheetId', label:'スプレッドシートID', wide:true }, { key:'sheet',  label:'シート名' }],
+  galilei:      [{ key:'sheetId', label:'スプレッドシートID', wide:true }],
+};
+
+function renderFyRows(cat, rows) {
+  const container = document.getElementById('cfg-' + cat + '-sheets-list');
+  if (!container) return;
+  container.innerHTML = '';
+  (rows || []).forEach((row, i) => container.appendChild(buildFyRow(cat, row, i)));
+}
+
+function buildFyRow(cat, row, idx) {
+  const wrap = document.createElement('div');
+  wrap.style.cssText = 'display:flex;gap:8px;align-items:center;margin-bottom:6px;flex-wrap:wrap';
+  wrap.dataset.fyRow = idx;
+
+  const fyInput = document.createElement('input');
+  fyInput.type = 'text'; fyInput.placeholder = '例: 2025'; fyInput.value = row.fy || '';
+  fyInput.dataset.key = 'fy';
+  fyInput.style.cssText = 'width:72px;padding:4px 8px;font-size:12px;border:1px solid var(--border);border-radius:6px;font-family:inherit';
+  const fyLabel = document.createElement('span');
+  fyLabel.textContent = '年度'; fyLabel.style.cssText = 'font-size:11px;color:var(--text-muted);white-space:nowrap';
+  wrap.appendChild(fyInput); wrap.appendChild(fyLabel);
+
+  (FY_FIELDS[cat] || []).forEach(field => {
+    const inp = document.createElement('input');
+    inp.type = 'text'; inp.placeholder = field.label + '（空=未設定）';
+    inp.value = row[field.key] || ''; inp.dataset.key = field.key;
+    inp.style.cssText = 'flex:' + (field.wide ? '2' : '1') + ';min-width:' + (field.wide ? '180px' : '90px') + ';padding:4px 8px;font-size:12px;border:1px solid ' + (row[field.key] ? 'var(--border)' : '#f59e0b66') + ';border-radius:6px;font-family:inherit';
+    wrap.appendChild(inp);
+  });
+
+  const del = document.createElement('button');
+  del.type = 'button'; del.textContent = '×';
+  del.style.cssText = 'padding:2px 8px;font-size:13px;border:1px solid var(--border);border-radius:6px;background:transparent;color:var(--text-muted);cursor:pointer;flex-shrink:0';
+  del.onclick = () => wrap.remove();
+  wrap.appendChild(del);
+  return wrap;
+}
+
+function addFyRow(cat) {
+  const container = document.getElementById('cfg-' + cat + '-sheets-list');
+  if (!container) return;
+  const rows = container.querySelectorAll('[data-fy-row]');
+  const lastFyEl = rows.length ? rows[rows.length - 1].querySelector('[data-key="fy"]') : null;
+  const nextFy = lastFyEl ? String(Number(lastFyEl.value || '2025') + 1) : '2026';
+  const defaults = { fy: nextFy, sheetId: '', sheet: '売上管理表', sheet1: '売上実績', sheet2: '【' + nextFy + '年度】EC' };
+  container.appendChild(buildFyRow(cat, defaults, rows.length));
+}
+
+function collectFyRows(cat) {
+  const container = document.getElementById('cfg-' + cat + '-sheets-list');
+  if (!container) return DEFAULT_CONFIG[cat + '_sheets'] || [];
+  const result = [];
+  container.querySelectorAll('[data-fy-row]').forEach(wrap => {
+    const row = {};
+    wrap.querySelectorAll('input[data-key]').forEach(inp => { row[inp.dataset.key] = inp.value.trim(); });
+    if (row.fy) result.push(row);
+  });
+  return result.length ? result : DEFAULT_CONFIG[cat + '_sheets'] || [];
+}
+// ==================== END 年度別シートリスト UI ====================
+
 function saveConfig() {
   const cfg = {
     apiKey: document.getElementById('cfg-apikey').value || DEFAULT_CONFIG.apiKey,
-    sheetId: document.getElementById('cfg-sheetid').value || DEFAULT_CONFIG.sheetId,
-    sheet1: document.getElementById('cfg-sheet1').value || DEFAULT_CONFIG.sheet1,
-    sheet2: document.getElementById('cfg-sheet2').value || DEFAULT_CONFIG.sheet2,
+    // 年度別シートリスト
+    ec_sheets: collectFyRows('ec'),
+    sales_sheets: collectFyRows('sales'),
+    construction_sheets: collectFyRows('construction'),
+    galilei_sheets: collectFyRows('galilei'),
+    // 後方互換: 各カテゴリで最初に設定済みのsheetIdを単体でも保持
+    sheetId:          (collectFyRows('ec').find(e=>e.sheetId)||{}).sheetId || DEFAULT_CONFIG.sheetId,
+    sheet1:           (collectFyRows('ec').find(e=>e.sheetId)||{}).sheet1  || DEFAULT_CONFIG.sheet1,
+    sheet2:           (collectFyRows('ec').find(e=>e.sheetId)||{}).sheet2  || DEFAULT_CONFIG.sheet2,
+    salesSheetId:     (collectFyRows('sales').find(e=>e.sheetId)||{}).sheetId || DEFAULT_CONFIG.salesSheetId,
+    salesSheet:       (collectFyRows('sales').find(e=>e.sheetId)||{}).sheet   || DEFAULT_CONFIG.salesSheet,
+    constructionSheetId: (collectFyRows('construction').find(e=>e.sheetId)||{}).sheetId || DEFAULT_CONFIG.constructionSheetId,
+    constructionSheet:   (collectFyRows('construction').find(e=>e.sheetId)||{}).sheet   || DEFAULT_CONFIG.constructionSheet,
+    galileiSheetId:   (collectFyRows('galilei').find(e=>e.sheetId)||{}).sheetId || DEFAULT_CONFIG.galileiSheetId,
+    // 目標値
     annualProfitTarget: Number(document.getElementById('cfg-annual-profit').value) || DEFAULT_CONFIG.annualProfitTarget,
     annualSalesTarget: Number(document.getElementById('cfg-annual-sales').value) || DEFAULT_CONFIG.annualSalesTarget,
     stockTarget: Number(document.getElementById('cfg-stock').value) || DEFAULT_CONFIG.stockTarget,
     marginTarget: Number(document.getElementById('cfg-margin-target').value) || DEFAULT_CONFIG.marginTarget,
-    salesSheetId: document.getElementById('cfg-sales-sheetid').value || DEFAULT_CONFIG.salesSheetId,
-    salesSheet: document.getElementById('cfg-sales-sheet').value || DEFAULT_CONFIG.salesSheet,
     salesAnnualSalesTarget: Number(document.getElementById('cfg-sales-annual-sales').value) || DEFAULT_CONFIG.salesAnnualSalesTarget,
     salesAnnualProfitTarget: Number(document.getElementById('cfg-sales-annual-profit').value) || DEFAULT_CONFIG.salesAnnualProfitTarget,
-    constructionSheetId: document.getElementById('cfg-construction-sheetid').value || DEFAULT_CONFIG.constructionSheetId,
-    constructionSheet: document.getElementById('cfg-construction-sheet').value || DEFAULT_CONFIG.constructionSheet,
     constructionAnnualSalesTarget: Number(document.getElementById('cfg-construction-annual-sales').value) || DEFAULT_CONFIG.constructionAnnualSalesTarget,
     constructionAnnualProfitTarget: Number(document.getElementById('cfg-construction-annual-profit').value) || DEFAULT_CONFIG.constructionAnnualProfitTarget,
-    galileiSheetId: document.getElementById('cfg-galilei-sheetid').value || DEFAULT_CONFIG.galileiSheetId,
     galileiAnnualSalesTarget: Number(document.getElementById('cfg-galilei-annual-sales').value) || DEFAULT_CONFIG.galileiAnnualSalesTarget,
     galileiAnnualProfitTarget: Number(document.getElementById('cfg-galilei-annual-profit').value) || DEFAULT_CONFIG.galileiAnnualProfitTarget,
     hrmosMonthlyLimitMin: hmToMin(document.getElementById('cfg-hrmos-monthly-limit').value) || DEFAULT_CONFIG.hrmosMonthlyLimitMin,
@@ -1700,22 +1810,20 @@ function toggleConfig() {
   if (p.classList.contains('open')) {
     const cfg = getConfig();
     document.getElementById('cfg-apikey').value = cfg.apiKey;
-    document.getElementById('cfg-sheetid').value = cfg.sheetId;
-    document.getElementById('cfg-sheet1').value = cfg.sheet1;
-    document.getElementById('cfg-sheet2').value = cfg.sheet2;
+    // 年度リストUIを描画
+    renderFyRows('ec',           cfg.ec_sheets           || DEFAULT_CONFIG.ec_sheets);
+    renderFyRows('sales',        cfg.sales_sheets        || DEFAULT_CONFIG.sales_sheets);
+    renderFyRows('construction', cfg.construction_sheets || DEFAULT_CONFIG.construction_sheets);
+    renderFyRows('galilei',      cfg.galilei_sheets      || DEFAULT_CONFIG.galilei_sheets);
+    // 目標値
     document.getElementById('cfg-annual-profit').value = cfg.annualProfitTarget;
     document.getElementById('cfg-annual-sales').value = cfg.annualSalesTarget;
     document.getElementById('cfg-stock').value = cfg.stockTarget;
     document.getElementById('cfg-margin-target').value = cfg.marginTarget;
-    document.getElementById('cfg-sales-sheetid').value = cfg.salesSheetId;
-    document.getElementById('cfg-sales-sheet').value = cfg.salesSheet;
     document.getElementById('cfg-sales-annual-sales').value = cfg.salesAnnualSalesTarget;
     document.getElementById('cfg-sales-annual-profit').value = cfg.salesAnnualProfitTarget;
-    document.getElementById('cfg-construction-sheetid').value = cfg.constructionSheetId;
-    document.getElementById('cfg-construction-sheet').value = cfg.constructionSheet;
     document.getElementById('cfg-construction-annual-sales').value = cfg.constructionAnnualSalesTarget;
     document.getElementById('cfg-construction-annual-profit').value = cfg.constructionAnnualProfitTarget;
-    document.getElementById('cfg-galilei-sheetid').value = cfg.galileiSheetId;
     document.getElementById('cfg-galilei-annual-sales').value = cfg.galileiAnnualSalesTarget;
     document.getElementById('cfg-galilei-annual-profit').value = cfg.galileiAnnualProfitTarget;
     document.getElementById('cfg-hrmos-monthly-limit').value = minToHm(cfg.hrmosMonthlyLimitMin);
@@ -1838,7 +1946,18 @@ async function loadData() {
   document.getElementById('kpi-row').innerHTML = '<div class="loading" style="grid-column:span 6"><div class="spinner"></div><span>データ読み込み中...</span></div>';
 
   try {
-    const rows = await fetchSheet(cfg.apiKey, cfg.sheetId, cfg.sheet1, 'B6:O2000');
+    // FYリストから全年度ロード
+    const _ecList = (cfg.ec_sheets || []).filter(e => e.sheetId);
+    if (!_ecList.length && cfg.sheetId) _ecList.push({ fy:'2025', sheetId:cfg.sheetId, sheet1:cfg.sheet1 });
+    let _ecAllRows = [];
+    for (const entry of _ecList) {
+      try {
+        const _r = await fetchSheet(cfg.apiKey, entry.sheetId, entry.sheet1 || cfg.sheet1, 'B6:O2000');
+        _r.forEach(r => { r._fy = entry.fy; });
+        _ecAllRows = _ecAllRows.concat(_r);
+      } catch(e2) { console.warn('EC FY取得失敗:', entry.fy, e2.message); }
+    }
+    const rows = _ecAllRows;
 
     allSales = rows.filter(r => r[0] && r[1]).map(r => {
       const pt = parseNum(r[7]);
@@ -2667,7 +2786,18 @@ async function loadSalesData() {
     // A=完工年月[0] B=完工日[1] C=販売先[2] D=売上内容[3] E=売上金額(税抜)[4]
     // F=仕入経費(税抜)[5] G=外注費(税抜)[6] H=粗利額(税抜)[7] I=粗利率[8]
     // J=回収条件[9] K=入金予定日[10] L=備考[11] M=(空)[12] N=請求書発行[13]
-    const rows = await fetchSheet(cfg.apiKey, cfg.salesSheetId, cfg.salesSheet, 'A6:N2000');
+    // FYリストから全年度ロード（後方互換: リストがなければ旧単体IDを使用）
+    const _salesList = (cfg.sales_sheets || []).filter(e => e.sheetId);
+    if (!_salesList.length && cfg.salesSheetId) _salesList.push({ fy:'2025', sheetId:cfg.salesSheetId, sheet:cfg.salesSheet });
+    let _salesAllRows = [];
+    for (const entry of _salesList) {
+      try {
+        const _r = await fetchSheet(cfg.apiKey, entry.sheetId, entry.sheet || cfg.salesSheet, 'A6:N2000');
+        _r.forEach(r => { r._fy = entry.fy; });
+        _salesAllRows = _salesAllRows.concat(_r);
+      } catch(e2) { console.warn('営業FY取得失敗:', entry.fy, e2.message); }
+    }
+    const rows = _salesAllRows;
     console.log('営業データ行数:', rows.length);
     const dataRows = rows.filter(r => r[0]);
     console.log('フィルタ後行数:', dataRows.length);
@@ -2901,7 +3031,17 @@ async function loadConstructionData() {
   try {
     // A=完工年月[0] B=完工日[1] C=販売先[2] D=施主[3] E=売上金額(税抜)[4]
     // F=仕入経費(税抜)[5] G=外注費(税抜)[6] H=粗利額(税抜)[7] I=粗利率[8]
-    const rows = await fetchSheet(cfg.apiKey, cfg.constructionSheetId, cfg.constructionSheet, 'A6:I2000');
+    const _constList = (cfg.construction_sheets || []).filter(e => e.sheetId);
+    if (!_constList.length && cfg.constructionSheetId) _constList.push({ fy:'2025', sheetId:cfg.constructionSheetId, sheet:cfg.constructionSheet });
+    let _constAllRows = [];
+    for (const entry of _constList) {
+      try {
+        const _r = await fetchSheet(cfg.apiKey, entry.sheetId, entry.sheet || cfg.constructionSheet, 'A6:I2000');
+        _r.forEach(r => { r._fy = entry.fy; });
+        _constAllRows = _constAllRows.concat(_r);
+      } catch(e2) { console.warn('工事FY取得失敗:', entry.fy, e2.message); }
+    }
+    const rows = _constAllRows;
     console.log('工事データ行数:', rows.length);
     const dataRows = rows.filter(r => r[0]);
     console.log('フィルタ後行数:', dataRows.length);
@@ -3074,6 +3214,19 @@ let galileiFilterFrom = '';
 let galileiFilterTo = '';
 
 // 今年度（10月始まり）を中心に対象シート名（年月）を動的生成
+// FYリストから全対象シートを生成（複数年度対応）
+function getAllGalileiSheetEntries() {
+  const cfg = getConfig();
+  const fyList = (cfg.galilei_sheets || DEFAULT_CONFIG.galilei_sheets).filter(e => e.sheetId);
+  const entries = [];
+  fyList.forEach(entry => {
+    const fy = Number(entry.fy);
+    for (let m = 10; m <= 12; m++) entries.push({ sheetId: entry.sheetId, fy: entry.fy, name: fy + '年' + m + '月' });
+    for (let m = 1;  m <= 9;  m++) entries.push({ sheetId: entry.sheetId, fy: entry.fy, name: (fy+1) + '年' + m + '月' });
+  });
+  return entries;
+}
+
 function getGalileiSheetNames(onlyLastFy=false) {
   const now = new Date();
   const y = now.getFullYear(), m = now.getMonth();
@@ -3161,7 +3314,30 @@ function parseGalileiSheetName(sheetName) {
 async function loadGalileiData(onlyLastFy=false) {
   console.log('loadGalileiData開始', onlyLastFy ? '(前年度分)' : '(今年度分)');
   const cfg = getConfig();
-  const sheetNames = getGalileiSheetNames(onlyLastFy);
+  // FYリスト対応: 後方互換でonlyLastFyも維持
+  let _galEntries;
+  if (onlyLastFy) {
+    // 前年度FYエントリを特定（FYリストの2番目以降 or 旧単体ID）
+    const _fyList = (cfg.galilei_sheets || []).filter(e => e.sheetId);
+    if (_fyList.length >= 2) {
+      // FYリストに複数登録されている場合: 末尾から2番目以前のエントリを前年度として使用
+      const _prevEntry = _fyList[_fyList.length - 2];
+      const _prevFy = Number(_prevEntry.fy);
+      const _prevNames = [];
+      for (let m = 10; m <= 12; m++) _prevNames.push((String(_prevFy) + '年' + m + '月'));
+      for (let m = 1;  m <= 9;  m++) _prevNames.push((String(_prevFy+1) + '年' + m + '月'));
+      _galEntries = _prevNames.map(name => ({ sheetId: _prevEntry.sheetId, fy: _prevEntry.fy, name }));
+    } else {
+      // 旧ロジック互換: 旧単体IDで前年度
+      _galEntries = getGalileiSheetNames(true).map(name => ({ sheetId: cfg.galileiSheetId, fy: 'prev', name }));
+    }
+  } else {
+    _galEntries = getAllGalileiSheetEntries();
+    // FYリスト未設定の場合は旧単体IDで今年度分を取得
+    if (!_galEntries.length && cfg.galileiSheetId) {
+      _galEntries = getGalileiSheetNames(false).map(name => ({ sheetId: cfg.galileiSheetId, fy: '2025', name }));
+    }
+  }
   if (!onlyLastFy) {
     allGalileiSites = [];
     allGalileiReps = [];
@@ -3170,18 +3346,18 @@ async function loadGalileiData(onlyLastFy=false) {
   }
   let successCount = 0;
 
-  // 1ヶ月分=4レンジを1リクエスト(batchGet)にまとめ、さらに全月を並列実行
-  const tasks = sheetNames.map(async (sheetName) => {
+  const tasks = _galEntries.map(async (entry) => {
+    const sheetName = entry.name;
     const ymNorm = parseGalileiSheetName(sheetName);
     if (!ymNorm) return;
     try {
       const ranges = [
-        `${sheetName}!C4:L200`,  // ①現場詳細
-        `${sheetName}!N6:P22`,   // ②営業詳細
-        `${sheetName}!R6:U200`,  // ③外注詳細
-        `${sheetName}!P37:P40`,  // ④経費
+        `${sheetName}!C4:L200`,
+        `${sheetName}!N6:P22`,
+        `${sheetName}!R6:U200`,
+        `${sheetName}!P37:P40`,
       ];
-      const [siteRows, repRows, outRows, expRows] = await fetchSheetBatch(cfg.apiKey, cfg.galileiSheetId, ranges);
+      const [siteRows, repRows, outRows, expRows] = await fetchSheetBatch(cfg.apiKey, entry.sheetId, ranges);
 
       siteRows.forEach(r => {
         const rawDate     = String(r[0]||'').trim();
