@@ -95,6 +95,11 @@ body { font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans','Yu Gothic UI',sa
   #sales-expenses-item-summary, #construction-expenses-item-summary { flex-direction:column !important; }
   #sales-expenses-item-summary > div, #construction-expenses-item-summary > div { min-width:0 !important; max-width:100% !important; width:100% !important; }
   .sp-hide { display:none !important; }
+  /* スマホ: 仕入・経費セクション全体を非表示 */
+  #sales-section-expenses, #construction-section-expenses { display:none !important; }
+  /* スマホ: 仕入・経費アコーディオンメニューも非表示 */
+  #sales-accordion .accordion-item:last-child,
+  #construction-accordion .accordion-item:last-child { display:none !important; }
   /* 仕入・経費 物件カード・月別カードの幅制限をスマホでは解除 */
   #sales-section-expenses .table-card div[style*="max-width"],
   #construction-section-expenses .table-card div[style*="max-width"] { max-width:100% !important; }
