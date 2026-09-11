@@ -4795,8 +4795,7 @@ function buildAiContext() {
     const g = galByMonth[m]    || {actual:0,budget:0,count:0};
     const e = ecByMonth[m]     || {profit:0,count:0};
     return `${m}: 営業[売上¥${fmt(s.sales)} 粗利¥${fmt(s.profit)} ${s.count}件] 工事[売上¥${fmt(co.sales)} 粗利¥${fmt(co.profit)} ${co.count}件] ガリレイ[実質¥${fmt(g.actual)} ${g.count}件] EC粗利[¥${fmt(e.profit)}]`;
-  }).join('
-');
+  }).join('\n');
 
   // 合計
   const totSales  = salesFY.reduce((a,s)=>a+s.sales,0);
