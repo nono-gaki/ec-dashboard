@@ -4806,7 +4806,7 @@ function buildAiContext() {
   const totGal    = galFY.reduce((a,s)=>a+s.actualAmount,0);
   const totEC     = ecFY.reduce((a,s)=>a+s.profit,0);
 
-  return `あなたはLIFE MARK'Sという会社のKPIデータアナリストです。以下は今年度（${fyStartY}年10月〜現在）の実績データです。このデータをもとに、ユーザーの質問に日本語で分かりやすく答えてください。数値は円単位で表示してください。
+  return `あなたはLIFE MARK\'Sという会社のKPIデータアナリストです。以下は今年度（${fyStartY}年10月〜現在）の実績データです。このデータをもとに、ユーザーの質問に日本語で分かりやすく答えてください。数値は円単位で表示してください。
 
 【今年度累計】
 - 営業: 売上¥${fmt(totSales)} / 粗利¥${fmt(totSalesP)} / ${salesFY.length}件
