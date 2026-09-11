@@ -393,8 +393,8 @@ body { font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans','Yu Gothic UI',sa
 
 <div class="tabs">
   <div class="tab active" onclick="switchTab('budget',this)">📊 予算進捗</div>
-  <div class="tab" onclick="switchTab('ai',this)">🤖 AI分析</div>
   <div class="tab" onclick="switchTab('hrmos',this)">⏱ 残業</div>
+  <div class="tab" onclick="switchTab('ai',this)">🤖 AI分析</div>
 </div>
 
 <div class="sub-tabs" id="budget-sub-tabs">
@@ -1656,16 +1656,16 @@ body { font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans','Yu Gothic UI',sa
         <div style="font-weight:700;font-size:14px">💬 データに質問する</div>
         <button onclick="clearAiChat()" style="font-size:11px;padding:3px 10px;border:1px solid var(--border);border-radius:6px;background:transparent;color:var(--text-muted);cursor:pointer;font-family:inherit">履歴をクリア</button>
       </div>
-      <div style="font-size:11px;color:var(--text-muted);margin-bottom:12px">全カテゴリのKPIデータをもとに、日本語で自由に質問できます。</div>
+
 
       <!-- チャット履歴 -->
       <div id="ai-chat-history" style="min-height:80px;max-height:480px;overflow-y:auto;margin-bottom:12px;display:flex;flex-direction:column;gap:10px"></div>
 
       <!-- 入力エリア -->
       <div style="display:flex;gap:8px;align-items:flex-end">
-        <textarea id="ai-chat-input" placeholder="例：今年度で粗利が一番高い月は？&#10;例：ガリレイと営業を比較して&#10;例：先月の数字をまとめて"
+        <textarea id="ai-chat-input" placeholder="例：今年度で粗利が一番高い月は？&#10;例：先月の数字をまとめて"
           style="flex:1;padding:10px 12px;font-size:13px;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--text-primary);font-family:inherit;resize:none;min-height:52px;max-height:120px;line-height:1.5;outline:none"
-          onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendAiChat()}"
+          onkeydown="if(event.key==='Enter'&&!event.shiftKey&&!event.isComposing){event.preventDefault();sendAiChat()}"
           oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,120)+'px'"
         ></textarea>
         <button onclick="sendAiChat()" id="ai-chat-send-btn"
