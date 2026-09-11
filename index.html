@@ -4358,6 +4358,7 @@ function toggleSalesAccordion(key, el) {
     document.querySelectorAll('#sales-sidebar .page-sidebar-item').forEach(t => t.classList.remove('active'));
     const si = document.querySelector(`#sales-sidebar .page-sidebar-item[onclick*="'${key}'"]`);
     if(si) si.classList.add('active');
+    if (key === 'expenses' && allSalesExpenses.length === 0) loadSalesExpensesData();
   }
 }
 
@@ -4386,6 +4387,7 @@ function toggleConstructionAccordion(key, el) {
     document.querySelectorAll('#construction-sidebar .page-sidebar-item').forEach(t => t.classList.remove('active'));
     const si = document.querySelector(`#construction-sidebar .page-sidebar-item[onclick*="'${key}'"]`);
     if(si) si.classList.add('active');
+    if (key === 'expenses' && allConstructionExpenses.length === 0) loadConstructionExpensesData();
   }
 }
 
