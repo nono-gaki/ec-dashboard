@@ -52,7 +52,7 @@ body { font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans','Yu Gothic UI',sa
 .subtab { padding:10px 16px; font-size:12px; color:var(--text-secondary); cursor:pointer; border-bottom:2px solid transparent; transition:all .15s; flex-shrink:0; }
 .subtab.active { color:var(--blue); border-bottom-color:var(--blue); font-weight:500; }
 .subtab:hover:not(.active) { color:var(--text-primary); }
-.sub-tabs { background:var(--surface); border-bottom:1px solid var(--border); padding:0 24px; display:flex; }
+.sub-tabs { background:var(--surface); border-bottom:1px solid var(--border); padding:0 24px; display:flex; position:sticky; top:107px; z-index:98; }
 .sub-tabs[hidden] { display:none; }
 
 /* HRMOS 残業テーブルのモバイル用カード表示 */
@@ -189,10 +189,11 @@ body { font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans','Yu Gothic UI',sa
 .bottom-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:16px; }
 .table-card { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:16px; }
 .table-card table { width:100%; border-collapse:collapse; }
-.table-card th { font-size:11px; color:var(--text-muted); text-align:left; padding:6px 8px; border-bottom:1px solid var(--border); font-weight:500; }
-.table-card th:not(:first-child) { text-align:right; }
-.table-card td { padding:7px 8px; border-bottom:1px solid var(--bg); font-size:12px; }
-.table-card td:not(:first-child) { text-align:right; }
+.table-card th { font-size:11px; color:var(--text-muted); text-align:center; padding:6px 8px; border-bottom:1px solid var(--border); border-right:1px solid var(--border); font-weight:500; }
+.table-card th:last-child { border-right:none; }
+.table-card td { padding:7px 8px; border-bottom:1px solid var(--bg); border-right:1px solid var(--bg); font-size:12px; text-align:left; }
+.table-card td:last-child { border-right:none; }
+.table-card td.num { text-align:right; }
 .table-card tr.total-row td { font-weight:600; background:var(--bg); }
 .kpi-progress-table { width:100%; border-collapse:collapse; }
 .kpi-progress-table th { font-size:11px; color:var(--text-muted); text-align:left; padding:6px 8px; border-bottom:1px solid var(--border); font-weight:500; }
@@ -235,7 +236,7 @@ body { font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans','Yu Gothic UI',sa
   /* TABS: 横スクロール可能に */
   .tabs { position:sticky; top:0; padding:0 8px; overflow-x:auto; -webkit-overflow-scrolling:touch; white-space:nowrap; z-index:99; }
   .tab { padding:10px 14px; font-size:12px; flex-shrink:0; }
-  .sub-tabs { padding:0 8px; overflow-x:auto; -webkit-overflow-scrolling:touch; white-space:nowrap; }
+  .sub-tabs { padding:0 8px; overflow-x:auto; -webkit-overflow-scrolling:touch; white-space:nowrap; top:88px; }
   .subtab { padding:8px 12px; }
   /* 残業サマリーは3列のみで余裕があるため、.tbl-fit-mobileの縮小フォントを上書きして大きく見せる */
   #hrmos-summary-table th, #hrmos-summary-table td { font-size:13px !important; padding:10px 6px !important; }
@@ -723,16 +724,16 @@ body { font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans','Yu Gothic UI',sa
             <table style="width:100%;border-collapse:collapse;font-size:12px" id="stock-table">
               <thead>
                 <tr style="border-bottom:1px solid var(--border)">
-                  <th style="text-align:left;padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500">ID</th>
-                  <th style="text-align:left;padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500">登録月</th>
-                  <th style="text-align:left;padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500">メーカー</th>
-                  <th style="text-align:left;padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500">商品名</th>
-                  <th style="text-align:right;padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500">仕入(税込)</th>
-                  <th style="text-align:right;padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500">メルカリ</th>
-                  <th style="text-align:right;padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500">Yahoo(税込)</th>
-                  <th style="text-align:center;padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500">状態</th>
-                  <th style="text-align:center;padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500">対応</th>
-                  <th style="text-align:right;padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500">経過月</th>
+                  <th style="padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500">ID</th>
+                  <th style="padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500">登録月</th>
+                  <th style="padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500">メーカー</th>
+                  <th style="padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500">商品名</th>
+                  <th style="padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500">仕入(税込)</th>
+                  <th style="padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500">メルカリ</th>
+                  <th style="padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500">Yahoo(税込)</th>
+                  <th style="padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500">状態</th>
+                  <th style="padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500">対応</th>
+                  <th style="padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500">経過月</th>
                 </tr>
               </thead>
               <tbody id="stock-table-body"></tbody>
@@ -782,15 +783,15 @@ body { font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans','Yu Gothic UI',sa
             <table class="purchase-table" style="width:100%;border-collapse:collapse;font-size:12px">
               <thead>
                 <tr style="border-bottom:1px solid var(--border)">
-                  <th style="text-align:left;padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500">買取日</th>
-                  <th style="text-align:left;padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500">買取先</th>
-                  <th style="text-align:left;padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500">内容</th>
-                  <th style="text-align:right;padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500">点数</th>
-                  <th style="text-align:right;padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500">買取金額(税抜)</th>
-                  <th style="text-align:right;padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500">販売金額(税抜)</th>
-                  <th style="text-align:right;padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500">粗利額(税抜)</th>
-                  <th style="text-align:right;padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500">粗利率</th>
-                  <th style="text-align:left;padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500">備考</th>
+                  <th style="padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500">買取日</th>
+                  <th style="padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500">買取先</th>
+                  <th style="padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500">内容</th>
+                  <th style="padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500">点数</th>
+                  <th style="padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500">買取金額(税抜)</th>
+                  <th style="padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500">販売金額(税抜)</th>
+                  <th style="padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500">粗利額(税抜)</th>
+                  <th style="padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500">粗利率</th>
+                  <th style="padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500">備考</th>
                 </tr>
               </thead>
               <tbody id="purchase-table-body"></tbody>
@@ -816,6 +817,7 @@ body { font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans','Yu Gothic UI',sa
         <div class="page-sidebar-item" onclick="switchSalesSection('charts',this)">推移・ランキング</div>
         <div class="page-sidebar-item" onclick="switchSalesSection('summary',this)">月別実績・KPI進捗</div>
         <div class="page-sidebar-item" onclick="switchSalesSection('list',this)">案件一覧</div>
+        <div class="page-sidebar-item" onclick="switchSalesSection('expenses',this)">仕入・経費／外注費</div>
       </div>
 
       <div class="page-content">
@@ -832,6 +834,9 @@ body { font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans','Yu Gothic UI',sa
           </div>
           <div class="accordion-item">
             <div class="accordion-header" onclick="toggleSalesAccordion('list',this)"><span>案件一覧</span><span class="accordion-arrow">▶</span></div>
+          </div>
+          <div class="accordion-item">
+            <div class="accordion-header" onclick="toggleSalesAccordion('expenses',this)"><span>仕入・経費／外注費</span><span class="accordion-arrow">▶</span></div>
           </div>
         </div>
 
@@ -958,16 +963,62 @@ body { font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans','Yu Gothic UI',sa
               <table class="tbl-fit-mobile cols-6" style="width:100%;border-collapse:collapse;font-size:12px">
                 <thead>
                   <tr style="border-bottom:1px solid var(--border)">
-                    <th style="text-align:left;padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500">完工日</th>
-                    <th style="text-align:left;padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500">販売先</th>
-                    <th style="text-align:left;padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500">売上内容</th>
-                    <th style="text-align:right;padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500">売上金額(税抜)</th>
-                    <th style="text-align:right;padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500">粗利額(税抜)</th>
-                    <th style="text-align:right;padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500">粗利率</th>
+                    <th style="padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500">完工日</th>
+                    <th style="padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500">販売先</th>
+                    <th style="padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500">売上内容</th>
+                    <th style="padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500">売上金額(税抜)</th>
+                    <th style="padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500">粗利額(税抜)</th>
+                    <th style="padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500">粗利率</th>
                   </tr>
                 </thead>
                 <tbody id="sales-table-body"></tbody>
               </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- セクション: 仕入・経費／外注費 -->
+        <div class="page-section" id="sales-section-expenses">
+          <div class="date-filter-bar">
+            <label>期間</label>
+            <input type="month" class="date-input sales-date-from">
+            <span class="date-sep">〜</span>
+            <input type="month" class="date-input sales-date-to">
+            <div class="filter-sep"></div>
+            <div class="preset-btns">
+              <button class="preset-btn active" onclick="setSalesPreset('this_month',this,true)">今月</button>
+              <button class="preset-btn" onclick="setSalesPreset('last_month',this,true)">前月</button>
+              <button class="preset-btn" onclick="setSalesPreset('last3',this,true)">直近3ヶ月</button>
+              <button class="preset-btn" onclick="setSalesPreset('last6',this,true)">直近6ヶ月</button>
+              <button class="preset-btn" onclick="setSalesPreset('this_fy',this,true)">今年度</button>
+              <button class="preset-btn" onclick="setSalesPreset('last_fy',this,true)">前年度</button>
+              <button class="preset-btn" onclick="setSalesPreset('all',this,true)">全期間</button>
+            </div>
+            <button class="apply-btn" onclick="applySalesFilter()">適用</button>
+            <span class="period-label sales-period-label">読み込み中...</span>
+          </div>
+
+          <!-- KPIカード -->
+          <div class="kpi-row" id="sales-expenses-kpi-row" style="grid-template-columns:repeat(4,1fr);margin-bottom:16px"></div>
+
+          <!-- 月別折りたたみリスト -->
+          <div class="table-card">
+            <div class="chart-title" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+              <span>月別 仕入・経費／外注費（月をクリックして詳細展開）</span>
+              <div style="display:flex;gap:8px;flex-wrap:wrap">
+                <select id="sales-expenses-type-filter" onchange="renderSalesExpenses()" class="filter-select" style="font-size:11px">
+                  <option value="">全種別</option>
+                  <option value="expense">仕入・経費のみ</option>
+                  <option value="outsource">外注費のみ</option>
+                </select>
+              </div>
+            </div>
+            <!-- 項目別集計 -->
+            <div id="sales-expenses-item-summary" style="display:none;gap:20px;margin-bottom:16px;padding:12px;background:var(--bg);border-radius:8px;flex-wrap:wrap"></div>
+
+            <!-- 月別折りたたみ -->
+            <div id="sales-expenses-monthly-list" style="margin-top:10px">
+              <div class="loading"><div class="spinner"></div><span>データ読み込み中...</span></div>
             </div>
           </div>
         </div>
@@ -989,6 +1040,7 @@ body { font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans','Yu Gothic UI',sa
         <div class="page-sidebar-item" onclick="switchConstructionSection('charts',this)">推移・ランキング</div>
         <div class="page-sidebar-item" onclick="switchConstructionSection('summary',this)">月別実績・KPI進捗</div>
         <div class="page-sidebar-item" onclick="switchConstructionSection('list',this)">案件一覧</div>
+        <div class="page-sidebar-item" onclick="switchConstructionSection('expenses',this)">仕入・経費／外注費</div>
       </div>
 
       <div class="page-content">
@@ -1005,6 +1057,9 @@ body { font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans','Yu Gothic UI',sa
           </div>
           <div class="accordion-item">
             <div class="accordion-header" onclick="toggleConstructionAccordion('list',this)"><span>案件一覧</span><span class="accordion-arrow">▶</span></div>
+          </div>
+          <div class="accordion-item">
+            <div class="accordion-header" onclick="toggleConstructionAccordion('expenses',this)"><span>仕入・経費／外注費</span><span class="accordion-arrow">▶</span></div>
           </div>
         </div>
 
@@ -1131,16 +1186,53 @@ body { font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans','Yu Gothic UI',sa
               <table class="tbl-fit-mobile cols-6" style="width:100%;border-collapse:collapse;font-size:12px">
                 <thead>
                   <tr style="border-bottom:1px solid var(--border)">
-                    <th style="text-align:left;padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500">完工日</th>
-                    <th style="text-align:left;padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500">販売先</th>
-                    <th style="text-align:left;padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500">施主</th>
-                    <th style="text-align:right;padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500">売上金額(税抜)</th>
-                    <th style="text-align:right;padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500">粗利額(税抜)</th>
-                    <th style="text-align:right;padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500">粗利率</th>
+                    <th style="padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500">完工日</th>
+                    <th style="padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500">販売先</th>
+                    <th style="padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500">施主</th>
+                    <th style="padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500">売上金額(税抜)</th>
+                    <th style="padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500">粗利額(税抜)</th>
+                    <th style="padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500">粗利率</th>
                   </tr>
                 </thead>
                 <tbody id="construction-table-body"></tbody>
               </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- セクション: 仕入・経費／外注費 -->
+        <div class="page-section" id="construction-section-expenses">
+          <div class="date-filter-bar">
+            <label>期間</label>
+            <input type="month" class="date-input construction-date-from">
+            <span class="date-sep">〜</span>
+            <input type="month" class="date-input construction-date-to">
+            <div class="filter-sep"></div>
+            <div class="preset-btns">
+              <button class="preset-btn active" onclick="setConstructionPreset('this_month',this,true)">今月</button>
+              <button class="preset-btn" onclick="setConstructionPreset('last_month',this,true)">前月</button>
+              <button class="preset-btn" onclick="setConstructionPreset('last3',this,true)">直近3ヶ月</button>
+              <button class="preset-btn" onclick="setConstructionPreset('last6',this,true)">直近6ヶ月</button>
+              <button class="preset-btn" onclick="setConstructionPreset('this_fy',this,true)">今年度</button>
+              <button class="preset-btn" onclick="setConstructionPreset('last_fy',this,true)">前年度</button>
+              <button class="preset-btn" onclick="setConstructionPreset('all',this,true)">全期間</button>
+            </div>
+            <button class="apply-btn" onclick="applyConstructionFilter()">適用</button>
+            <span class="period-label construction-period-label">読み込み中...</span>
+          </div>
+          <div class="kpi-row" id="construction-expenses-kpi-row" style="grid-template-columns:repeat(4,1fr);margin-bottom:16px"></div>
+          <div class="table-card">
+            <div class="chart-title" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+              <span>月別 仕入・経費／外注費（月をクリックして詳細展開）</span>
+              <select id="construction-expenses-type-filter" onchange="renderConstructionExpenses()" class="filter-select" style="font-size:11px">
+                <option value="">全種別</option>
+                <option value="expense">仕入・経費のみ</option>
+                <option value="outsource">外注費のみ</option>
+              </select>
+            </div>
+            <div id="construction-expenses-item-summary" style="display:none;gap:20px;margin-bottom:14px;padding:12px;background:var(--bg);border-radius:8px;flex-wrap:wrap"></div>
+            <div id="construction-expenses-monthly-list" style="margin-top:4px">
+              <div class="loading"><div class="spinner"></div><span>データ読み込み中...</span></div>
             </div>
           </div>
         </div>
@@ -1326,14 +1418,14 @@ body { font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans','Yu Gothic UI',sa
               <table class="tbl-fit-mobile cols-8" style="width:100%;border-collapse:collapse;font-size:12px">
                 <thead>
                   <tr style="border-bottom:1px solid var(--border)">
-                    <th style="text-align:left;padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500">施行日</th>
-                    <th style="text-align:left;padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500">営業担当</th>
-                    <th style="text-align:left;padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500">物件名</th>
-                    <th style="text-align:left;padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500">市町村区</th>
-                    <th style="text-align:left;padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500">施工内容</th>
-                    <th style="text-align:right;padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500">予算売上(税別)</th>
-                    <th style="text-align:right;padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500">実質金額(税別)</th>
-                    <th style="text-align:right;padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500">翌月検収(税別)</th>
+                    <th style="padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500">施行日</th>
+                    <th style="padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500">営業担当</th>
+                    <th style="padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500">物件名</th>
+                    <th style="padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500">市町村区</th>
+                    <th style="padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500">施工内容</th>
+                    <th style="padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500">予算売上(税別)</th>
+                    <th style="padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500">実質金額(税別)</th>
+                    <th style="padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500">翌月検収(税別)</th>
                   </tr>
                 </thead>
                 <tbody id="galilei-sites-table-body"></tbody>
@@ -1382,9 +1474,9 @@ body { font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans','Yu Gothic UI',sa
                 <table style="width:100%;border-collapse:collapse;font-size:12px">
                   <thead>
                     <tr style="border-bottom:1px solid var(--border)">
-                      <th style="text-align:left;padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500">担当営業</th>
-                      <th style="text-align:right;padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500">物件数</th>
-                      <th style="text-align:right;padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500">金額(税別)</th>
+                      <th style="padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500">担当営業</th>
+                      <th style="padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500">物件数</th>
+                      <th style="padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500">金額(税別)</th>
                     </tr>
                   </thead>
                   <tbody id="galilei-reps-table-body"></tbody>
@@ -1468,12 +1560,12 @@ body { font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans','Yu Gothic UI',sa
               <table class="tbl-fit-mobile cols-6" style="width:100%;border-collapse:collapse;font-size:12px">
                 <thead>
                   <tr style="border-bottom:1px solid var(--border)">
-                    <th style="text-align:left;padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500">年月</th>
-                    <th style="text-align:right;padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500">駐車場等</th>
-                    <th style="text-align:right;padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500">ETC利用料金</th>
-                    <th style="text-align:right;padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500">部材費</th>
-                    <th style="text-align:right;padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500">廃棄費</th>
-                    <th style="text-align:right;padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500">合計</th>
+                    <th style="padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500">年月</th>
+                    <th style="padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500">駐車場等</th>
+                    <th style="padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500">ETC利用料金</th>
+                    <th style="padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500">部材費</th>
+                    <th style="padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500">廃棄費</th>
+                    <th style="padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500">合計</th>
                   </tr>
                 </thead>
                 <tbody id="galilei-expense-table-body"></tbody>
@@ -1607,16 +1699,16 @@ body { font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans','Yu Gothic UI',sa
         <table style="width:100%;border-collapse:collapse;font-size:12px" id="hrmos-work-table">
           <thead>
             <tr style="border-bottom:1px solid var(--border)">
-              <th style="text-align:left;padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500;cursor:pointer;user-select:none" onclick="toggleHrmosSort('work','name')">氏名<span id="hrmos-arrow-work-name"></span></th>
-              <th style="text-align:left;padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500">部門</th>
-              <th style="text-align:right;padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500;cursor:pointer;user-select:none" onclick="toggleHrmosSort('work','prescribed')">所定時間<span id="hrmos-arrow-work-prescribed"></span></th>
-              <th style="text-align:right;padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500;cursor:pointer;user-select:none" onclick="toggleHrmosSort('work','inPrescribed')">所定内労働時間<span id="hrmos-arrow-work-inPrescribed"></span></th>
-              <th style="text-align:right;padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500;cursor:pointer;user-select:none" onclick="toggleHrmosSort('work','legalHolidayOvertime')">法定外休日労働時間<span id="hrmos-arrow-work-legalHolidayOvertime"></span></th>
-              <th style="text-align:right;padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500;cursor:pointer;user-select:none" onclick="toggleHrmosSort('work','statutoryHoliday')">法定休日労働時間<span id="hrmos-arrow-work-statutoryHoliday"></span></th>
-              <th style="text-align:right;padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500;cursor:pointer;user-select:none" onclick="toggleHrmosSort('work','lateNight')">深夜労働時間<span id="hrmos-arrow-work-lateNight"></span></th>
-              <th style="text-align:right;padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500;cursor:pointer;user-select:none" onclick="toggleHrmosSort('work','total')">総労働時間<span id="hrmos-arrow-work-total"></span></th>
-              <th style="text-align:right;padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500;cursor:pointer;user-select:none" onclick="toggleHrmosSort('work','actual')">実働時間<span id="hrmos-arrow-work-actual"></span></th>
-              <th style="text-align:right;padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500;cursor:pointer;user-select:none" onclick="toggleHrmosSort('work','over')">残業時間<span id="hrmos-arrow-work-over"></span></th>
+              <th style="padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500;cursor:pointer;user-select:none" onclick="toggleHrmosSort('work','name')">氏名<span id="hrmos-arrow-work-name"></span></th>
+              <th style="padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500">部門</th>
+              <th style="padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500;cursor:pointer;user-select:none" onclick="toggleHrmosSort('work','prescribed')">所定時間<span id="hrmos-arrow-work-prescribed"></span></th>
+              <th style="padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500;cursor:pointer;user-select:none" onclick="toggleHrmosSort('work','inPrescribed')">所定内労働時間<span id="hrmos-arrow-work-inPrescribed"></span></th>
+              <th style="padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500;cursor:pointer;user-select:none" onclick="toggleHrmosSort('work','legalHolidayOvertime')">法定外休日労働時間<span id="hrmos-arrow-work-legalHolidayOvertime"></span></th>
+              <th style="padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500;cursor:pointer;user-select:none" onclick="toggleHrmosSort('work','statutoryHoliday')">法定休日労働時間<span id="hrmos-arrow-work-statutoryHoliday"></span></th>
+              <th style="padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500;cursor:pointer;user-select:none" onclick="toggleHrmosSort('work','lateNight')">深夜労働時間<span id="hrmos-arrow-work-lateNight"></span></th>
+              <th style="padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500;cursor:pointer;user-select:none" onclick="toggleHrmosSort('work','total')">総労働時間<span id="hrmos-arrow-work-total"></span></th>
+              <th style="padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500;cursor:pointer;user-select:none" onclick="toggleHrmosSort('work','actual')">実働時間<span id="hrmos-arrow-work-actual"></span></th>
+              <th style="padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500;cursor:pointer;user-select:none" onclick="toggleHrmosSort('work','over')">残業時間<span id="hrmos-arrow-work-over"></span></th>
             </tr>
           </thead>
           <tbody id="hrmos-work-table-body"></tbody>
@@ -2779,6 +2871,338 @@ function calcSalesFilterMonths() {
   return Math.max((to.getFullYear() - base.getFullYear()) * 12 + (to.getMonth() - base.getMonth()) + 1, 1);
 }
 
+
+// ==================== 営業 仕入・経費／外注費 ====================
+let allSalesExpenses = [];   // { sheetName, yearMonth, type:'expense'|'outsource', item, note, amount }
+const SALES_EXPENSE_SKIP_KEYWORDS = ['営業部', '管理票', '原本'];
+const salesExpensesExpanded = new Set();
+
+async function loadSalesExpensesData() {
+  console.log('loadSalesExpensesData開始');
+  const cfg = getConfig();
+  allSalesExpenses = [];
+
+  // ローディング表示
+  const listEl = document.getElementById('sales-expenses-monthly-list');
+  if (listEl) listEl.innerHTML = '<div class="loading"><div class="spinner"></div><span>データ読み込み中...</span></div>';
+
+  // Excelシリアル値→年月変換
+  function serialToYM(n) {
+    const d = new Date(Math.round((n - 25569) * 86400 * 1000));
+    const y = d.getUTCFullYear(), m = d.getUTCMonth()+1;
+    return (y >= 2000 && y <= 2100) ? `${y}/${String(m).padStart(2,'0')}` : null;
+  }
+  function rawToYM(raw) {
+    if (!raw) return null;
+    const s = String(raw).trim();
+    const num = Number(s.replace(/,/g,''));
+    if (!isNaN(num) && num > 40000) return serialToYM(num);
+    const m = s.match(/(\d{4})[\/\-](\d{1,2})/);
+    return m ? `${m[1]}/${String(m[2]).padStart(2,'0')}` : null;
+  }
+  // シート名をrangeで使えるようエスケープ
+  const escSheet = t => /[^a-zA-Z0-9_]/.test(t) ? `'${t.replace(/'/g,"''")}'` : t;
+
+  const sheetIdList = (cfg.sales_sheets || []).filter(e => e.sheetId);
+  if (!sheetIdList.length && cfg.salesSheetId) sheetIdList.push({ sheetId: cfg.salesSheetId });
+
+  for (const entry of sheetIdList) {
+    try {
+      const metaUrl = `https://sheets.googleapis.com/v4/spreadsheets/${entry.sheetId}?key=${cfg.apiKey}&fields=sheets.properties.title`;
+      const metaRes = await fetch(metaUrl);
+      if (!metaRes.ok) { console.warn('シート一覧取得失敗', entry.sheetId, metaRes.status); continue; }
+      const meta = await metaRes.json();
+      const sheetTitles = (meta.sheets || []).map(s => s.properties.title);
+
+      const targets = sheetTitles.filter(title =>
+        !SALES_EXPENSE_SKIP_KEYWORDS.some(kw => title.includes(kw))
+      );
+      console.log('仕入・経費 対象シート数:', targets.length, targets.slice(0,5));
+
+      // batchGetは1リクエスト100レンジまで → 1シート7レンジなので14シートずつ
+      const BATCH_SIZE = 14;
+      for (let i = 0; i < targets.length; i += BATCH_SIZE) {
+        const batch = targets.slice(i, i + BATCH_SIZE);
+        const ranges = batch.flatMap(title => {
+          const s = escSheet(title);
+          return [
+            `${s}!K2`,
+            `${s}!A14:A23`,
+            `${s}!C14:C23`,
+            `${s}!E14:E23`,
+            `${s}!G14:G23`,
+            `${s}!I14:I23`,
+            `${s}!K14:K23`,
+          ];
+        });
+        try {
+          const batchResult = await fetchSheetBatch(cfg.apiKey, entry.sheetId, ranges);
+          batch.forEach((title, j) => {
+            const base = j * 7;
+            const k2Rows = batchResult[base] || [];
+            const rawDate = k2Rows[0] ? String(k2Rows[0][0]||'').trim() : '';
+            const yearMonth = rawToYM(rawDate);
+            if (!yearMonth) { console.log('完工日なし→スキップ:', title, rawDate); return; }
+
+            const expItems = batchResult[base+1] || [];
+            const expNotes = batchResult[base+2] || [];
+            const expAmts  = batchResult[base+3] || [];
+            const outItems = batchResult[base+4] || [];
+            const outNotes = batchResult[base+5] || [];
+            const outAmts  = batchResult[base+6] || [];
+
+            for (let r = 0; r < 10; r++) {
+              const item   = expItems[r] ? String(expItems[r][0]||'').trim() : '';
+              const note   = expNotes[r] ? String(expNotes[r][0]||'').trim() : '';
+              const amount = expAmts[r]  ? parseNum(expAmts[r][0]) : 0;
+              if (!item && amount === 0) continue;
+              allSalesExpenses.push({ sheetName:title, yearMonth, type:'expense', item:item||'（項目なし）', note, amount });
+            }
+            for (let r = 0; r < 10; r++) {
+              const item   = outItems[r] ? String(outItems[r][0]||'').trim() : '';
+              const note   = outNotes[r] ? String(outNotes[r][0]||'').trim() : '';
+              const amount = outAmts[r]  ? parseNum(outAmts[r][0]) : 0;
+              if (!item && amount === 0) continue;
+              allSalesExpenses.push({ sheetName:title, yearMonth, type:'outsource', item:item||'（項目なし）', note, amount });
+            }
+          });
+        } catch(batchErr) {
+          console.warn('batchGet失敗 batch', i, ':', batchErr.message);
+        }
+      }
+    } catch(e) {
+      console.error('loadSalesExpensesData エラー:', e.message);
+    }
+  }
+  console.log('仕入・経費データ件数:', allSalesExpenses.length);
+  renderSalesExpenses();
+}
+
+function filterSalesExpensesByPeriod(arr) {
+  return arr.filter(d => {
+    const ymNorm = d.yearMonth.replace('/', '-').substring(0, 7);
+    if (salesFilterFrom && ymNorm < salesFilterFrom) return false;
+    if (salesFilterTo   && ymNorm > salesFilterTo)   return false;
+    return true;
+  });
+}
+
+function renderSalesExpenses() {
+  const typeFilter = (document.getElementById('sales-expenses-type-filter') || {}).value || '';
+  let data = filterSalesExpensesByPeriod(allSalesExpenses);
+  if (typeFilter === 'expense')   data = data.filter(d => d.type === 'expense');
+  if (typeFilter === 'outsource') data = data.filter(d => d.type === 'outsource');
+
+  const expData = data.filter(d => d.type === 'expense');
+  const outData = data.filter(d => d.type === 'outsource');
+  const totalExpense   = expData.reduce((a,d) => a+d.amount, 0);
+  const totalOutsource = outData.reduce((a,d) => a+d.amount, 0);
+  const totalAll       = totalExpense + totalOutsource;
+  const countSheets    = new Set(data.map(d => d.sheetName)).size;
+
+  // ── KPIカード ──
+  document.getElementById('sales-expenses-kpi-row').innerHTML =
+    kpiCard('仕入・経費 合計', '¥'+fmtYen(totalExpense),   0, '', false, true) +
+    kpiCard('外注費 合計',     '¥'+fmtYen(totalOutsource), 0, '', false, true) +
+    kpiCard('合計（税抜）',    '¥'+fmtYen(totalAll),       0, '', false, true) +
+    kpiCard('対象物件数',      countSheets+'件',            0, '', false, true);
+
+  // ── 項目別集計（クリックで物件明細展開） ──
+  const _itemExp = window._salesItemExpanded || (window._salesItemExpanded = { expense:{}, outsource:{} });
+
+  function buildItemSummary(rows, color, label, typeKey) {
+    const itemMap = {}, itemDetails = {};
+    rows.forEach(d => {
+      itemMap[d.item] = (itemMap[d.item]||0) + d.amount;
+      if (!itemDetails[d.item]) itemDetails[d.item] = [];
+      itemDetails[d.item].push(d);
+    });
+    const entries = Object.entries(itemMap).filter(([k,v]) => v > 0).sort((a,b) => b[1]-a[1]);
+    if (!entries.length) return '';
+    const max = entries[0][1];
+    const expanded = _itemExp[typeKey] || {};
+
+    const rowsHtml = entries.map(([item, amt], idx) => {
+      const w = Math.max(Math.round(amt/max*100), 2);
+      const dId = `se-item-d-${typeKey}-${idx}`;
+      const aId = `se-item-a-${typeKey}-${idx}`;
+      const isOpen = !!expanded[item];
+      const safeItem = item.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+      const detailRows = (itemDetails[item]||[]).map(d =>
+        `<tr style="border-bottom:0.5px solid var(--border)">
+          <td style="padding:2px 6px;font-size:11px">${d.sheetName}</td>
+          <td style="padding:2px 6px;font-size:11px;color:var(--text-muted)">${d.note||'-'}</td>
+          <td style="padding:2px 6px;font-size:11px;text-align:right;font-weight:500">${d.amount?'¥'+fmtYen(d.amount):'-'}</td>
+        </tr>`).join('');
+      return `<tr style="cursor:pointer;border-bottom:0.5px solid var(--border)" onclick="toggleSalesItemDetail('${typeKey}','${idx}','${safeItem}')">
+        <td style="padding:3px 6px;font-size:12px;max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${item}">
+          <span id="${aId}" style="font-size:10px;color:var(--text-muted);margin-right:3px;display:inline-block;transform:rotate(${isOpen?90:0}deg);transition:transform .15s">▶</span>${item}
+        </td>
+        <td style="padding:3px 6px;width:100%">
+          <div style="background:var(--border);border-radius:3px;overflow:hidden;height:13px">
+            <div style="height:13px;width:${w}%;background:${color};border-radius:3px;opacity:.75"></div>
+          </div>
+        </td>
+        <td style="padding:3px 6px;font-size:12px;font-weight:600;text-align:right;white-space:nowrap">¥${fmtYen(amt)}</td>
+      </tr>
+      <tr id="${dId}" style="display:${isOpen?'table-row':'none'}">
+        <td colspan="3" style="padding:2px 0 6px 14px">
+          <table style="width:100%;border-collapse:collapse;background:var(--bg);border-radius:5px">
+            <thead><tr>
+              <th style="padding:2px 6px;font-size:10px;color:var(--text-muted);font-weight:500;">物件名</th>
+              <th style="padding:2px 6px;font-size:10px;color:var(--text-muted);font-weight:500;">備考</th>
+              <th style="padding:2px 6px;font-size:10px;color:var(--text-muted);font-weight:500;">金額</th>
+            </tr></thead>
+            <tbody>${detailRows}</tbody>
+          </table>
+        </td>
+      </tr>`;
+    }).join('');
+
+    return `<div style="flex:1;min-width:0">
+      <div style="font-size:11px;font-weight:600;color:${color};margin-bottom:6px;padding-bottom:4px;border-bottom:2px solid ${color}">${label} <span style="font-size:10px;font-weight:400;color:var(--text-muted)">（クリックで詳細）</span></div>
+      <table style="width:100%;border-collapse:collapse">${rowsHtml}</table>
+    </div>`;
+  }
+
+  const expSummary = buildItemSummary(expData, '#3B82F6', '仕入・経費 項目別', 'expense');
+  const outSummary = buildItemSummary(outData, '#8B5CF6', '外注費 項目別', 'outsource');
+
+  const summaryEl = document.getElementById('sales-expenses-item-summary');
+  if (summaryEl) {
+    summaryEl.style.display = (expSummary || outSummary) ? 'flex' : 'none';
+    summaryEl.innerHTML = (expSummary || '') + (outSummary ? `<div style="width:1px;background:var(--border);flex-shrink:0;margin:0 4px"></div>` + outSummary : '');
+  }
+
+  // ── 月別グループ化 ──
+  const monthGroups = {};
+  data.forEach(d => {
+    if (!monthGroups[d.yearMonth]) monthGroups[d.yearMonth] = { items:[], expTotal:0, outTotal:0 };
+    monthGroups[d.yearMonth].items.push(d);
+    if (d.type === 'expense')   monthGroups[d.yearMonth].expTotal += d.amount;
+    if (d.type === 'outsource') monthGroups[d.yearMonth].outTotal += d.amount;
+  });
+  const sortedMonths = Object.keys(monthGroups).sort().reverse();
+
+  const listEl = document.getElementById('sales-expenses-monthly-list');
+  if (!listEl) return;
+
+  if (!sortedMonths.length) {
+    listEl.innerHTML = '<div style="color:var(--text-muted);font-size:12px;padding:12px 0">データがありません</div>';
+    return;
+  }
+
+  listEl.innerHTML = sortedMonths.map(ym => {
+    const g = monthGroups[ym];
+    const isOpen = salesExpensesExpanded.has(ym);
+
+    // 物件ごとにまとめる
+    const bySheet = {};
+    g.items.forEach(d => {
+      if (!bySheet[d.sheetName]) bySheet[d.sheetName] = { expense:[], outsource:[] };
+      bySheet[d.sheetName][d.type === 'expense' ? 'expense' : 'outsource'].push(d);
+    });
+
+    const detailHtml = Object.entries(bySheet).map(([sheet, rows]) => {
+      const sheetExpTotal = rows.expense.reduce((a,d)=>a+d.amount,0);
+      const sheetOutTotal = rows.outsource.reduce((a,d)=>a+d.amount,0);
+
+      // 仕入・経費行
+      const expRows = rows.expense.map(d =>
+        `<tr style="border-bottom:0.5px solid var(--bg)">
+          <td style="padding:2px 5px;font-size:11px;color:#3B82F6;white-space:nowrap">仕入・経費</td>
+          <td style="padding:2px 5px;font-size:11px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${d.item}">${d.item}</td>
+          <td style="padding:2px 5px;font-size:11px;color:var(--text-secondary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${d.note||''}">${d.note||''}</td>
+          <td style="padding:2px 5px;font-size:11px;text-align:right;font-weight:600;white-space:nowrap">${d.amount ? '¥'+fmtYen(d.amount) : '-'}</td>
+        </tr>`).join('');
+
+      // 外注費行
+      const outRows = rows.outsource.map(d =>
+        `<tr style="border-bottom:0.5px solid var(--bg)">
+          <td style="padding:2px 5px;font-size:11px;color:#8B5CF6;white-space:nowrap">外注費</td>
+          <td style="padding:2px 5px;font-size:11px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${d.item}">${d.item}</td>
+          <td style="padding:2px 5px;font-size:11px;color:var(--text-secondary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${d.note||''}">${d.note||''}</td>
+          <td style="padding:2px 5px;font-size:11px;text-align:right;font-weight:600;white-space:nowrap">${d.amount ? '¥'+fmtYen(d.amount) : '-'}</td>
+        </tr>`).join('');
+
+      return `<div style="margin-bottom:8px;border:1px solid var(--border);border-radius:7px;overflow:hidden;max-width:680px">
+        <div style="background:var(--bg);padding:5px 10px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border)">
+          <span style="font-weight:600;font-size:12px">${sheet}</span>
+          <span style="font-size:10px;color:var(--text-muted)">
+            仕入経費 ${sheetExpTotal ? '¥'+fmtYen(sheetExpTotal) : '-'} / 外注費 ${sheetOutTotal ? '¥'+fmtYen(sheetOutTotal) : '-'}
+          </span>
+        </div>
+        <table style="width:100%;border-collapse:collapse;table-layout:fixed">
+          <colgroup><col style="width:72px"><col style="width:155px"><col><col style="width:100px"></colgroup>
+          <thead><tr style="border-bottom:1px solid var(--border);background:var(--surface)">
+            <th style="padding:3px 6px;font-size:10px;color:var(--text-muted);font-weight:500;">種別</th>
+            <th style="padding:3px 6px;font-size:10px;color:var(--text-muted);font-weight:500;">項目名</th>
+            <th style="padding:3px 6px;font-size:10px;color:var(--text-muted);font-weight:500;">備考</th>
+            <th style="padding:3px 6px;font-size:10px;color:var(--text-muted);font-weight:500;">金額</th>
+          </tr></thead>
+          <tbody>${expRows}${outRows}</tbody>
+        </table>
+      </div>`;
+    }).join('');
+
+    const monthTotal = g.expTotal + g.outTotal;
+    return `
+      <div style="border:1px solid var(--border);border-radius:8px;margin-bottom:8px;overflow:hidden;max-width:720px">
+        <div onclick="toggleSalesExpensesMonth('${ym}')" style="cursor:pointer;display:flex;justify-content:space-between;align-items:center;padding:9px 12px;background:var(--bg)">
+          <div style="display:flex;align-items:center;gap:10px">
+            <span id="sales-exp-arrow-${ym}" style="font-size:11px;color:var(--text-muted);transition:transform .2s;display:inline-block;transform:rotate(${isOpen?90:0}deg)">▶</span>
+            <span style="font-weight:600;font-size:13px">${ym}</span>
+            <span style="font-size:11px;color:var(--text-muted)">${new Set(g.items.map(d=>d.sheetName)).size}物件</span>
+          </div>
+          <div style="text-align:right">
+            <span style="font-size:12px;font-weight:700">¥${fmtYen(monthTotal)}</span>
+            <span style="font-size:10px;color:var(--text-muted);margin-left:8px">仕入経費¥${fmtYen(g.expTotal)} / 外注費¥${fmtYen(g.outTotal)}</span>
+          </div>
+        </div>
+        <div id="sales-exp-detail-${ym}" style="display:${isOpen?'block':'none'};padding:8px">
+          ${detailHtml}
+        </div>
+      </div>`;
+  }).join('');
+}
+
+// 月別：排他アコーデオン
+function toggleSalesExpensesMonth(ym) {
+  const isOpen = salesExpensesExpanded.has(ym);
+  salesExpensesExpanded.forEach(k => {
+    const d = document.getElementById('sales-exp-detail-'+k);
+    const a = document.getElementById('sales-exp-arrow-'+k);
+    if (d) d.style.display = 'none';
+    if (a) a.style.transform = 'rotate(0deg)';
+  });
+  salesExpensesExpanded.clear();
+  if (!isOpen) {
+    salesExpensesExpanded.add(ym);
+    const d = document.getElementById('sales-exp-detail-'+ym);
+    const a = document.getElementById('sales-exp-arrow-'+ym);
+    if (d) d.style.display = 'block';
+    if (a) a.style.transform = 'rotate(90deg)';
+  }
+}
+
+// 項目別：排他アコーデオン（クリックで物件明細展開）
+function toggleSalesItemDetail(typeKey, idx, item) {
+  const exp = window._salesItemExpanded[typeKey];
+  const isOpen = !!exp[item];
+  // 同typeKey内を全て閉じる
+  Object.keys(exp).forEach(k => { exp[k] = false; });
+  document.querySelectorAll(`[id^="se-item-d-${typeKey}-"]`).forEach(el => { el.style.display = 'none'; });
+  document.querySelectorAll(`[id^="se-item-a-${typeKey}-"]`).forEach(el => { el.style.transform = 'rotate(0deg)'; });
+  if (!isOpen) {
+    exp[item] = true;
+    const d = document.getElementById(`se-item-d-${typeKey}-${idx}`);
+    const a = document.getElementById(`se-item-a-${typeKey}-${idx}`);
+    if (d) d.style.display = 'table-row';
+    if (a) a.style.transform = 'rotate(90deg)';
+  }
+}
+// ==================== END 営業 仕入・経費／外注費 ====================
+
 async function loadSalesData() {
   console.log('loadSalesData開始');
   const cfg = getConfig();
@@ -2937,8 +3361,8 @@ function renderSalesDashboard() {
     const d = monthMap[m];
     const rate = d.sales>0 ? d.profit/d.sales*100 : 0;
     const isNow = m===thisYM_slash || m===thisYM_dash;
-    return `<tr><td data-label="完工年月">${m}${isNow?' <span style="font-size:10px;color:var(--blue)">今月</span>':''}</td><td data-label="売上高（円）">¥${fmtYen(d.sales)}</td><td data-label="粗利額（円）">¥${fmtYen(d.profit)}</td><td data-label="粗利率">${fmtPct(rate)}</td><td data-label="件数">${d.count}件</td></tr>`;
-  }).join('') + `<tr class="total-row"><td data-label="完工年月">合計</td><td data-label="売上高（円）">¥${fmtYen(totalSales)}</td><td data-label="粗利額（円）">¥${fmtYen(totalProfit)}</td><td data-label="粗利率">${fmtPct(totalMargin)}</td><td data-label="件数">${totalCount}件</td></tr>`;
+    return `<tr><td data-label="完工年月">${m}${isNow?' <span style="font-size:10px;color:var(--blue)">今月</span>':''}</td><td class="num" data-label="売上高（円）">¥${fmtYen(d.sales)}</td><td class="num" data-label="粗利額（円）">¥${fmtYen(d.profit)}</td><td class="num" data-label="粗利率">${fmtPct(rate)}</td><td class="num" data-label="件数">${d.count}件</td></tr>`;
+  }).join('') + `<tr class="total-row"><td data-label="完工年月">合計</td><td class="num" data-label="売上高（円）">¥${fmtYen(totalSales)}</td><td class="num" data-label="粗利額（円）">¥${fmtYen(totalProfit)}</td><td class="num" data-label="粗利率">${fmtPct(totalMargin)}</td><td class="num" data-label="件数">${totalCount}件</td></tr>`;
 
   // KPI進捗テーブル
   const kpiItems = [
@@ -2948,8 +3372,11 @@ function renderSalesDashboard() {
   const cmap = {good:'#16A34A', warn:'#D97706', bad:'#DC2626'};
   document.getElementById('sales-kpi-progress-table').innerHTML = kpiItems.map(k=>{
     const cl = achCls(k.pct); const w = Math.min(Math.round(k.pct),100);
-    return `<tr><td data-label="KPI項目">${k.label}</td><td data-label="目標" style="color:var(--text-muted)">${k.target}</td><td data-label="実績" style="font-weight:600">${k.actual}</td><td data-label="達成率" class="${cl==='good'?'td-green':cl==='warn'?'td-amber':'td-red'}">${Math.round(k.pct*10)/10}%</td><td data-label="進捗"><div class="mini-bar-wrap"><div class="mini-bar" style="width:${w}%;background:${cmap[cl]}"></div></div></td></tr>`;
+    return `<tr><td data-label="KPI項目">${k.label}</td><td class="num" data-label="目標" style="color:var(--text-muted)">${k.target}</td><td class="num" data-label="実績" style="font-weight:600">${k.actual}</td><td class="num" data-label="達成率" class="${cl==='good'?'td-green':cl==='warn'?'td-amber':'td-red'}">${Math.round(k.pct*10)/10}%</td><td data-label="進捗"><div class="mini-bar-wrap"><div class="mini-bar" style="width:${w}%;background:${cmap[cl]}"></div></div></td></tr>`;
   }).join('');
+
+  // 仕入・経費セクションが表示中なら再描画
+  if (allSalesExpenses.length > 0) renderSalesExpenses();
 
   // 案件一覧テーブル
   document.getElementById('sales-table-body').innerHTML = [...sales].reverse().map(d=>`
@@ -2957,9 +3384,9 @@ function renderSalesDashboard() {
       <td data-label="完工日" style="padding:6px 8px">${shortDate(d.date)}</td>
       <td data-label="販売先" style="padding:6px 8px;font-weight:500">${d.client}</td>
       <td data-label="売上内容" style="padding:6px 8px;color:var(--text-secondary)">${d.content}</td>
-      <td data-label="売上金額(税抜)" style="padding:6px 8px;text-align:right">¥${fmtYen(d.sales)}</td>
-      <td data-label="粗利額(税抜)" style="padding:6px 8px;text-align:right;font-weight:600;color:var(--green)">¥${fmtYen(d.profit)}</td>
-      <td data-label="粗利率" style="padding:6px 8px;text-align:right;color:${d.profitRate>=30?'var(--green)':d.profitRate>=15?'var(--amber)':'var(--red)'}">${fmtPct(d.profitRate)}</td>
+      <td data-label="売上金額(税抜)" class="num" style="padding:6px 8px">¥${fmtYen(d.sales)}</td>
+      <td data-label="粗利額(税抜)" class="num" style="padding:6px 8px;font-weight:600;color:var(--green)">¥${fmtYen(d.profit)}</td>
+      <td data-label="粗利率" class="num" style="padding:6px 8px;color:${d.profitRate>=30?'var(--green)':d.profitRate>=15?'var(--amber)':'var(--red)'}">${fmtPct(d.profitRate)}</td>
     </tr>`).join('');
 }
 
@@ -3080,6 +3507,295 @@ async function loadConstructionData() {
   }
 }
 
+
+// ==================== その他工事 仕入・経費／外注費 ====================
+let allConstructionExpenses = [];
+const CONSTRUCTION_EXPENSE_SKIP_KEYWORDS = ['その他工事', '管理票', '原本'];
+const constructionExpensesExpanded = new Set();
+const _constructionItemExpanded = { expense:{}, outsource:{} };
+
+async function loadConstructionExpensesData() {
+  console.log('loadConstructionExpensesData開始');
+  const cfg = getConfig();
+  allConstructionExpenses = [];
+
+  const listEl = document.getElementById('construction-expenses-monthly-list');
+  if (listEl) listEl.innerHTML = '<div class="loading"><div class="spinner"></div><span>データ読み込み中...</span></div>';
+
+  function serialToYM_c(n) {
+    const d = new Date(Math.round((n - 25569) * 86400 * 1000));
+    const y = d.getUTCFullYear(), m = d.getUTCMonth()+1;
+    return (y >= 2000 && y <= 2100) ? `${y}/${String(m).padStart(2,'0')}` : null;
+  }
+  function rawToYM_c(raw) {
+    if (!raw) return null;
+    const s = String(raw).trim();
+    const num = Number(s.replace(/,/g,''));
+    if (!isNaN(num) && num > 40000) return serialToYM_c(num);
+    const m = s.match(/(\d{4})[\/\-](\d{1,2})/);
+    return m ? `${m[1]}/${String(m[2]).padStart(2,'0')}` : null;
+  }
+  const escSheet_c = t => /[^a-zA-Z0-9_]/.test(t) ? `'${t.replace(/'/g,"''")}'` : t;
+
+  const sheetIdList = (cfg.construction_sheets || []).filter(e => e.sheetId);
+  if (!sheetIdList.length && cfg.constructionSheetId) sheetIdList.push({ sheetId: cfg.constructionSheetId });
+
+  for (const entry of sheetIdList) {
+    try {
+      const metaUrl = `https://sheets.googleapis.com/v4/spreadsheets/${entry.sheetId}?key=${cfg.apiKey}&fields=sheets.properties.title`;
+      const metaRes = await fetch(metaUrl);
+      if (!metaRes.ok) { console.warn('シート一覧取得失敗', entry.sheetId, metaRes.status); continue; }
+      const meta = await metaRes.json();
+      const sheetTitles = (meta.sheets || []).map(s => s.properties.title);
+
+      const targets = sheetTitles.filter(title =>
+        !CONSTRUCTION_EXPENSE_SKIP_KEYWORDS.some(kw => title.includes(kw))
+      );
+      console.log('工事 仕入・経費 対象シート数:', targets.length, targets.slice(0,5));
+
+      const BATCH_SIZE = 14;
+      for (let i = 0; i < targets.length; i += BATCH_SIZE) {
+        const batch = targets.slice(i, i + BATCH_SIZE);
+        const ranges = batch.flatMap(title => {
+          const s = escSheet_c(title);
+          return [`${s}!K2`, `${s}!A14:A23`, `${s}!C14:C23`, `${s}!E14:E23`, `${s}!G14:G23`, `${s}!I14:I23`, `${s}!K14:K23`];
+        });
+        try {
+          const batchResult = await fetchSheetBatch(cfg.apiKey, entry.sheetId, ranges);
+          batch.forEach((title, j) => {
+            const base = j * 7;
+            const k2Rows = batchResult[base] || [];
+            const rawDate = k2Rows[0] ? String(k2Rows[0][0]||'').trim() : '';
+            const yearMonth = rawToYM_c(rawDate);
+            if (!yearMonth) { console.log('完工日なし→スキップ:', title, rawDate); return; }
+
+            const expItems = batchResult[base+1]||[], expNotes = batchResult[base+2]||[], expAmts = batchResult[base+3]||[];
+            const outItems = batchResult[base+4]||[], outNotes = batchResult[base+5]||[], outAmts = batchResult[base+6]||[];
+
+            for (let r = 0; r < 10; r++) {
+              const item = expItems[r] ? String(expItems[r][0]||'').trim() : '';
+              const note = expNotes[r] ? String(expNotes[r][0]||'').trim() : '';
+              const amount = expAmts[r] ? parseNum(expAmts[r][0]) : 0;
+              if (!item && amount === 0) continue;
+              allConstructionExpenses.push({ sheetName:title, yearMonth, type:'expense', item:item||'（項目なし）', note, amount });
+            }
+            for (let r = 0; r < 10; r++) {
+              const item = outItems[r] ? String(outItems[r][0]||'').trim() : '';
+              const note = outNotes[r] ? String(outNotes[r][0]||'').trim() : '';
+              const amount = outAmts[r] ? parseNum(outAmts[r][0]) : 0;
+              if (!item && amount === 0) continue;
+              allConstructionExpenses.push({ sheetName:title, yearMonth, type:'outsource', item:item||'（項目なし）', note, amount });
+            }
+          });
+        } catch(batchErr) { console.warn('batchGet失敗:', batchErr.message); }
+      }
+    } catch(e) { console.error('loadConstructionExpensesData エラー:', e.message); }
+  }
+  console.log('工事 仕入・経費データ件数:', allConstructionExpenses.length);
+  renderConstructionExpenses();
+}
+
+function filterConstructionExpensesByPeriod(arr) {
+  return arr.filter(d => {
+    const ymNorm = d.yearMonth.replace('/', '-').substring(0, 7);
+    if (constructionFilterFrom && ymNorm < constructionFilterFrom) return false;
+    if (constructionFilterTo   && ymNorm > constructionFilterTo)   return false;
+    return true;
+  });
+}
+
+function buildConstructionItemSummary(rows, color, label, typeKey) {
+  const itemMap = {}, itemDetails = {};
+  rows.forEach(d => {
+    itemMap[d.item] = (itemMap[d.item]||0) + d.amount;
+    if (!itemDetails[d.item]) itemDetails[d.item] = [];
+    itemDetails[d.item].push(d);
+  });
+  const entries = Object.entries(itemMap).filter(([k,v]) => v > 0).sort((a,b) => b[1]-a[1]);
+  if (!entries.length) return '';
+  const max = entries[0][1];
+  const expanded = _constructionItemExpanded[typeKey] || {};
+
+  const rowsHtml = entries.map(([item, amt], idx) => {
+    const w = Math.max(Math.round(amt/max*100), 2);
+    const dId = `ce-item-d-${typeKey}-${idx}`;
+    const aId = `ce-item-a-${typeKey}-${idx}`;
+    const isOpen = !!expanded[item];
+    const safeItem = item.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+    const detailRows = (itemDetails[item]||[]).map(d =>
+      `<tr style="border-bottom:0.5px solid var(--border)">
+        <td style="padding:2px 6px;font-size:11px">${d.sheetName}</td>
+        <td style="padding:2px 6px;font-size:11px;color:var(--text-muted)">${d.note||'-'}</td>
+        <td style="padding:2px 6px;font-size:11px;text-align:right;font-weight:500">${d.amount?'¥'+fmtYen(d.amount):'-'}</td>
+      </tr>`).join('');
+    return `<tr style="cursor:pointer;border-bottom:0.5px solid var(--border)" onclick="toggleConstructionItemDetail('${typeKey}','${idx}','${safeItem}')">
+      <td style="padding:3px 6px;font-size:12px;max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${item}">
+        <span id="${aId}" style="font-size:10px;color:var(--text-muted);margin-right:3px;display:inline-block;transform:rotate(${isOpen?90:0}deg);transition:transform .15s">▶</span>${item}
+      </td>
+      <td style="padding:3px 6px;width:100%">
+        <div style="background:var(--border);border-radius:3px;overflow:hidden;height:13px">
+          <div style="height:13px;width:${w}%;background:${color};border-radius:3px;opacity:.75"></div>
+        </div>
+      </td>
+      <td style="padding:3px 6px;font-size:12px;font-weight:600;text-align:right;white-space:nowrap">¥${fmtYen(amt)}</td>
+    </tr>
+    <tr id="${dId}" style="display:${isOpen?'table-row':'none'}">
+      <td colspan="3" style="padding:2px 0 6px 14px">
+        <table style="width:100%;border-collapse:collapse;background:var(--bg);border-radius:5px">
+          <thead><tr>
+            <th style="padding:2px 6px;font-size:10px;color:var(--text-muted);font-weight:500;text-align:left">物件名</th>
+            <th style="padding:2px 6px;font-size:10px;color:var(--text-muted);font-weight:500;text-align:left">備考</th>
+            <th style="padding:2px 6px;font-size:10px;color:var(--text-muted);font-weight:500;text-align:right">金額</th>
+          </tr></thead>
+          <tbody>${detailRows}</tbody>
+        </table>
+      </td>
+    </tr>`;
+  }).join('');
+
+  return `<div style="flex:1;min-width:0">
+    <div style="font-size:11px;font-weight:600;color:${color};margin-bottom:6px;padding-bottom:4px;border-bottom:2px solid ${color}">${label} <span style="font-size:10px;font-weight:400;color:var(--text-muted)">（クリックで詳細）</span></div>
+    <table style="width:100%;border-collapse:collapse">${rowsHtml}</table>
+  </div>`;
+}
+
+function toggleConstructionItemDetail(typeKey, idx, item) {
+  const exp = _constructionItemExpanded[typeKey];
+  const isOpen = !!exp[item];
+  Object.keys(exp).forEach(k => { exp[k] = false; });
+  document.querySelectorAll(`[id^="ce-item-d-${typeKey}-"]`).forEach(el => { el.style.display = 'none'; });
+  document.querySelectorAll(`[id^="ce-item-a-${typeKey}-"]`).forEach(el => { el.style.transform = 'rotate(0deg)'; });
+  if (!isOpen) {
+    exp[item] = true;
+    const d = document.getElementById(`ce-item-d-${typeKey}-${idx}`);
+    const a = document.getElementById(`ce-item-a-${typeKey}-${idx}`);
+    if (d) d.style.display = 'table-row';
+    if (a) a.style.transform = 'rotate(90deg)';
+  }
+}
+
+function renderConstructionExpenses() {
+  const typeFilter = (document.getElementById('construction-expenses-type-filter')||{}).value||'';
+  let data = filterConstructionExpensesByPeriod(allConstructionExpenses);
+  if (typeFilter === 'expense')   data = data.filter(d => d.type === 'expense');
+  if (typeFilter === 'outsource') data = data.filter(d => d.type === 'outsource');
+
+  const expData = data.filter(d => d.type === 'expense');
+  const outData = data.filter(d => d.type === 'outsource');
+  const totalExpense   = expData.reduce((a,d) => a+d.amount, 0);
+  const totalOutsource = outData.reduce((a,d) => a+d.amount, 0);
+  const totalAll       = totalExpense + totalOutsource;
+  const countSheets    = new Set(data.map(d => d.sheetName)).size;
+
+  document.getElementById('construction-expenses-kpi-row').innerHTML =
+    kpiCard('仕入・経費 合計', '¥'+fmtYen(totalExpense),   0, '', false, true) +
+    kpiCard('外注費 合計',     '¥'+fmtYen(totalOutsource), 0, '', false, true) +
+    kpiCard('合計（税抜）',    '¥'+fmtYen(totalAll),       0, '', false, true) +
+    kpiCard('対象物件数',      countSheets+'件',            0, '', false, true);
+
+  const expSummary = buildConstructionItemSummary(expData, '#F59E0B', '仕入・経費 項目別', 'expense');
+  const outSummary = buildConstructionItemSummary(outData, '#8B5CF6', '外注費 項目別', 'outsource');
+  const summaryEl = document.getElementById('construction-expenses-item-summary');
+  if (summaryEl) {
+    summaryEl.style.display = (expSummary||outSummary) ? 'flex' : 'none';
+    summaryEl.innerHTML = (expSummary||'') +
+      (outSummary ? `<div style="width:1px;background:var(--border);flex-shrink:0;margin:0 4px"></div>`+outSummary : '');
+  }
+
+  const monthGroups = {};
+  data.forEach(d => {
+    if (!monthGroups[d.yearMonth]) monthGroups[d.yearMonth] = { items:[], expTotal:0, outTotal:0 };
+    monthGroups[d.yearMonth].items.push(d);
+    if (d.type==='expense')   monthGroups[d.yearMonth].expTotal += d.amount;
+    if (d.type==='outsource') monthGroups[d.yearMonth].outTotal += d.amount;
+  });
+  const sortedMonths = Object.keys(monthGroups).sort().reverse();
+
+  const listEl = document.getElementById('construction-expenses-monthly-list');
+  if (!listEl) return;
+  if (!sortedMonths.length) {
+    listEl.innerHTML = '<div style="color:var(--text-muted);font-size:12px;padding:12px 0">データがありません</div>';
+    return;
+  }
+
+  listEl.innerHTML = sortedMonths.map(ym => {
+    const g = monthGroups[ym];
+    const isOpen = constructionExpensesExpanded.has(ym);
+    const bySheet = {};
+    g.items.forEach(d => {
+      if (!bySheet[d.sheetName]) bySheet[d.sheetName] = { expense:[], outsource:[] };
+      bySheet[d.sheetName][d.type==='expense'?'expense':'outsource'].push(d);
+    });
+
+    const detailHtml = Object.entries(bySheet).map(([sheet, rows]) => {
+      const sheetExpTotal = rows.expense.reduce((a,d)=>a+d.amount,0);
+      const sheetOutTotal = rows.outsource.reduce((a,d)=>a+d.amount,0);
+      const makeRow = (d, typeColor, typeLabel) =>
+        `<tr style="border-bottom:0.5px solid var(--bg)">
+          <td style="padding:2px 5px;font-size:11px;color:${typeColor};white-space:nowrap">${typeLabel}</td>
+          <td style="padding:2px 5px;font-size:11px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${d.item}">${d.item}</td>
+          <td style="padding:2px 5px;font-size:11px;color:var(--text-secondary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${d.note||''}">${d.note||''}</td>
+          <td style="padding:2px 5px;font-size:11px;text-align:right;font-weight:600;white-space:nowrap">${d.amount?'¥'+fmtYen(d.amount):'-'}</td>
+        </tr>`;
+      const expRows = rows.expense.map(d=>makeRow(d,'#F59E0B','仕入・経費')).join('');
+      const outRows = rows.outsource.map(d=>makeRow(d,'#8B5CF6','外注費')).join('');
+      return `<div style="margin-bottom:6px;border:1px solid var(--border);border-radius:6px;overflow:hidden;max-width:680px">
+        <div style="background:var(--bg);padding:4px 8px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border)">
+          <span style="font-weight:600;font-size:12px">${sheet}</span>
+          <span style="font-size:10px;color:var(--text-muted)">仕入経費 ${sheetExpTotal?'¥'+fmtYen(sheetExpTotal):'-'} / 外注費 ${sheetOutTotal?'¥'+fmtYen(sheetOutTotal):'-'}</span>
+        </div>
+        <table style="width:100%;border-collapse:collapse;table-layout:fixed">
+          <colgroup><col style="width:72px"><col style="width:155px"><col><col style="width:100px"></colgroup>
+          <thead><tr style="border-bottom:1px solid var(--border)">
+            <th style="padding:3px 6px;font-size:10px;color:var(--text-muted);font-weight:500">種別</th>
+            <th style="padding:3px 6px;font-size:10px;color:var(--text-muted);font-weight:500">項目名</th>
+            <th style="padding:3px 6px;font-size:10px;color:var(--text-muted);font-weight:500">備考</th>
+            <th style="padding:3px 6px;font-size:10px;color:var(--text-muted);font-weight:500;text-align:right">金額</th>
+          </tr></thead>
+          <tbody>${expRows}${outRows}</tbody>
+        </table>
+      </div>`;
+    }).join('');
+
+    const monthTotal = g.expTotal + g.outTotal;
+    return `<div style="border:1px solid var(--border);border-radius:8px;margin-bottom:8px;overflow:hidden;max-width:720px">
+      <div onclick="toggleConstructionExpensesMonth('${ym}')" style="cursor:pointer;display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:var(--bg)">
+        <div style="display:flex;align-items:center;gap:8px">
+          <span id="ce-exp-arrow-${ym}" style="font-size:11px;color:var(--text-muted);transition:transform .2s;display:inline-block;transform:rotate(${isOpen?90:0}deg)">▶</span>
+          <span style="font-weight:600;font-size:13px">${ym}</span>
+          <span style="font-size:11px;color:var(--text-muted)">${new Set(g.items.map(d=>d.sheetName)).size}物件</span>
+        </div>
+        <div style="text-align:right">
+          <span style="font-size:12px;font-weight:700">¥${fmtYen(monthTotal)}</span>
+          <span style="font-size:10px;color:var(--text-muted);margin-left:8px">仕入経費¥${fmtYen(g.expTotal)} / 外注費¥${fmtYen(g.outTotal)}</span>
+        </div>
+      </div>
+      <div id="ce-exp-detail-${ym}" style="display:${isOpen?'block':'none'};padding:6px 8px">
+        ${detailHtml}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function toggleConstructionExpensesMonth(ym) {
+  const isOpen = constructionExpensesExpanded.has(ym);
+  constructionExpensesExpanded.forEach(k => {
+    const d = document.getElementById('ce-exp-detail-'+k);
+    const a = document.getElementById('ce-exp-arrow-'+k);
+    if (d) d.style.display = 'none';
+    if (a) a.style.transform = 'rotate(0deg)';
+  });
+  constructionExpensesExpanded.clear();
+  if (!isOpen) {
+    constructionExpensesExpanded.add(ym);
+    const d = document.getElementById('ce-exp-detail-'+ym);
+    const a = document.getElementById('ce-exp-arrow-'+ym);
+    if (d) d.style.display = 'block';
+    if (a) a.style.transform = 'rotate(90deg)';
+  }
+}
+// ==================== END その他工事 仕入・経費／外注費 ====================
+
 function renderConstructionDashboard() {
   const sales = allConstructionData.filter(s => {
     const ymNorm = s.yearMonth.replace('/','-').substring(0,7);
@@ -3178,8 +3894,8 @@ function renderConstructionDashboard() {
     const d = monthMap[m];
     const rate = d.sales>0 ? d.profit/d.sales*100 : 0;
     const isNow = m===thisYM_slash || m===thisYM_dash;
-    return `<tr><td data-label="完工年月">${m}${isNow?' <span style="font-size:10px;color:var(--blue)">今月</span>':''}</td><td data-label="売上高（円）">¥${fmtYen(d.sales)}</td><td data-label="粗利額（円）">¥${fmtYen(d.profit)}</td><td data-label="粗利率">${fmtPct(rate)}</td><td data-label="件数">${d.count}件</td></tr>`;
-  }).join('') + `<tr class="total-row"><td data-label="完工年月">合計</td><td data-label="売上高（円）">¥${fmtYen(totalSales)}</td><td data-label="粗利額（円）">¥${fmtYen(totalProfit)}</td><td data-label="粗利率">${fmtPct(totalMargin)}</td><td data-label="件数">${totalCount}件</td></tr>`;
+    return `<tr><td data-label="完工年月">${m}${isNow?' <span style="font-size:10px;color:var(--blue)">今月</span>':''}</td><td class="num" data-label="売上高（円）">¥${fmtYen(d.sales)}</td><td class="num" data-label="粗利額（円）">¥${fmtYen(d.profit)}</td><td class="num" data-label="粗利率">${fmtPct(rate)}</td><td class="num" data-label="件数">${d.count}件</td></tr>`;
+  }).join('') + `<tr class="total-row"><td data-label="完工年月">合計</td><td class="num" data-label="売上高（円）">¥${fmtYen(totalSales)}</td><td class="num" data-label="粗利額（円）">¥${fmtYen(totalProfit)}</td><td class="num" data-label="粗利率">${fmtPct(totalMargin)}</td><td class="num" data-label="件数">${totalCount}件</td></tr>`;
 
   // KPI進捗テーブル
   const kpiItems = [
@@ -3189,18 +3905,20 @@ function renderConstructionDashboard() {
   const cmap2 = {good:'#16A34A', warn:'#D97706', bad:'#DC2626'};
   document.getElementById('construction-kpi-progress-table').innerHTML = kpiItems.map(k=>{
     const cl = achCls(k.pct); const w = Math.min(Math.round(k.pct),100);
-    return `<tr><td data-label="KPI項目">${k.label}</td><td data-label="目標" style="color:var(--text-muted)">${k.target}</td><td data-label="実績" style="font-weight:600">${k.actual}</td><td data-label="達成率" class="${cl==='good'?'td-green':cl==='warn'?'td-amber':'td-red'}">${Math.round(k.pct*10)/10}%</td><td data-label="進捗"><div class="mini-bar-wrap"><div class="mini-bar" style="width:${w}%;background:${cmap2[cl]}"></div></div></td></tr>`;
+    return `<tr><td data-label="KPI項目">${k.label}</td><td class="num" data-label="目標" style="color:var(--text-muted)">${k.target}</td><td class="num" data-label="実績" style="font-weight:600">${k.actual}</td><td class="num" data-label="達成率" class="${cl==='good'?'td-green':cl==='warn'?'td-amber':'td-red'}">${Math.round(k.pct*10)/10}%</td><td data-label="進捗"><div class="mini-bar-wrap"><div class="mini-bar" style="width:${w}%;background:${cmap2[cl]}"></div></div></td></tr>`;
   }).join('');
 
   // 案件一覧テーブル
+  if (allConstructionExpenses.length > 0) renderConstructionExpenses();
+
   document.getElementById('construction-table-body').innerHTML = [...sales].reverse().map(d=>`
     <tr style="border-bottom:0.5px solid var(--bg)">
       <td data-label="完工日" style="padding:6px 8px">${shortDate(d.date)}</td>
       <td data-label="販売先" style="padding:6px 8px;font-weight:500">${d.client}</td>
       <td data-label="施主" style="padding:6px 8px;color:var(--text-secondary)">${d.owner}</td>
-      <td data-label="売上金額(税抜)" style="padding:6px 8px;text-align:right">¥${fmtYen(d.sales)}</td>
-      <td data-label="粗利額(税抜)" style="padding:6px 8px;text-align:right;font-weight:600;color:var(--green)">¥${fmtYen(d.profit)}</td>
-      <td data-label="粗利率" style="padding:6px 8px;text-align:right;color:${d.profitRate>=30?'var(--green)':d.profitRate>=15?'var(--amber)':'var(--red)'}">${fmtPct(d.profitRate)}</td>
+      <td data-label="売上金額(税抜)" class="num" style="padding:6px 8px">¥${fmtYen(d.sales)}</td>
+      <td data-label="粗利額(税抜)" class="num" style="padding:6px 8px;font-weight:600;color:var(--green)">¥${fmtYen(d.profit)}</td>
+      <td data-label="粗利率" class="num" style="padding:6px 8px;color:${d.profitRate>=30?'var(--green)':d.profitRate>=15?'var(--amber)':'var(--red)'}">${fmtPct(d.profitRate)}</td>
     </tr>`).join('');
 }
 
@@ -3583,8 +4301,8 @@ function renderGalileiDashboard() {
   document.getElementById('galilei-monthly-table').innerHTML = recentMonths.map(k=>{
     const d = monthMap[k];
     const isNow = k === thisYM_dash;
-    return `<tr><td data-label="年月">${d.label}${isNow?' <span style="font-size:10px;color:var(--blue)">今月</span>':''}</td><td data-label="実質金額（円）">¥${fmtYen(d.actual)}</td><td data-label="予算売上（円）">¥${fmtYen(d.budget)}</td><td data-label="粗利額（円）" style="font-weight:600;color:var(--green)">¥${fmtYen(d.profit)}</td><td data-label="件数">${d.count}件</td></tr>`;
-  }).join('') + `<tr class="total-row"><td data-label="年月">合計</td><td data-label="実質金額（円）">¥${fmtYen(totalActual)}</td><td data-label="予算売上（円）">¥${fmtYen(totalBudget)}</td><td data-label="粗利額（円）">¥${fmtYen(totalProfit)}</td><td data-label="件数">${totalCount}件</td></tr>`;
+    return `<tr><td data-label="年月">${d.label}${isNow?' <span style="font-size:10px;color:var(--blue)">今月</span>':''}</td><td class="num" data-label="実質金額（円）">¥${fmtYen(d.actual)}</td><td class="num" data-label="予算売上（円）">¥${fmtYen(d.budget)}</td><td class="num" data-label="粗利額（円）" style="font-weight:600;color:var(--green)">¥${fmtYen(d.profit)}</td><td class="num" data-label="件数">${d.count}件</td></tr>`;
+  }).join('') + `<tr class="total-row"><td data-label="年月">合計</td><td class="num" data-label="実質金額（円）">¥${fmtYen(totalActual)}</td><td class="num" data-label="予算売上（円）">¥${fmtYen(totalBudget)}</td><td class="num" data-label="粗利額（円）">¥${fmtYen(totalProfit)}</td><td class="num" data-label="件数">${totalCount}件</td></tr>`;
 
   // KPI進捗
   const kpiItems = [
@@ -3594,7 +4312,7 @@ function renderGalileiDashboard() {
   const cmap3 = {good:'#16A34A', warn:'#D97706', bad:'#DC2626'};
   document.getElementById('galilei-kpi-progress-table').innerHTML = kpiItems.map(k=>{
     const cl = achCls(k.pct); const w = Math.min(Math.round(k.pct),100);
-    return `<tr><td data-label="KPI項目">${k.label}</td><td data-label="目標" style="color:var(--text-muted)">${k.target}</td><td data-label="実績" style="font-weight:600">${k.actual}</td><td data-label="達成率" class="${cl==='good'?'td-green':cl==='warn'?'td-amber':'td-red'}">${Math.round(k.pct*10)/10}%</td><td data-label="進捗"><div class="mini-bar-wrap"><div class="mini-bar" style="width:${w}%;background:${cmap3[cl]}"></div></div></td></tr>`;
+    return `<tr><td data-label="KPI項目">${k.label}</td><td class="num" data-label="目標" style="color:var(--text-muted)">${k.target}</td><td class="num" data-label="実績" style="font-weight:600">${k.actual}</td><td class="num" data-label="達成率" class="${cl==='good'?'td-green':cl==='warn'?'td-amber':'td-red'}">${Math.round(k.pct*10)/10}%</td><td data-label="進捗"><div class="mini-bar-wrap"><div class="mini-bar" style="width:${w}%;background:${cmap3[cl]}"></div></div></td></tr>`;
   }).join('');
 
   // 各セクション描画
@@ -3612,6 +4330,8 @@ function switchSalesSection(key, el) {
   document.querySelectorAll('#page-sales .page-content > .page-section').forEach(s => s.classList.remove('active'));
   const target = document.getElementById('sales-section-' + key);
   if(target) target.classList.add('active');
+  // 仕入・経費セクションを開いた時にデータ未ロードなら読み込む
+  if (key === 'expenses' && allSalesExpenses.length === 0) loadSalesExpensesData();
   document.querySelectorAll('#sales-accordion .accordion-header').forEach(h => h.classList.remove('active'));
   const mh = document.querySelector(`#sales-accordion .accordion-header[onclick*="'${key}'"]`);
   if(mh) mh.classList.add('active');
@@ -3639,6 +4359,7 @@ function switchConstructionSection(key, el) {
   document.querySelectorAll('#page-construction .page-content > .page-section').forEach(s => s.classList.remove('active'));
   const target = document.getElementById('construction-section-' + key);
   if(target) target.classList.add('active');
+  if (key === 'expenses' && allConstructionExpenses.length === 0) loadConstructionExpensesData();
   document.querySelectorAll('#construction-accordion .accordion-header').forEach(h => h.classList.remove('active'));
   const mh = document.querySelector(`#construction-accordion .accordion-header[onclick*="'${key}'"]`);
   if(mh) mh.classList.add('active');
@@ -3942,12 +4663,12 @@ function renderBudgetDashboard() {
   // ── サマリーテーブル ──
   document.getElementById('budget-summary-thead').innerHTML = `
     <tr style="border-bottom:1px solid var(--border)">
-      <th style="text-align:left;padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500;white-space:nowrap">年月</th>
-      <th style="text-align:right;padding:6px 8px;font-size:11px;color:#3B82F6;font-weight:500">営業</th>
-      <th style="text-align:right;padding:6px 8px;font-size:11px;color:#F59E0B;font-weight:500">工事</th>
-      <th style="text-align:right;padding:6px 8px;font-size:11px;color:#10B981;font-weight:500">ガリレイ</th>
-      <th style="text-align:right;padding:6px 8px;font-size:11px;color:#8B5CF6;font-weight:500">EC</th>
-      <th style="text-align:right;padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500;border-left:1px solid var(--border)">合計</th>
+      <th style="padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500;white-space:nowrap">年月</th>
+      <th style="padding:6px 8px;font-size:11px;color:#3B82F6;font-weight:500">営業</th>
+      <th style="padding:6px 8px;font-size:11px;color:#F59E0B;font-weight:500">工事</th>
+      <th style="padding:6px 8px;font-size:11px;color:#10B981;font-weight:500">ガリレイ</th>
+      <th style="padding:6px 8px;font-size:11px;color:#8B5CF6;font-weight:500">EC</th>
+      <th style="padding:6px 8px;font-size:11px;color:var(--text-muted);font-weight:500;border-left:1px solid var(--border)">合計</th>
     </tr>`;
 
   let totalRow = {s:0,c:0,g:0,e:0};
@@ -4321,9 +5042,9 @@ function renderGalileiSites() {
       <td data-label="物件名" style="padding:6px 8px;font-weight:500">${s.property}</td>
       <td data-label="市町村区" style="padding:6px 8px;color:var(--text-secondary)">${s.area}</td>
       <td data-label="施工内容" style="padding:6px 8px;color:var(--text-secondary)">${s.content}</td>
-      <td data-label="予算売上(税別)" style="padding:6px 8px;text-align:right">${s.budgetSales?'¥'+fmtYen(s.budgetSales):'-'}</td>
-      <td data-label="実質金額(税別)" style="padding:6px 8px;text-align:right;font-weight:600;color:var(--green)">${s.actualAmount?'¥'+fmtYen(s.actualAmount):'-'}</td>
-      <td data-label="翌月検収(税別)" style="padding:6px 8px;text-align:right;color:var(--amber)">${s.nextMonth?'¥'+fmtYen(s.nextMonth):'-'}</td>
+      <td data-label="予算売上(税別)" class="num" style="padding:6px 8px">${s.budgetSales?'¥'+fmtYen(s.budgetSales):'-'}</td>
+      <td data-label="実質金額(税別)" class="num" style="padding:6px 8px;font-weight:600;color:var(--green)">${s.actualAmount?'¥'+fmtYen(s.actualAmount):'-'}</td>
+      <td data-label="翌月検収(税別)" class="num" style="padding:6px 8px;color:var(--amber)">${s.nextMonth?'¥'+fmtYen(s.nextMonth):'-'}</td>
     </tr>`).join('');
 }
 
@@ -4353,8 +5074,8 @@ function renderGalileiReps() {
   document.getElementById('galilei-reps-table-body').innerHTML = entries.map(([rep,v]) => `
     <tr style="border-bottom:0.5px solid var(--bg)">
       <td data-label="担当営業" style="padding:6px 8px;font-weight:500">${rep}</td>
-      <td data-label="物件数" style="padding:6px 8px;text-align:right">${v.count}件</td>
-      <td data-label="金額(税別)" style="padding:6px 8px;text-align:right;font-weight:600;color:var(--green)">¥${fmtYen(v.amount)}</td>
+      <td data-label="物件数" class="num" style="padding:6px 8px">${v.count}件</td>
+      <td data-label="金額(税別)" class="num" style="padding:6px 8px;font-weight:600;color:var(--green)">¥${fmtYen(v.amount)}</td>
     </tr>`).join('');
 }
 
@@ -4440,7 +5161,7 @@ function renderGalileiOutsource() {
       </div>`).join('');
     const isOpen = galileiOutsourceExpanded.has(k);
     return `
-      <div style="border:1px solid var(--border);border-radius:8px;margin-bottom:8px;overflow:hidden">
+      <div style="border:1px solid var(--border);border-radius:8px;margin-bottom:8px;overflow:hidden;max-width:720px">
         <div onclick="toggleGalileiOutsourceMonth('${k}')" style="cursor:pointer;display:flex;justify-content:space-between;align-items:center;padding:10px 12px;background:var(--bg)">
           <div style="display:flex;align-items:center;gap:8px">
             <span id="galilei-outsource-arrow-${k}" style="font-size:11px;color:var(--text-muted);transition:transform .2s;display:inline-block;transform:rotate(${isOpen?90:0}deg)">▶</span>
@@ -4457,13 +5178,21 @@ function renderGalileiOutsource() {
 }
 
 function toggleGalileiOutsourceMonth(key) {
-  const detail = document.getElementById('galilei-outsource-detail-'+key);
-  const arrow  = document.getElementById('galilei-outsource-arrow-'+key);
-  if (!detail) return;
-  const isOpen = detail.style.display === 'block';
-  detail.style.display = isOpen ? 'none' : 'block';
-  if (arrow) arrow.style.transform = isOpen ? 'rotate(0deg)' : 'rotate(90deg)';
-  if (isOpen) galileiOutsourceExpanded.delete(key); else galileiOutsourceExpanded.add(key);
+  const isOpen = galileiOutsourceExpanded.has(key);
+  galileiOutsourceExpanded.forEach(k => {
+    const d = document.getElementById('galilei-outsource-detail-'+k);
+    const a = document.getElementById('galilei-outsource-arrow-'+k);
+    if (d) d.style.display = 'none';
+    if (a) a.style.transform = 'rotate(0deg)';
+  });
+  galileiOutsourceExpanded.clear();
+  if (!isOpen) {
+    galileiOutsourceExpanded.add(key);
+    const d = document.getElementById('galilei-outsource-detail-'+key);
+    const a = document.getElementById('galilei-outsource-arrow-'+key);
+    if (d) d.style.display = 'block';
+    if (a) a.style.transform = 'rotate(90deg)';
+  }
 }
 
 // 経費一覧
@@ -4474,11 +5203,11 @@ function renderGalileiExpense() {
     const total = e.parking + e.etc + e.parts + e.disposal;
     return `<tr style="border-bottom:0.5px solid var(--bg)">
       <td data-label="年月" style="padding:6px 8px">${e.yearMonth}</td>
-      <td data-label="駐車場/ガソリン費" style="padding:6px 8px;text-align:right">¥${fmtYen(e.parking)}</td>
-      <td data-label="ETC利用料金" style="padding:6px 8px;text-align:right">¥${fmtYen(e.etc)}</td>
-      <td data-label="部材費" style="padding:6px 8px;text-align:right">¥${fmtYen(e.parts)}</td>
-      <td data-label="廃棄費" style="padding:6px 8px;text-align:right">¥${fmtYen(e.disposal)}</td>
-      <td data-label="合計" style="padding:6px 8px;text-align:right;font-weight:600">¥${fmtYen(total)}</td>
+      <td data-label="駐車場/ガソリン費" class="num" style="padding:6px 8px">¥${fmtYen(e.parking)}</td>
+      <td data-label="ETC利用料金" class="num" style="padding:6px 8px">¥${fmtYen(e.etc)}</td>
+      <td data-label="部材費" class="num" style="padding:6px 8px">¥${fmtYen(e.parts)}</td>
+      <td data-label="廃棄費" class="num" style="padding:6px 8px">¥${fmtYen(e.disposal)}</td>
+      <td data-label="合計" class="num" style="padding:6px 8px;font-weight:600">¥${fmtYen(total)}</td>
     </tr>`;
   }).join('') + (sorted.length>0 ? (() => {
     const t = {parking:0,etc:0,parts:0,disposal:0};
@@ -4486,11 +5215,11 @@ function renderGalileiExpense() {
     const grandTotal = t.parking+t.etc+t.parts+t.disposal;
     return `<tr class="total-row">
       <td data-label="年月">合計</td>
-      <td data-label="駐車場/ガソリン費">¥${fmtYen(t.parking)}</td>
-      <td data-label="ETC利用料金">¥${fmtYen(t.etc)}</td>
-      <td data-label="部材費">¥${fmtYen(t.parts)}</td>
-      <td data-label="廃棄費">¥${fmtYen(t.disposal)}</td>
-      <td data-label="合計">¥${fmtYen(grandTotal)}</td>
+      <td class="num" data-label="駐車場/ガソリン費">¥${fmtYen(t.parking)}</td>
+      <td class="num" data-label="ETC利用料金">¥${fmtYen(t.etc)}</td>
+      <td class="num" data-label="部材費">¥${fmtYen(t.parts)}</td>
+      <td class="num" data-label="廃棄費">¥${fmtYen(t.disposal)}</td>
+      <td class="num" data-label="合計">¥${fmtYen(grandTotal)}</td>
     </tr>`;
   })() : '');
 }
@@ -4670,9 +5399,9 @@ function renderHrmosDashboard() {
   const summaryArrow = (key) => summaryArrowField === key ? (summaryState.dir === 'desc' ? ' ▼' : ' ▲') : '';
   document.getElementById('hrmos-summary-thead').innerHTML = `
     <tr style="border-bottom:1px solid var(--border)">
-      <th style="width:${summaryShowAvg?40:60}%;text-align:left;padding:10px 6px;font-size:12px;color:var(--text-muted);font-weight:500;cursor:pointer;user-select:none" onclick="toggleHrmosSort('summary','name')">氏名${summaryArrow('name')}</th>
-      ${summaryShowAvg ? `<th style="width:30%;text-align:right;padding:10px 6px;font-size:12px;color:var(--text-muted);font-weight:500;cursor:pointer;user-select:none" onclick="toggleHrmosSort('summary','avgPerMonth')">月平均${summaryArrow('avgPerMonth')}</th>` : ''}
-      <th style="width:${summaryShowAvg?30:40}%;text-align:right;padding:10px 6px;font-size:12px;color:var(--text-muted);font-weight:500;cursor:pointer;user-select:none" onclick="toggleHrmosSort('summary','over')">${summaryShowAvg?'期間累計':'残業時間'}${summaryArrow('over')}</th>
+      <th style="width:${summaryShowAvg?40:60}%;padding:10px 6px;font-size:12px;color:var(--text-muted);font-weight:500;cursor:pointer;user-select:none" onclick="toggleHrmosSort('summary','name')">氏名${summaryArrow('name')}</th>
+      ${summaryShowAvg ? `<th style="width:30%;padding:10px 6px;font-size:12px;color:var(--text-muted);font-weight:500;cursor:pointer;user-select:none" onclick="toggleHrmosSort('summary','avgPerMonth')">月平均${summaryArrow('avgPerMonth')}</th>` : ''}
+      <th style="width:${summaryShowAvg?30:40}%;padding:10px 6px;font-size:12px;color:var(--text-muted);font-weight:500;cursor:pointer;user-select:none" onclick="toggleHrmosSort('summary','over')">${summaryShowAvg?'期間累計':'残業時間'}${summaryArrow('over')}</th>
     </tr>`;
 
   document.getElementById('hrmos-summary-table-body').innerHTML = employeesSummary.map(e => `
