@@ -93,7 +93,19 @@ body { font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans','Yu Gothic UI',sa
   .page-content { width:100%; }
   .mobile-accordion { display:block; margin-bottom:12px; }
   #sales-expenses-item-summary, #construction-expenses-item-summary { flex-direction:column !important; }
-  #sales-expenses-item-summary > div[style], #construction-expenses-item-summary > div[style] { min-width:0 !important; max-width:100% !important; }
+  #sales-expenses-item-summary > div, #construction-expenses-item-summary > div { min-width:0 !important; max-width:100% !important; width:100% !important; }
+  .sp-hide { display:none !important; }
+  /* 仕入・経費 物件カード・月別カードの幅制限をスマホでは解除 */
+  #sales-section-expenses .table-card div[style*="max-width"],
+  #construction-section-expenses .table-card div[style*="max-width"] { max-width:100% !important; }
+  /* テーブルのはみ出し防止 */
+  #sales-section-expenses table,
+  #construction-section-expenses table { table-layout:fixed !important; word-break:break-all; }
+  #sales-section-expenses td,
+  #construction-section-expenses td { white-space:normal !important; word-break:break-all; }
+  /* 項目別集計バーテーブル */
+  #sales-section-expenses .table-card,
+  #construction-section-expenses .table-card { overflow:hidden; }
   .accordion-item { background:var(--surface); border:1px solid var(--border); border-radius:8px; margin-bottom:6px; overflow:hidden; }
   .accordion-header {
     display:flex; justify-content:space-between; align-items:center; padding:12px 14px;
@@ -3046,7 +3058,7 @@ function renderSalesExpenses() {
           <td style="padding:2px 6px;font-size:11px;text-align:right;font-weight:500">${d.amount?'¥'+fmtYen(d.amount):'-'}</td>
         </tr>`).join('');
       return `<tr style="cursor:pointer;border-bottom:0.5px solid var(--border)" onclick="toggleSalesItemDetail('${typeKey}','${idx}','${safeItem}')">
-        <td style="padding:3px 6px;font-size:12px;max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${item}">
+        <td style="padding:3px 6px;font-size:12px;max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;word-break:break-all" title="${item}">
           <span id="${aId}" style="font-size:10px;color:var(--text-muted);margin-right:3px;display:inline-block;transform:rotate(${isOpen?90:0}deg);transition:transform .15s">▶</span>${item}
         </td>
         <td style="padding:3px 6px;width:100%">
@@ -3158,7 +3170,7 @@ function renderSalesExpenses() {
 
     const monthTotal = g.expTotal + g.outTotal;
     return `
-      <div style="border:1px solid var(--border);border-radius:8px;margin-bottom:8px;overflow:hidden;max-width:720px">
+      <div style="border:1px solid var(--border);border-radius:8px;margin-bottom:8px;overflow:hidden;max-width:720px;width:100%;box-sizing:border-box">
         <div onclick="toggleSalesExpensesMonth('${ym}')" style="cursor:pointer;display:flex;justify-content:space-between;align-items:center;padding:9px 12px;background:var(--bg)">
           <div style="display:flex;align-items:center;gap:10px">
             <span id="sales-exp-arrow-${ym}" style="font-size:11px;color:var(--text-muted);transition:transform .2s;display:inline-block;transform:rotate(${isOpen?90:0}deg)">▶</span>
@@ -3167,7 +3179,7 @@ function renderSalesExpenses() {
           </div>
           <div style="text-align:right">
             <span style="font-size:12px;font-weight:700">¥${fmtYen(monthTotal)}</span>
-            <span style="font-size:10px;color:var(--text-muted);margin-left:8px">仕入経費¥${fmtYen(g.expTotal)} / 外注費¥${fmtYen(g.outTotal)}</span>
+            <span style="font-size:10px;color:var(--text-muted);margin-left:4px;word-break:break-all">仕入経費¥${fmtYen(g.expTotal)} / 外注費¥${fmtYen(g.outTotal)}</span>
           </div>
         </div>
         <div id="sales-exp-detail-${ym}" style="display:${isOpen?'block':'none'};padding:8px">
@@ -3640,7 +3652,7 @@ function buildConstructionItemSummary(rows, color, label, typeKey) {
         <td style="padding:2px 6px;font-size:11px;text-align:right;font-weight:500">${d.amount?'¥'+fmtYen(d.amount):'-'}</td>
       </tr>`).join('');
     return `<tr style="cursor:pointer;border-bottom:0.5px solid var(--border)" onclick="toggleConstructionItemDetail('${typeKey}','${idx}','${safeItem}')">
-      <td style="padding:3px 6px;font-size:12px;max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${item}">
+      <td style="padding:3px 6px;font-size:12px;max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;word-break:break-all" title="${item}">
         <span id="${aId}" style="font-size:10px;color:var(--text-muted);margin-right:3px;display:inline-block;transform:rotate(${isOpen?90:0}deg);transition:transform .15s">▶</span>${item}
       </td>
       <td style="padding:3px 6px;width:100%">
@@ -3710,7 +3722,7 @@ function renderConstructionExpenses() {
   if (summaryEl) {
     summaryEl.style.display = (expSummary||outSummary) ? 'flex' : 'none';
     summaryEl.innerHTML = (expSummary||'') +
-      (outSummary ? `<div style="width:1px;background:var(--border);flex-shrink:0;margin:0 4px"></div>`+outSummary : '');
+      (outSummary ? `<div class="sp-hide" style="width:1px;background:var(--border);flex-shrink:0;margin:0 4px"></div>`+outSummary : '');
   }
 
   const monthGroups = {};
@@ -3750,7 +3762,7 @@ function renderConstructionExpenses() {
         </tr>`;
       const expRows = rows.expense.map(d=>makeRow(d,'#F59E0B','仕入・経費')).join('');
       const outRows = rows.outsource.map(d=>makeRow(d,'#8B5CF6','外注費')).join('');
-      return `<div style="margin-bottom:6px;border:1px solid var(--border);border-radius:6px;overflow:hidden;max-width:680px">
+      return `<div style="margin-bottom:6px;border:1px solid var(--border);border-radius:6px;overflow:hidden;max-width:680px;width:100%">
         <div style="background:var(--bg);padding:4px 8px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border)">
           <span style="font-weight:600;font-size:12px">${sheet}</span>
           <span style="font-size:10px;color:var(--text-muted)">仕入経費 ${sheetExpTotal?'¥'+fmtYen(sheetExpTotal):'-'} / 外注費 ${sheetOutTotal?'¥'+fmtYen(sheetOutTotal):'-'}</span>
@@ -3769,7 +3781,7 @@ function renderConstructionExpenses() {
     }).join('');
 
     const monthTotal = g.expTotal + g.outTotal;
-    return `<div style="border:1px solid var(--border);border-radius:8px;margin-bottom:8px;overflow:hidden;max-width:720px">
+    return `<div style="border:1px solid var(--border);border-radius:8px;margin-bottom:8px;overflow:hidden;max-width:720px;width:100%;box-sizing:border-box">
       <div onclick="toggleConstructionExpensesMonth('${ym}')" style="cursor:pointer;display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:var(--bg)">
         <div style="display:flex;align-items:center;gap:8px">
           <span id="ce-exp-arrow-${ym}" style="font-size:11px;color:var(--text-muted);transition:transform .2s;display:inline-block;transform:rotate(${isOpen?90:0}deg)">▶</span>
@@ -3778,7 +3790,7 @@ function renderConstructionExpenses() {
         </div>
         <div style="text-align:right">
           <span style="font-size:12px;font-weight:700">¥${fmtYen(monthTotal)}</span>
-          <span style="font-size:10px;color:var(--text-muted);margin-left:8px">仕入経費¥${fmtYen(g.expTotal)} / 外注費¥${fmtYen(g.outTotal)}</span>
+          <span style="font-size:10px;color:var(--text-muted);margin-left:4px;word-break:break-all">仕入経費¥${fmtYen(g.expTotal)} / 外注費¥${fmtYen(g.outTotal)}</span>
         </div>
       </div>
       <div id="ce-exp-detail-${ym}" style="display:${isOpen?'block':'none'};padding:6px 8px">
@@ -5174,7 +5186,7 @@ function renderGalileiOutsource() {
       </div>`).join('');
     const isOpen = galileiOutsourceExpanded.has(k);
     return `
-      <div style="border:1px solid var(--border);border-radius:8px;margin-bottom:8px;overflow:hidden;max-width:720px">
+      <div style="border:1px solid var(--border);border-radius:8px;margin-bottom:8px;overflow:hidden;max-width:720px;width:100%;box-sizing:border-box">
         <div onclick="toggleGalileiOutsourceMonth('${k}')" style="cursor:pointer;display:flex;justify-content:space-between;align-items:center;padding:10px 12px;background:var(--bg)">
           <div style="display:flex;align-items:center;gap:8px">
             <span id="galilei-outsource-arrow-${k}" style="font-size:11px;color:var(--text-muted);transition:transform .2s;display:inline-block;transform:rotate(${isOpen?90:0}deg)">▶</span>
