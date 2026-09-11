@@ -1648,33 +1648,9 @@ body { font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans','Yu Gothic UI',sa
       </div>
       <button class="apply-btn" onclick="refreshAllData()">再分析</button>
     </div>
-    <div id="ai-analysis-body" style="margin-bottom:24px"></div>
-
-    <!-- AIチャットセクション -->
-    <div class="table-card">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
-        <div style="font-weight:700;font-size:14px">💬 データに質問する</div>
-        <button onclick="clearAiChat()" style="font-size:11px;padding:3px 10px;border:1px solid var(--border);border-radius:6px;background:transparent;color:var(--text-muted);cursor:pointer;font-family:inherit">履歴をクリア</button>
-      </div>
+    <div id="ai-analysis-body"></div>
 
 
-      <!-- チャット履歴 -->
-      <div id="ai-chat-history" style="min-height:80px;max-height:480px;overflow-y:auto;margin-bottom:12px;display:flex;flex-direction:column;gap:10px"></div>
-
-      <!-- 入力エリア -->
-      <div style="display:flex;gap:8px;align-items:flex-end">
-        <textarea id="ai-chat-input" placeholder="例：今年度で粗利が一番高い月は？&#10;例：先月の数字をまとめて"
-          style="flex:1;padding:10px 12px;font-size:13px;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--text-primary);font-family:inherit;resize:none;min-height:52px;max-height:120px;line-height:1.5;outline:none"
-          onkeydown="if(event.key==='Enter'&&!event.shiftKey&&!event.isComposing){event.preventDefault();sendAiChat()}"
-          oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,120)+'px'"
-        ></textarea>
-        <button onclick="sendAiChat()" id="ai-chat-send-btn"
-          style="padding:10px 18px;background:var(--blue);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap;height:52px">
-          送信
-        </button>
-      </div>
-      <div style="font-size:10px;color:var(--text-muted);margin-top:6px">Shift+Enterで改行 / Enterで送信</div>
-    </div>
   </div><!-- /page-ai -->
 
   <!-- ======================== 残業（HRMOS連携）ページ ======================== -->
@@ -2800,7 +2776,6 @@ function switchTab(key, el) {
   }
   if (key === 'ai') {
     renderAiAnalysis();
-    renderAiChatHistory();
   }
   if (key === 'hrmos' && !hrmosLoaded) {
     setHrmosPreset('this_month', document.querySelector('#page-hrmos .preset-btn[onclick*="this_month"]'), true);
@@ -4722,159 +4697,6 @@ function renderBudgetDashboard() {
       <td style="text-align:right;padding:7px 8px;font-size:12px;font-weight:700;border-left:1px solid var(--border)">¥${fmtYen(Math.round(totalRow.s+totalRow.c+totalRow.g+totalRow.e))}</td>
     </tr>`;
 }
-
-// ==================== AI チャット ====================
-let aiChatHistory = []; // { role:'user'|'assistant', content:string }
-
-function buildAiContext() {
-  const now = new Date();
-  const thisYM = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0');
-  const fyStartY = now.getMonth() >= 9 ? now.getFullYear() : now.getFullYear()-1;
-  const fyFrom = fyStartY + '-10';
-
-  function inFY(ym) {
-    const n = String(ym).replace('/','-').substring(0,7);
-    return n >= fyFrom && n <= thisYM;
-  }
-
-  const salesFY = (allSalesData||[]).filter(s => inFY(s.yearMonth));
-  const constFY = allConstructionData.filter(s => inFY(s.yearMonth));
-  const galFY   = allGalileiSites.filter(s => s.yearMonthNorm >= fyFrom && s.yearMonthNorm <= thisYM);
-  const ecFY    = allSales.filter(s => inFY(s.yearMonth||''));
-
-  const salesByMonth = {}, constByMonth = {}, galByMonth = {}, ecByMonth = {};
-
-  salesFY.forEach(s => {
-    const m = String(s.yearMonth).replace('/','-').substring(0,7);
-    if (!salesByMonth[m]) salesByMonth[m] = {sales:0,profit:0,count:0};
-    salesByMonth[m].sales += s.sales; salesByMonth[m].profit += s.profit; salesByMonth[m].count++;
-  });
-  constFY.forEach(s => {
-    const m = String(s.yearMonth).replace('/','-').substring(0,7);
-    if (!constByMonth[m]) constByMonth[m] = {sales:0,profit:0,count:0};
-    constByMonth[m].sales += s.sales; constByMonth[m].profit += s.profit; constByMonth[m].count++;
-  });
-  galFY.forEach(s => {
-    const m = s.yearMonthNorm.substring(0,7);
-    if (!galByMonth[m]) galByMonth[m] = {actual:0,budget:0,count:0};
-    galByMonth[m].actual += s.actualAmount; galByMonth[m].budget += s.budgetSales; galByMonth[m].count++;
-  });
-  ecFY.forEach(s => {
-    const m = String(s.yearMonth||'').replace('/','-').substring(0,7);
-    if (!ecByMonth[m]) ecByMonth[m] = {profit:0,count:0};
-    ecByMonth[m].profit += s.profit; ecByMonth[m].count += (s.qty||1);
-  });
-
-  const fmt = n => Math.round(n).toLocaleString('ja-JP');
-  const allMonths = [...new Set([...Object.keys(salesByMonth),...Object.keys(constByMonth),...Object.keys(galByMonth),...Object.keys(ecByMonth)])].sort();
-
-  const monthLines = allMonths.map(m => {
-    const s  = salesByMonth[m]  || {sales:0,profit:0,count:0};
-    const co = constByMonth[m]  || {sales:0,profit:0,count:0};
-    const g  = galByMonth[m]    || {actual:0,budget:0,count:0};
-    const e  = ecByMonth[m]     || {profit:0,count:0};
-    return m + ': ' +
-      '営業[売上￥' + fmt(s.sales) + ' 粗利￥' + fmt(s.profit) + ' ' + s.count + '件] ' +
-      '工事[売上￥' + fmt(co.sales) + ' 粗利￥' + fmt(co.profit) + ' ' + co.count + '件] ' +
-      'ガリレイ[実質￥' + fmt(g.actual) + ' ' + g.count + '件] ' +
-      'EC粗利[￥' + fmt(e.profit) + ']';
-  }).join('\n');
-
-  const totSales  = salesFY.reduce((a,s)=>a+s.sales,0);
-  const totSalesP = salesFY.reduce((a,s)=>a+s.profit,0);
-  const totConst  = constFY.reduce((a,s)=>a+s.sales,0);
-  const totConstP = constFY.reduce((a,s)=>a+s.profit,0);
-  const totGal    = galFY.reduce((a,s)=>a+s.actualAmount,0);
-  const totEC     = ecFY.reduce((a,s)=>a+s.profit,0);
-
-  return 'あなたはLIFE MARKS（ライフマークス）という会社のKPIデータアナリストです。' +
-    '以下は今年度（' + fyStartY + '年10月〜現在）の実績データです。' +
-    'このデータをもとに、ユーザーの質問に日本語で分かりやすく答えてください。数値は円単位で表示してください。\n\n' +
-    '【今年度累計】\n' +
-    '- 営業: 売上￥' + fmt(totSales) + ' / 粗利￥' + fmt(totSalesP) + ' / ' + salesFY.length + '件\n' +
-    '- その他工事: 売上￥' + fmt(totConst) + ' / 粗利￥' + fmt(totConstP) + ' / ' + constFY.length + '件\n' +
-    '- ガリレイ工事: 実質金額￥' + fmt(totGal) + ' / ' + galFY.length + '件\n' +
-    '- EC粗利: ￥' + fmt(totEC) + '\n\n' +
-    '【月別内訳】\n' + monthLines + '\n\n' +
-    '【年間目標】\n' +
-    '- 営業: 売上￥' + fmt(48600000) + ' / 粗利￥' + fmt(16350000) + '\n' +
-    '- その他工事: 売上￥' + fmt(16200000) + ' / 粗利￥' + fmt(13000000) + '\n' +
-    '- ガリレイ: 実質￥' + fmt(63750000) + '\n' +
-    '- EC粗利: ￥' + fmt(12000000);
-}
-
-async function sendAiChat() {
-  const input = document.getElementById('ai-chat-input');
-  const question = (input.value || '').trim();
-  if (!question) return;
-
-  // UI更新
-  input.value = '';
-  input.style.height = '52px';
-  const btn = document.getElementById('ai-chat-send-btn');
-  btn.disabled = true;
-  btn.textContent = '送信中...';
-
-  // ユーザーメッセージをhistoryに追加
-  aiChatHistory.push({ role:'user', content: question });
-  renderAiChatHistory();
-
-  // AIに送信
-  try {
-    const systemPrompt = buildAiContext();
-    const messages = aiChatHistory.map(h => ({ role: h.role, content: h.content }));
-
-    const res = await fetch('/.netlify/functions/ai-chat', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-6',
-        max_tokens: 1000,
-        system: systemPrompt,
-        messages: messages,
-      })
-    });
-
-    const data = await res.json();
-    const answer = (data.content || []).map(b => b.text||'').join('');
-    aiChatHistory.push({ role:'assistant', content: answer || '（回答を取得できませんでした）' });
-  } catch(e) {
-    aiChatHistory.push({ role:'assistant', content: `エラーが発生しました: ${e.message}` });
-  }
-
-  renderAiChatHistory();
-  btn.disabled = false;
-  btn.textContent = '送信';
-}
-
-function renderAiChatHistory() {
-  const el = document.getElementById('ai-chat-history');
-  if (!el) return;
-
-  if (!aiChatHistory.length) {
-    el.innerHTML = '<div style="color:var(--text-muted);font-size:12px;text-align:center;padding:20px 0">質問を入力してください</div>';
-    return;
-  }
-
-  el.innerHTML = aiChatHistory.map(msg => {
-    const isUser = msg.role === 'user';
-    return `<div style="display:flex;flex-direction:column;align-items:${isUser?'flex-end':'flex-start'}">
-      <div style="max-width:85%;padding:10px 14px;border-radius:${isUser?'12px 12px 2px 12px':'12px 12px 12px 2px'};background:${isUser?'var(--blue)':'var(--bg)'};color:${isUser?'#fff':'var(--text-primary)'};font-size:13px;line-height:1.6;white-space:pre-wrap;word-break:break-word">
-        ${msg.content.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
-      </div>
-      <div style="font-size:10px;color:var(--text-muted);margin-top:2px">${isUser?'あなた':'AI'}</div>
-    </div>`;
-  }).join('');
-
-  // 最新メッセージにスクロール
-  el.scrollTop = el.scrollHeight;
-}
-
-function clearAiChat() {
-  aiChatHistory = [];
-  renderAiChatHistory();
-}
-// ==================== END AI チャット ====================
 
 // ==================== AI分析（ルールベース診断） ====================
 function fyRangeAndElapsed() {
