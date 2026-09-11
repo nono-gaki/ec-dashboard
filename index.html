@@ -1676,9 +1676,8 @@ body { font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans','Yu Gothic UI',sa
       <span class="period-label" id="hrmos-period-label"></span>
     </div>
 
-    <div class="kpi-row" id="hrmos-kpi-row" style="grid-template-columns:repeat(3,1fr);margin-bottom:16px"></div>
-
     <div style="display:flex;gap:12px;margin-bottom:16px;align-items:flex-start;flex-wrap:wrap">
+      <!-- サマリー（左・幅固定） -->
       <div class="table-card" style="flex:0 0 auto;width:260px">
         <div class="chart-title">📊 残業サマリー</div>
         <div style="margin-top:10px">
@@ -1688,9 +1687,13 @@ body { font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans','Yu Gothic UI',sa
           </table>
         </div>
       </div>
-      <div class="table-card" style="flex:1;min-width:200px">
-        <div class="chart-title">🤖 残業アラート</div>
-        <div id="hrmos-alerts-body" style="margin-top:6px"></div>
+      <!-- 右エリア（KPIカード + アラート） -->
+      <div style="flex:1;min-width:200px;display:flex;flex-direction:column;gap:12px">
+        <div class="kpi-row" id="hrmos-kpi-row" style="grid-template-columns:repeat(3,1fr);margin-bottom:0"></div>
+        <div class="table-card">
+          <div class="chart-title">🤖 残業アラート</div>
+          <div id="hrmos-alerts-body" style="margin-top:6px"></div>
+        </div>
       </div>
     </div>
 
