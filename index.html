@@ -4824,7 +4824,7 @@ async function sendAiChat() {
     const systemPrompt = buildAiContext();
     const messages = aiChatHistory.map(h => ({ role: h.role, content: h.content }));
 
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
+    const res = await fetch('/.netlify/functions/ai-chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
