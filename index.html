@@ -240,6 +240,7 @@ body { font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans','Yu Gothic UI',sa
   .subtab { padding:8px 12px; }
   /* 残業サマリーは3列のみで余裕があるため、.tbl-fit-mobileの縮小フォントを上書きして大きく見せる */
   #hrmos-summary-table th, #hrmos-summary-table td { font-size:13px !important; padding:10px 6px !important; }
+  #page-hrmos .table-card[style*="max-width"] { max-width:100% !important; }
 
   /* MAIN: パディング縮小 */
   .main { padding:10px 10px; max-width:100%; }
@@ -5234,8 +5235,8 @@ let hrmosMonthly = [];
 let hrmosFilterFrom = '';
 let hrmosFilterTo = '';
 let hrmosSortState = {
-  work: { field: 'total', dir: 'desc' },
-  summary: { field: 'avgPerMonth', dir: 'desc' },
+  work:    { field: 'over', dir: 'desc' },
+  summary: { field: 'over', dir: 'desc' },
 };
 
 function toggleHrmosSort(table, field) {
