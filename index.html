@@ -95,6 +95,11 @@ body { font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans','Yu Gothic UI',sa
   #sales-expenses-item-summary, #construction-expenses-item-summary { flex-direction:column !important; }
   #sales-expenses-item-summary > div, #construction-expenses-item-summary > div { min-width:0 !important; max-width:100% !important; width:100% !important; }
   .sp-hide { display:none !important; }
+  /* スマホ: 仕入・経費メニューとセクションを非表示 */
+  #sales-accordion .accordion-header[onclick*="'expenses'"],
+  #construction-accordion .accordion-header[onclick*="'expenses'"],
+  #sales-section-expenses,
+  #construction-section-expenses { display:none !important; }
   /* スマホ: 仕入・経費セクション全体を非表示 */
   #sales-section-expenses, #construction-section-expenses { display:none !important; }
   /* スマホ: 仕入・経費アコーディオンメニューも非表示 */
