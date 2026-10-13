@@ -1773,25 +1773,25 @@ const DEFAULT_CONFIG = {
     { fy: '2025', sheetId: '13gcnyBhGn1_jU_dCBy8FUUJ4X4mqxwJUwLi0LmZgO_s', sheet1: '売上実績', sheet2: '【2026年度】EC',
       profitTarget: 12000000, salesTarget: 360, stockTarget: 100, marginTarget: 55 },
     { fy: '2026', sheetId: '', sheet1: '売上実績', sheet2: '【2027年度】EC',
-      profitTarget: '', salesTarget: '', stockTarget: '', marginTarget: '' },
+      profitTarget: 7200000, salesTarget: '', stockTarget: '', marginTarget: '' },
   ],
   sales_sheets: [
     { fy: '2025', sheetId: '1kWAvrWPzsKxajmcpzSnoAnc0A8aISZ72JwKS5jqu5YQ', sheet: '売上管理表',
       salesTarget: 48600000, profitTarget: 16350000 },
     { fy: '2026', sheetId: '', sheet: '売上管理表',
-      salesTarget: '', profitTarget: '' },
+      salesTarget: 96000000, profitTarget: 22200000 },
   ],
   construction_sheets: [
     { fy: '2025', sheetId: '1lA1glCzhkl3bazoAhvQ2xmp6cG_0EiO3wzaFl8x8wHs', sheet: '売上管理表',
       salesTarget: 16200000, profitTarget: 13000000 },
     { fy: '2026', sheetId: '', sheet: '売上管理表',
-      salesTarget: '', profitTarget: '' },
+      salesTarget: 24000000, profitTarget: 18600000 },
   ],
   galilei_sheets: [
     { fy: '2025', sheetId: '1-Twac-Kb3EOb9jSMbI5vPZkXbw_0wm5VhYe2iJTbgc0',
       salesTarget: 63750000, profitTarget: 46970000 },
-    { fy: '2026', sheetId: '',
-      salesTarget: '', profitTarget: '' },
+    { fy: '2026', sheetId: '1nG177j3RDXx10Yxxo0CXBDpIlRA8DPnIP2DTPyFd1zY',
+      salesTarget: 60000000, profitTarget: 48000000 },
   ],
   hrmosMonthlyLimitMin: 30 * 60,
   hrmosExcludeEmployments: '取締役,野々垣,渡辺',
@@ -1803,32 +1803,42 @@ let filterTo = '';
 let ecLoaded = false;
 
 
-// 現在のフィルター期間に対応するFY（年度）を判定して目標値を返す
-function getFyTargets(cat, fromYM, toYM) {
-  const cfg = getConfig();
-  const sheets = cfg[cat + '_sheets'] || [];
-  if (!sheets.length) return null;
+// ===== 年度別目標値（ここを毎年更新する） =====
+const FY_TARGETS = {
+  '2025': {
+    sales:        { salesTarget: 48600000,  profitTarget: 16350000 },
+    construction: { salesTarget: 16200000,  profitTarget: 13000000 },
+    galilei:      { salesTarget: 63750000,  profitTarget: 46970000 },
+    ec:           { profitTarget: 12000000, salesTarget: 360, stockTarget: 100, marginTarget: 55 },
+  },
+  '2026': {
+    sales:        { salesTarget: 96000000,  profitTarget: 22200000 },
+    construction: { salesTarget: 24000000,  profitTarget: 18600000 },
+    galilei:      { salesTarget: 60000000,  profitTarget: 48000000 },
+    ec:           { profitTarget: 7200000,  salesTarget: 360, stockTarget: 100, marginTarget: 55 },
+  },
+};
 
-  // フィルター期間の中心月からFYを判定
-  let targetFy = null;
-  if (fromYM || toYM) {
-    const midYM = fromYM || toYM;
-    const [y, m] = midYM.split('-').map(Number);
-    // 10月始まりのFY: 10月以降なら y年度、1-9月なら y-1年度
-    targetFy = String(m >= 10 ? y : y - 1);
-  } else {
-    // フィルターなし = 今年度
-    const now = new Date();
-    const m = now.getMonth() + 1;
-    targetFy = String(m >= 10 ? now.getFullYear() : now.getFullYear() - 1);
+// フィルター期間からFY（会計年度）を判定（10月始まり）
+function detectFy(fromYM, toYM) {
+  const ref = fromYM || toYM || '';
+  if (ref) {
+    const [y, m] = ref.split('-').map(Number);
+    return String(m >= 10 ? y : y - 1);
   }
-
-  // 対象FYの行を探す（なければ最初の設定済み行）
-  const entry = sheets.find(e => e.fy === targetFy && e.sheetId) ||
-                sheets.find(e => e.sheetId) ||
-                sheets[0];
-  return entry || null;
+  const now = new Date();
+  const m = now.getMonth() + 1;
+  return String(m >= 10 ? now.getFullYear() : now.getFullYear() - 1);
 }
+
+// 年度・カテゴリに対応する目標値オブジェクトを返す
+function getAnnualTargets(cat, fromYM, toYM) {
+  const fy = detectFy(fromYM, toYM);
+  return (FY_TARGETS[fy] && FY_TARGETS[fy][cat]) || FY_TARGETS['2025'][cat] || {};
+}
+
+// 後方互換のため残す（旧名）
+function getFyTargets(cat, fromYM, toYM) { return getAnnualTargets(cat, fromYM, toYM); }
 
 function getConfig() {
   try {
@@ -2213,11 +2223,11 @@ function renderDashboard() {
   const thisMonthData = monthMap[thisYM_slash] || monthMap[thisYM_dash] || {profit:0,count:0,price:0};
   const thisMonthProfit = thisMonthData.profit;
 
-  const _ecFyEntry = getFyTargets('ec', filterFrom, filterTo);
-  const annualProfitTarget = (_ecFyEntry && _ecFyEntry.profitTarget !== '') ? Number(_ecFyEntry.profitTarget) : cfg.annualProfitTarget;
-  const annualSalesTarget  = (_ecFyEntry && _ecFyEntry.salesTarget  !== '') ? Number(_ecFyEntry.salesTarget)  : cfg.annualSalesTarget;
-  const stockTarget        = (_ecFyEntry && _ecFyEntry.stockTarget  !== '') ? Number(_ecFyEntry.stockTarget)  : cfg.stockTarget;
-  const marginTarget       = (_ecFyEntry && _ecFyEntry.marginTarget !== '') ? Number(_ecFyEntry.marginTarget) : cfg.marginTarget;
+  const _ecT = getAnnualTargets('ec', filterFrom, filterTo);
+  const annualProfitTarget = _ecT.profitTarget || cfg.annualProfitTarget;
+  const annualSalesTarget  = _ecT.salesTarget  || cfg.annualSalesTarget;
+  const stockTarget        = _ecT.stockTarget  || cfg.stockTarget;
+  const marginTarget       = _ecT.marginTarget || cfg.marginTarget;
   const monthlyProfitTarget = annualProfitTarget / 12;
   // 期間に応じた目標値スケーリング
   const filterMonths = calcFilterMonths();
@@ -3379,10 +3389,11 @@ function renderSalesDashboard() {
   const thisMonthData = monthMap[thisYM_slash] || monthMap[thisYM_dash] || {sales:0,profit:0,count:0};
 
   const filterMonths = calcSalesFilterMonths();
-  const scaledSalesTarget  = Math.round(cfg.salesAnnualSalesTarget  / 12 * filterMonths);
-  const scaledProfitTarget = Math.round(cfg.salesAnnualProfitTarget / 12 * filterMonths);
-  const monthlySalesTarget  = cfg.salesAnnualSalesTarget  / 12;
-  const monthlyProfitTarget = cfg.salesAnnualProfitTarget / 12;
+  const _sT = getAnnualTargets('sales', salesFilterFrom, salesFilterTo);
+  const scaledSalesTarget  = Math.round(_sT.salesTarget  / 12 * filterMonths);
+  const scaledProfitTarget = Math.round(_sT.profitTarget / 12 * filterMonths);
+  const monthlySalesTarget  = _sT.salesTarget  / 12;
+  const monthlyProfitTarget = _sT.profitTarget / 12;
 
   const salesAchieve  = scaledSalesTarget>0  ? totalSales/scaledSalesTarget*100   : 0;
   const profitAchieve = scaledProfitTarget>0 ? totalProfit/scaledProfitTarget*100 : 0;
@@ -3912,13 +3923,11 @@ function renderConstructionDashboard() {
 
   const cfg = getConfig();
   const filterMonths = calcConstructionFilterMonths();
-  const _cFyEntry = getFyTargets('construction', constructionFilterFrom, constructionFilterTo);
-  const _cSalesAnnual  = (_cFyEntry && _cFyEntry.salesTarget  !== '') ? Number(_cFyEntry.salesTarget)  : cfg.constructionAnnualSalesTarget;
-  const _cProfitAnnual = (_cFyEntry && _cFyEntry.profitTarget !== '') ? Number(_cFyEntry.profitTarget) : cfg.constructionAnnualProfitTarget;
-  const scaledSalesTarget  = Math.round(_cSalesAnnual  / 12 * filterMonths);
-  const scaledProfitTarget = Math.round(_cProfitAnnual / 12 * filterMonths);
-  const monthlySalesTarget  = _cSalesAnnual  / 12;
-  const monthlyProfitTarget = _cProfitAnnual / 12;
+  const _cT = getAnnualTargets('construction', constructionFilterFrom, constructionFilterTo);
+  const scaledSalesTarget  = Math.round(_cT.salesTarget  / 12 * filterMonths);
+  const scaledProfitTarget = Math.round(_cT.profitTarget / 12 * filterMonths);
+  const monthlySalesTarget  = _cT.salesTarget  / 12;
+  const monthlyProfitTarget = _cT.profitTarget / 12;
 
   const salesAchieve  = scaledSalesTarget>0  ? totalSales/scaledSalesTarget*100   : 0;
   const profitAchieve = scaledProfitTarget>0 ? totalProfit/scaledProfitTarget*100 : 0;
@@ -4326,13 +4335,11 @@ function renderGalileiDashboard() {
 
   const cfg = getConfig();
   const filterMonths = calcGalileiFilterMonths();
-  const _gFyEntry = getFyTargets('galilei', galileiFilterFrom, galileiFilterTo);
-  const _gSalesAnnual  = (_gFyEntry && _gFyEntry.salesTarget  !== '') ? Number(_gFyEntry.salesTarget)  : cfg.galileiAnnualSalesTarget;
-  const _gProfitAnnual = (_gFyEntry && _gFyEntry.profitTarget !== '') ? Number(_gFyEntry.profitTarget) : GALILEI_CONFIG ? GALILEI_CONFIG.annualProfitTarget : cfg.galileiAnnualProfitTarget;
-  const scaledSalesTarget  = Math.round(_gSalesAnnual  / 12 * filterMonths);
-  const scaledProfitTarget = Math.round(_gProfitAnnual / 12 * filterMonths);
-  const monthlySalesTarget  = _gSalesAnnual  / 12;
-  const monthlyProfitTarget = _gProfitAnnual / 12;
+  const _gT = getAnnualTargets('galilei', galileiFilterFrom, galileiFilterTo);
+  const scaledSalesTarget  = Math.round(_gT.salesTarget  / 12 * filterMonths);
+  const scaledProfitTarget = Math.round(_gT.profitTarget / 12 * filterMonths);
+  const monthlySalesTarget  = _gT.salesTarget  / 12;
+  const monthlyProfitTarget = _gT.profitTarget / 12;
 
   const salesAchieve  = scaledSalesTarget>0  ? totalActual/scaledSalesTarget*100   : 0;
   const profitAchieve = scaledProfitTarget>0 ? totalProfit/scaledProfitTarget*100  : 0;
@@ -4543,22 +4550,25 @@ function renderBudgetDashboard() {
 
   const cfg = getConfig();
 
+  // ── FY別目標値を取得（全カテゴリ） ──
+  const _bS = getAnnualTargets('sales',        budgetFilterFrom, budgetFilterTo);
+  const _bC = getAnnualTargets('construction', budgetFilterFrom, budgetFilterTo);
+  const _bG = getAnnualTargets('galilei',      budgetFilterFrom, budgetFilterTo);
+  const _bE = getAnnualTargets('ec',           budgetFilterFrom, budgetFilterTo);
+
   // ── EC ──
   const ecSales  = allSales.filter(s => inRange(s.yearMonth||''));
   const ecProfit = ecSales.reduce((a,s)=>a+s.profit,0);
   const ecRev    = ecSales.reduce((a,s)=>a+s.price,0);
-  const ecAnnualProfit = cfg.annualProfitTarget;
-  const ecTargetP = Math.round(ecAnnualProfit/12*filterMonths);
+  const ecTargetP = Math.round((_bE.profitTarget||cfg.annualProfitTarget)/12*filterMonths);
   const ecAchP    = ecTargetP>0 ? ecProfit/ecTargetP*100 : 0;
 
   // ── 営業 ──
   const salesRows  = allSalesData ? allSalesData.filter(s=>inRange(s.yearMonth)) : [];
   const salesRev   = salesRows.reduce((a,s)=>a+s.sales,0);
   const salesProfit= salesRows.reduce((a,s)=>a+s.profit,0);
-  const sAnnualS   = cfg.salesAnnualSalesTarget;
-  const sAnnualP   = cfg.salesAnnualProfitTarget;
-  const sTargetS   = Math.round(sAnnualS/12*filterMonths);
-  const sTargetP   = Math.round(sAnnualP/12*filterMonths);
+  const sTargetS   = Math.round((_bS.salesTarget ||cfg.salesAnnualSalesTarget) /12*filterMonths);
+  const sTargetP   = Math.round((_bS.profitTarget||cfg.salesAnnualProfitTarget)/12*filterMonths);
   const sAchS      = sTargetS>0 ? salesRev/sTargetS*100   : 0;
   const sAchP      = sTargetP>0 ? salesProfit/sTargetP*100 : 0;
 
@@ -4566,9 +4576,8 @@ function renderBudgetDashboard() {
   const constRows  = allConstructionData.filter(s=>inRange(s.yearMonth));
   const constRev   = constRows.reduce((a,s)=>a+s.sales,0);
   const constProfit= constRows.reduce((a,s)=>a+s.profit,0);
-  const cTargetS   = Math.round(cfg.constructionAnnualSalesTarget/12*filterMonths);
-  const cTargetP   = Math.round(cfg.constructionAnnualProfitTarget/12*filterMonths);
-  const cAchS      = cTargetS>0 ? constRev/constRev*100 : 0; // ※ 売上目標
+  const cTargetS   = Math.round((_bC.salesTarget ||cfg.constructionAnnualSalesTarget) /12*filterMonths);
+  const cTargetP   = Math.round((_bC.profitTarget||cfg.constructionAnnualProfitTarget)/12*filterMonths);
   const cAchSfix   = cTargetS>0 ? constRev/cTargetS*100 : 0;
   const cAchP      = cTargetP>0 ? constProfit/cTargetP*100 : 0;
 
@@ -4579,8 +4588,8 @@ function renderBudgetDashboard() {
   const galOutsource = allGalileiOutsource.filter(o=>inRange(o.yearMonthNorm)).reduce((a,o)=>a+o.amount,0);
   const galExpense   = allGalileiExpense.filter(e=>inRange(e.yearMonthNorm)).reduce((a,e)=>a+e.parking+e.etc+e.parts+e.disposal,0);
   const galProfit  = galRev - galOutsource - galExpense;
-  const gTargetS   = Math.round(cfg.galileiAnnualSalesTarget/12*filterMonths);
-  const gTargetP   = Math.round(cfg.galileiAnnualProfitTarget/12*filterMonths);
+  const gTargetS   = Math.round((_bG.salesTarget ||cfg.galileiAnnualSalesTarget) /12*filterMonths);
+  const gTargetP   = Math.round((_bG.profitTarget||cfg.galileiAnnualProfitTarget)/12*filterMonths);
   const gAchS      = gTargetS>0 ? galRev/gTargetS*100 : 0;
   const gAchP      = gTargetP>0 ? galProfit/gTargetP*100 : 0;
 
@@ -5643,6 +5652,7 @@ function refreshAllData() {
   });
 }
 
+// 2026年度目標値マイグレーション（未設定の場合のみ自動セット）
 // INIT
 setPreset('this_month', document.querySelector('.preset-btn[onclick*="this_month"]'));
 refreshAllData();
