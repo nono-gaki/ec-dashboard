@@ -140,7 +140,7 @@ body { font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans','Yu Gothic UI',sa
 .filter-sep { width:1px; height:20px; background:var(--border); }
 .apply-btn { font-size:12px; padding:5px 14px; border-radius:6px; border:none; background:var(--blue); color:#fff; cursor:pointer; font-family:inherit; font-weight:500; }
 .apply-btn:hover { opacity:.85; }
-.period-label { font-size:11px; color:var(--blue); font-weight:500; background:var(--blue-light); padding:3px 10px; border-radius:5px; }
+.period-label { display:none; }
 
 /* CONFIG PANEL */
 .config-panel { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:16px; margin-bottom:16px; display:none; }
@@ -152,6 +152,21 @@ body { font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans','Yu Gothic UI',sa
 .config-save { margin-top:12px; font-size:12px; background:var(--blue); color:#fff; border:none; padding:7px 18px; border-radius:6px; cursor:pointer; font-family:inherit; }
 .fy-add-btn { font-size:11px; padding:4px 12px; border:1px dashed var(--border); background:transparent; color:var(--text-muted); border-radius:6px; cursor:pointer; font-family:inherit; margin-bottom:10px; }
 .fy-add-btn:hover { border-color:var(--blue); color:var(--blue); }
+/* 昨対比較 */
+.yoy-metric-btn { display:inline-flex; align-items:center; gap:4px; padding:4px 10px; border:1px solid var(--border); border-radius:6px; font-size:12px; cursor:pointer; background:var(--surface); transition:border-color .15s; }
+.yoy-metric-btn:has(input:checked) { border-color:var(--blue); color:var(--blue); background:var(--blue-light); }
+.yoy-metric-btn input { display:none; }
+.yoy-kpi-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:10px; margin-bottom:16px; }
+.yoy-kpi-card { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:14px 16px; }
+.yoy-kpi-label { font-size:11px; color:var(--text-muted); margin-bottom:4px; }
+.yoy-kpi-values { display:flex; gap:12px; align-items:flex-end; flex-wrap:wrap; }
+.yoy-val-curr { font-size:20px; font-weight:700; color:var(--text-primary); }
+.yoy-val-prev { font-size:13px; color:var(--text-muted); }
+.yoy-diff-pos { color:var(--green); font-size:12px; font-weight:600; }
+.yoy-diff-neg { color:var(--red); font-size:12px; font-weight:600; }
+.yoy-diff-neu { color:var(--text-muted); font-size:12px; }
+.yoy-chart-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:16px; }
+@media(max-width:480px){ .yoy-chart-row { grid-template-columns:1fr; } }
 
 /* KPI CARDS */
 .kpi-row { display:grid; grid-template-columns:repeat(6,1fr); gap:12px; margin-bottom:16px; }
@@ -486,6 +501,7 @@ body { font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans','Yu Gothic UI',sa
       <div class="page-sidebar-item" onclick="switchEcSection('summary',this)">月別実績・KPI進捗</div>
       <div class="page-sidebar-item" onclick="switchEcSection('stock',this)">在庫一覧</div>
       <div class="page-sidebar-item" onclick="switchEcSection('purchase',this)">買取一覧</div>
+      <div class="page-sidebar-item" onclick="switchEcSection('yoy',this)">📈 昨対比較</div>
     </div>
 
     <div class="page-content">
@@ -812,6 +828,30 @@ body { font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans','Yu Gothic UI',sa
         </div>
       </div>
 
+
+      <!-- セクション: 昨対比較 -->
+      <div class="page-section" id="ec-section-yoy">
+        <div class="yoy-controls table-card" style="margin-bottom:12px">
+          <div style="font-weight:600;font-size:14px;margin-bottom:10px">📈 昨対比較設定</div>
+          <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end">
+            <div>
+              <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px">比較対象月</div>
+              <input type="month" id="ec-yoy-month" class="date-input" style="width:160px">
+            </div>
+            <div>
+              <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px">指標</div>
+              <div style="display:flex;gap:6px;flex-wrap:wrap">
+                <label class="yoy-metric-btn"><input type="checkbox" value="profit" checked> 粗利</label>
+                <label class="yoy-metric-btn"><input type="checkbox" value="count" checked> 販売数</label>
+                <label class="yoy-metric-btn"><input type="checkbox" value="margin"> 粗利率</label>
+                <label class="yoy-metric-btn"><input type="checkbox" value="stock"> 在庫点数</label>
+              </div>
+            </div>
+            <button class="apply-btn" onclick="renderEcYoy()">比較する</button>
+          </div>
+        </div>
+        <div id="ec-yoy-result"></div>
+      </div>
     </div><!-- /page-content -->
   </div><!-- /page-layout -->
 
@@ -830,6 +870,7 @@ body { font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans','Yu Gothic UI',sa
         <div class="page-sidebar-item" onclick="switchSalesSection('summary',this)">月別実績・KPI進捗</div>
         <div class="page-sidebar-item" onclick="switchSalesSection('list',this)">案件一覧</div>
         <div class="page-sidebar-item" onclick="switchSalesSection('expenses',this)">仕入・経費／外注費</div>
+        <div class="page-sidebar-item" onclick="switchSalesSection('yoy',this)">📈 昨対比較</div>
       </div>
 
       <div class="page-content">
@@ -1053,6 +1094,7 @@ body { font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans','Yu Gothic UI',sa
         <div class="page-sidebar-item" onclick="switchConstructionSection('summary',this)">月別実績・KPI進捗</div>
         <div class="page-sidebar-item" onclick="switchConstructionSection('list',this)">案件一覧</div>
         <div class="page-sidebar-item" onclick="switchConstructionSection('expenses',this)">仕入・経費／外注費</div>
+        <div class="page-sidebar-item" onclick="switchConstructionSection('yoy',this)">📈 昨対比較</div>
       </div>
 
       <div class="page-content">
@@ -1269,6 +1311,7 @@ body { font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans','Yu Gothic UI',sa
         <div class="page-sidebar-item" onclick="switchGalileiSection('reps',this)">営業担当者別</div>
         <div class="page-sidebar-item" onclick="switchGalileiSection('outsource',this)">外注一覧</div>
         <div class="page-sidebar-item" onclick="switchGalileiSection('expense',this)">経費一覧</div>
+        <div class="page-sidebar-item" onclick="switchGalileiSection('yoy',this)">📈 昨対比較</div>
       </div>
 
       <div class="page-content">
@@ -2846,6 +2889,305 @@ window.addEventListener('load', adjustTabsStickyPosition);
 adjustTabsStickyPosition();
 setTimeout(adjustTabsStickyPosition, 300);
 
+
+// ==================== 昨対比較 ====================
+function yoyGetChecked(containerId) {
+  const el = document.getElementById(containerId);
+  if (!el) return [];
+  return [...el.querySelectorAll('input[type=checkbox]:checked')].map(cb => cb.value);
+}
+
+function yoyFmtDiff(curr, prev, isRate) {
+  if (!prev) return '<span class="yoy-diff-neu">前年データなし</span>';
+  const diff = curr - prev;
+  const pct  = Math.round(diff / Math.abs(prev) * 1000) / 10;
+  const sign = diff >= 0 ? '+' : '';
+  const cls  = diff > 0 ? 'yoy-diff-pos' : diff < 0 ? 'yoy-diff-neg' : 'yoy-diff-neu';
+  const valStr = isRate
+    ? `${sign}${Math.round(diff*10)/10}pt`
+    : `${sign}¥${fmtYen(Math.round(diff))} (${sign}${pct}%)`;
+  return `<span class="${cls}">${valStr}</span>`;
+}
+
+function yoyBuildCards(rows) {
+  return `<div class="yoy-kpi-grid">${rows.map(r => `
+    <div class="yoy-kpi-card">
+      <div class="yoy-kpi-label">${r.label}</div>
+      <div class="yoy-kpi-values">
+        <div>
+          <div style="font-size:10px;color:var(--blue);margin-bottom:1px">今期</div>
+          <div class="yoy-val-curr">${r.curr}</div>
+        </div>
+        <div>
+          <div style="font-size:10px;color:var(--text-muted);margin-bottom:1px">前年同期</div>
+          <div class="yoy-val-prev">${r.prev}</div>
+        </div>
+      </div>
+      <div style="margin-top:6px">${r.diff}</div>
+    </div>`).join('')}</div>`;
+}
+
+function yoyBuildMonthlyTable(months, currMap, prevMap, cols) {
+  const thead = `<tr><th>年月</th>${cols.map(col=>`<th>${col.label}(今期)</th><th>${col.label}(前年)</th><th>増減</th>`).join('')}</tr>`;
+  const tbody = months.map(m => {
+    const cy = currMap[m] || {}, py = prevMap[m] || {};
+    return `<tr><td>${m}</td>${cols.map(col => {
+      const cv = cy[col.key] ?? 0, pv = py[col.key] ?? 0;
+      const diff = cv - pv;
+      const cls = diff > 0 ? 'yoy-diff-pos' : diff < 0 ? 'yoy-diff-neg' : 'yoy-diff-neu';
+      const sign = diff >= 0 ? '+' : '';
+      const diffStr = col.isRate
+        ? `<span class="${cls}">${sign}${Math.round(diff*10)/10}pt</span>`
+        : `<span class="${cls}">${sign}¥${fmtYen(Math.round(diff))}</span>`;
+      const fmt = col.isRate ? v => `${Math.round(v*10)/10}%` : v => v ? '¥'+fmtYen(Math.round(v)) : '-';
+      return `<td class="num">${fmt(cv)}</td><td class="num" style="color:var(--text-muted)">${fmt(pv)}</td><td class="num">${diffStr}</td>`;
+    }).join('')}</tr>`;
+  }).join('');
+  return `<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:12px">
+    <thead style="border-bottom:1px solid var(--border)">${thead}</thead>
+    <tbody>${tbody}</tbody>
+  </table></div>`;
+}
+
+// 前年同月のYM文字列を返す
+function yoyPrevYM(ym) {
+  const [y, m] = ym.split('-').map(Number);
+  return `${y-1}-${String(m).padStart(2,'0')}`;
+}
+
+// 選択月から12ヶ月分のYMリストを生成（指定月が属するFY）
+function yoyGetMonths(baseYM) {
+  const [y, m] = baseYM.split('-').map(Number);
+  const fyStart = m >= 10 ? y : y - 1;
+  const months = [];
+  for (let i = 0; i < 12; i++) {
+    const d = new Date(fyStart, 9 + i, 1);
+    months.push(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`);
+  }
+  return months;
+}
+
+// ── 営業 昨対 ──
+function renderSalesYoy() {
+  const baseYM = document.getElementById('sales-yoy-month')?.value;
+  if (!baseYM) { alert('比較対象月を選択してください'); return; }
+  const metrics = yoyGetChecked('sales-yoy-metrics');
+  const months  = yoyGetMonths(baseYM);
+  const prevMonths = months.map(yoyPrevYM);
+
+  const currMap = {}, prevMap = {};
+  months.forEach(m => {
+    const rows = (allSalesData||[]).filter(r => String(r.yearMonth).replace('/','-').substring(0,7) === m);
+    currMap[m] = {
+      sales:  rows.reduce((a,r)=>a+r.sales,0),
+      profit: rows.reduce((a,r)=>a+r.profit,0),
+      count:  rows.length,
+      margin: rows.length ? rows.reduce((a,r)=>a+r.profitRate,0)/rows.length : 0,
+    };
+  });
+  prevMonths.forEach((pm, i) => {
+    const rows = (allSalesData||[]).filter(r => String(r.yearMonth).replace('/','-').substring(0,7) === pm);
+    prevMap[months[i]] = {
+      sales:  rows.reduce((a,r)=>a+r.sales,0),
+      profit: rows.reduce((a,r)=>a+r.profit,0),
+      count:  rows.length,
+      margin: rows.length ? rows.reduce((a,r)=>a+r.profitRate,0)/rows.length : 0,
+    };
+  });
+
+  const totC = {sales:0,profit:0,count:0}, totP = {sales:0,profit:0,count:0};
+  months.forEach(m => { ['sales','profit','count'].forEach(k=>{ totC[k]+=(currMap[m]||{})[k]||0; totP[k]+=(prevMap[m]||{})[k]||0; }); });
+
+  const metricDefs = [
+    {key:'sales',  label:'売上高', isRate:false},
+    {key:'profit', label:'粗利額', isRate:false},
+    {key:'count',  label:'件数',   isRate:false, unit:'件'},
+    {key:'margin', label:'粗利率', isRate:true},
+  ].filter(d => metrics.includes(d.key));
+
+  const cards = metricDefs.map(d => ({
+    label: d.label,
+    curr:  d.isRate ? `${Math.round(totC[d.key]*10/10)/10}%` : d.unit ? `${totC[d.key]}${d.unit}` : `¥${fmtYen(Math.round(totC[d.key]))}`,
+    prev:  d.isRate ? `${Math.round(totP[d.key]*10/10)/10}%` : d.unit ? `${totP[d.key]}${d.unit}` : (totP[d.key] ? `¥${fmtYen(Math.round(totP[d.key]))}` : '-'),
+    diff:  yoyFmtDiff(totC[d.key], totP[d.key], d.isRate),
+  }));
+
+  const colDefs = metricDefs.filter(d=>!d.isRate || metrics.includes('margin'));
+  const table = yoyBuildMonthlyTable(months, currMap, prevMap, colDefs.map(d=>({key:d.key,label:d.label,isRate:d.isRate})));
+
+  document.getElementById('sales-yoy-result').innerHTML =
+    `<div style="font-size:12px;color:var(--text-muted);margin-bottom:8px">期間: ${months[0]} 〜 ${months[11]}（前年同期比較）</div>` +
+    yoyBuildCards(cards) +
+    `<div class="table-card"><div class="chart-title">月別推移</div><div style="margin-top:10px">${table}</div></div>`;
+}
+
+// ── 工事 昨対 ──
+function renderConstructionYoy() {
+  const baseYM = document.getElementById('construction-yoy-month')?.value;
+  if (!baseYM) { alert('比較対象月を選択してください'); return; }
+  const metrics = [...document.querySelectorAll('#construction-section-yoy input[type=checkbox]:checked')].map(cb=>cb.value);
+  const months  = yoyGetMonths(baseYM);
+  const prevMonths = months.map(yoyPrevYM);
+
+  const currMap = {}, prevMap = {};
+  months.forEach(m => {
+    const rows = allConstructionData.filter(r => String(r.yearMonth).replace('/','-').substring(0,7) === m);
+    currMap[m] = { sales:rows.reduce((a,r)=>a+r.sales,0), profit:rows.reduce((a,r)=>a+r.profit,0), count:rows.length };
+  });
+  prevMonths.forEach((pm, i) => {
+    const rows = allConstructionData.filter(r => String(r.yearMonth).replace('/','-').substring(0,7) === pm);
+    prevMap[months[i]] = { sales:rows.reduce((a,r)=>a+r.sales,0), profit:rows.reduce((a,r)=>a+r.profit,0), count:rows.length };
+  });
+
+  const totC = {sales:0,profit:0,count:0}, totP = {sales:0,profit:0,count:0};
+  months.forEach(m => { ['sales','profit','count'].forEach(k=>{ totC[k]+=(currMap[m]||{})[k]||0; totP[k]+=(prevMap[m]||{})[k]||0; }); });
+
+  const metricDefs = [{key:'sales',label:'売上高'},{key:'profit',label:'粗利額'},{key:'count',label:'件数',unit:'件'}].filter(d=>metrics.includes(d.key));
+  const cards = metricDefs.map(d => ({
+    label:d.label, curr:d.unit?`${totC[d.key]}${d.unit}`:`¥${fmtYen(Math.round(totC[d.key]))}`,
+    prev:d.unit?`${totP[d.key]}${d.unit}`:(totP[d.key]?`¥${fmtYen(Math.round(totP[d.key]))}`:'-'),
+    diff:yoyFmtDiff(totC[d.key],totP[d.key],false),
+  }));
+  const table = yoyBuildMonthlyTable(months,currMap,prevMap,metricDefs.map(d=>({key:d.key,label:d.label})));
+  document.getElementById('construction-yoy-result').innerHTML =
+    `<div style="font-size:12px;color:var(--text-muted);margin-bottom:8px">期間: ${months[0]} 〜 ${months[11]}</div>` +
+    yoyBuildCards(cards) + `<div class="table-card"><div class="chart-title">月別推移</div><div style="margin-top:10px">${table}</div></div>`;
+}
+
+// ── ガリレイ 昨対 ──
+function renderGalileiYoy() {
+  const baseYM = document.getElementById('galilei-yoy-month')?.value;
+  if (!baseYM) { alert('比較対象月を選択してください'); return; }
+  const metrics = [...document.querySelectorAll('#galilei-section-yoy input[type=checkbox]:checked')].map(cb=>cb.value);
+  const months  = yoyGetMonths(baseYM);
+  const prevMonths = months.map(yoyPrevYM);
+
+  const currMap = {}, prevMap = {};
+  months.forEach(m => {
+    const sites = allGalileiSites.filter(s=>s.yearMonthNorm.substring(0,7)===m);
+    const out   = allGalileiOutsource.filter(o=>o.yearMonthNorm.substring(0,7)===m);
+    const profits = sites.map(s=>s.actualAmount - (allGalileiOutsource.filter(o=>o.yearMonthNorm.substring(0,7)===m && o.sheetName===s.sheetName).reduce((a,o)=>a+o.amount,0)));
+    currMap[m] = {
+      actual:   sites.reduce((a,s)=>a+s.actualAmount,0),
+      count:    sites.length,
+      outsource:out.reduce((a,o)=>a+o.amount,0),
+      avgProfit:sites.length ? sites.reduce((a,s)=>a+s.actualAmount,0)/sites.length : 0,
+    };
+  });
+  prevMonths.forEach((pm,i) => {
+    const sites = allGalileiSites.filter(s=>s.yearMonthNorm.substring(0,7)===pm);
+    const out   = allGalileiOutsource.filter(o=>o.yearMonthNorm.substring(0,7)===pm);
+    prevMap[months[i]] = {
+      actual:   sites.reduce((a,s)=>a+s.actualAmount,0),
+      count:    sites.length,
+      outsource:out.reduce((a,o)=>a+o.amount,0),
+      avgProfit:sites.length ? sites.reduce((a,s)=>a+s.actualAmount,0)/sites.length : 0,
+    };
+  });
+
+  const totC={actual:0,count:0,outsource:0,avgProfit:0}, totP={actual:0,count:0,outsource:0,avgProfit:0};
+  months.forEach(m=>{['actual','count','outsource','avgProfit'].forEach(k=>{totC[k]+=(currMap[m]||{})[k]||0; totP[k]+=(prevMap[m]||{})[k]||0;});});
+  totC.avgProfit = totC.count ? totC.actual/totC.count : 0;
+  totP.avgProfit = totP.count ? totP.actual/totP.count : 0;
+
+  const metricDefs = [
+    {key:'actual',label:'実質金額'},{key:'count',label:'件数',unit:'件'},
+    {key:'outsource',label:'外注費'},{key:'avgProfit',label:'現場平均金額'},
+  ].filter(d=>metrics.includes(d.key));
+
+  const cards = metricDefs.map(d=>({
+    label:d.label, curr:d.unit?`${Math.round(totC[d.key])}${d.unit}`:`¥${fmtYen(Math.round(totC[d.key]))}`,
+    prev:d.unit?`${Math.round(totP[d.key])}${d.unit}`:(totP[d.key]?`¥${fmtYen(Math.round(totP[d.key]))}`:'-'),
+    diff:yoyFmtDiff(totC[d.key],totP[d.key],false),
+  }));
+  const table = yoyBuildMonthlyTable(months,currMap,prevMap,metricDefs.map(d=>({key:d.key,label:d.label})));
+  document.getElementById('galilei-yoy-result').innerHTML =
+    `<div style="font-size:12px;color:var(--text-muted);margin-bottom:8px">期間: ${months[0]} 〜 ${months[11]}</div>` +
+    yoyBuildCards(cards) + `<div class="table-card"><div class="chart-title">月別推移</div><div style="margin-top:10px">${table}</div></div>`;
+}
+
+// ── EC 昨対 ──
+function renderEcYoy() {
+  const baseYM = document.getElementById('ec-yoy-month')?.value;
+  if (!baseYM) { alert('比較対象月を選択してください'); return; }
+  const metrics = [...document.querySelectorAll('#ec-section-yoy input[type=checkbox]:checked')].map(cb=>cb.value);
+  const months  = yoyGetMonths(baseYM);
+  const prevMonths = months.map(yoyPrevYM);
+
+  const currMap = {}, prevMap = {};
+  months.forEach(m => {
+    const rows = allSales.filter(s=>String(s.yearMonth||'').replace('/','-').substring(0,7)===m);
+    const stk  = allStock.filter(s=>String(s.yearMonth||'').replace('/','-').substring(0,7)===m);
+    currMap[m] = {
+      profit: rows.reduce((a,s)=>a+s.profit,0), count:rows.reduce((a,s)=>a+(s.qty||1),0),
+      margin: rows.length ? rows.reduce((a,s)=>a+(s.profitRate||0),0)/rows.length : 0,
+      stock:  stk.length,
+    };
+  });
+  prevMonths.forEach((pm,i) => {
+    const rows = allSales.filter(s=>String(s.yearMonth||'').replace('/','-').substring(0,7)===pm);
+    const stk  = allStock.filter(s=>String(s.yearMonth||'').replace('/','-').substring(0,7)===pm);
+    prevMap[months[i]] = {
+      profit:rows.reduce((a,s)=>a+s.profit,0), count:rows.reduce((a,s)=>a+(s.qty||1),0),
+      margin:rows.length?rows.reduce((a,s)=>a+(s.profitRate||0),0)/rows.length:0, stock:stk.length,
+    };
+  });
+
+  const totC={profit:0,count:0,margin:0,stock:0}, totP={profit:0,count:0,margin:0,stock:0};
+  months.forEach(m=>{['profit','count','margin','stock'].forEach(k=>{totC[k]+=(currMap[m]||{})[k]||0; totP[k]+=(prevMap[m]||{})[k]||0;});});
+  totC.margin=totC.count?totC.margin/12:0; totP.margin=totP.count?totP.margin/12:0;
+
+  const metricDefs=[
+    {key:'profit',label:'粗利額'},{key:'count',label:'販売数',unit:'点'},
+    {key:'margin',label:'粗利率',isRate:true},{key:'stock',label:'在庫点数',unit:'点'},
+  ].filter(d=>metrics.includes(d.key));
+
+  const cards = metricDefs.map(d=>({
+    label:d.label, curr:d.isRate?`${Math.round(totC[d.key]*10)/10}%`:d.unit?`${Math.round(totC[d.key])}${d.unit}`:`¥${fmtYen(Math.round(totC[d.key]))}`,
+    prev:d.isRate?`${Math.round(totP[d.key]*10)/10}%`:d.unit?`${Math.round(totP[d.key])}${d.unit}`:(totP[d.key]?`¥${fmtYen(Math.round(totP[d.key]))}`:'-'),
+    diff:yoyFmtDiff(totC[d.key],totP[d.key],d.isRate||false),
+  }));
+  const table = yoyBuildMonthlyTable(months,currMap,prevMap,metricDefs.map(d=>({key:d.key,label:d.label,isRate:d.isRate})));
+  document.getElementById('ec-yoy-result').innerHTML =
+    `<div style="font-size:12px;color:var(--text-muted);margin-bottom:8px">期間: ${months[0]} 〜 ${months[11]}</div>` +
+    yoyBuildCards(cards) + `<div class="table-card"><div class="chart-title">月別推移</div><div style="margin-top:10px">${table}</div></div>`;
+}
+
+// switchSection に yoy 対応を追加するパッチ
+const _origSwitchSales = switchSalesSection;
+switchSalesSection = function(key, el) {
+  _origSwitchSales(key, el);
+  if (key === 'yoy') {
+    const m = document.getElementById('sales-yoy-month');
+    if (m && !m.value) { const n=new Date(); m.value=`${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,'0')}`; }
+  }
+};
+const _origSwitchConst = switchConstructionSection;
+switchConstructionSection = function(key, el) {
+  _origSwitchConst(key, el);
+  if (key === 'yoy') {
+    const m = document.getElementById('construction-yoy-month');
+    if (m && !m.value) { const n=new Date(); m.value=`${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,'0')}`; }
+  }
+};
+const _origSwitchGal = switchGalileiSection;
+switchGalileiSection = function(key, el) {
+  _origSwitchGal(key, el);
+  if (key === 'yoy') {
+    const m = document.getElementById('galilei-yoy-month');
+    if (m && !m.value) { const n=new Date(); m.value=`${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,'0')}`; }
+  }
+};
+const _origSwitchEc = switchEcSection;
+switchEcSection = function(key, el) {
+  _origSwitchEc(key, el);
+  if (key === 'yoy') {
+    const m = document.getElementById('ec-yoy-month');
+    if (m && !m.value) { const n=new Date(); m.value=`${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,'0')}`; }
+  }
+};
+// ==================== END 昨対比較 ====================
+
 // ==================== TAB SWITCH ====================
 let budgetSubKey = 'overview';
 
@@ -2937,11 +3279,6 @@ function applySalesFilter() {
 }
 
 function calcSalesFilterMonths() {
-  const activeBtn = document.querySelector('#page-sales .preset-btn.active');
-  if (activeBtn) {
-    const onclickAttr = activeBtn.getAttribute('onclick') || '';
-    if (onclickAttr.includes('this_fy') || onclickAttr.includes('last_fy')) return 12;
-  }
   // 「全期間」や日付未指定の場合は、実際に表示されているフィルタ済みデータの月数で計算
   const filtered = allSalesData.filter(s => {
     const ymNorm = s.yearMonth.replace('/','-').substring(0,7);
@@ -3520,11 +3857,6 @@ function applyConstructionFilter() {
 }
 
 function calcConstructionFilterMonths() {
-  const activeBtn = document.querySelector('#page-construction .preset-btn.active');
-  if (activeBtn) {
-    const onclickAttr = activeBtn.getAttribute('onclick') || '';
-    if (onclickAttr.includes('this_fy') || onclickAttr.includes('last_fy')) return 12;
-  }
   const filtered = allConstructionData.filter(s => {
     const ymNorm = s.yearMonth.replace('/','-').substring(0,7);
     if (constructionFilterFrom && ymNorm < constructionFilterFrom) return false;
@@ -4100,11 +4432,6 @@ function applyGalileiFilter() {
 }
 
 function calcGalileiFilterMonths() {
-  const activeBtn = document.querySelector('#page-galilei .preset-btn.active');
-  if (activeBtn) {
-    const onclickAttr = activeBtn.getAttribute('onclick') || '';
-    if (onclickAttr.includes('this_fy') || onclickAttr.includes('last_fy')) return 12;
-  }
   const filtered = allGalileiSites.filter(s => {
     const ymNorm = s.yearMonthNorm;
     if (galileiFilterFrom && ymNorm < galileiFilterFrom) return false;
@@ -4518,7 +4845,6 @@ function calcBudgetMonths() {
   const activeBtn = document.querySelector('#page-budget .preset-btn.active');
   if (activeBtn) {
     const oc = activeBtn.getAttribute('onclick')||'';
-    if (oc.includes('this_fy')||oc.includes('last_fy')) return 12;
     if (oc.includes('last3')) return 3;
     if (oc.includes('last6')) return 6;
     if (oc.includes('this_month')||oc.includes('last_month')) return 1;
