@@ -153,6 +153,8 @@ body { font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans','Yu Gothic UI',sa
 .fy-add-btn { font-size:11px; padding:4px 12px; border:1px dashed var(--border); background:transparent; color:var(--text-muted); border-radius:6px; cursor:pointer; font-family:inherit; margin-bottom:10px; }
 .fy-add-btn:hover { border-color:var(--blue); color:var(--blue); }
 /* 昨対比較 */
+.yoy-cat-tab { padding:8px 18px;border:none;background:transparent;cursor:pointer;font-size:13px;font-family:inherit;color:var(--text-muted);border-bottom:2px solid transparent;margin-bottom:-1px; }
+.yoy-cat-tab.active { color:var(--blue);font-weight:600;border-bottom-color:var(--blue); }
 .yoy-metric-btn { display:inline-flex; align-items:center; gap:4px; padding:4px 10px; border:1px solid var(--border); border-radius:6px; font-size:12px; cursor:pointer; background:var(--surface); transition:border-color .15s; }
 .yoy-metric-btn:has(input:checked) { border-color:var(--blue); color:var(--blue); background:var(--blue-light); }
 .yoy-metric-btn input { display:none; }
@@ -436,6 +438,7 @@ body { font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans','Yu Gothic UI',sa
   <div class="tab active" onclick="switchTab('budget',this)">📊 予算進捗</div>
   <div class="tab" onclick="switchTab('hrmos',this)">⏱ 残業</div>
   <div class="tab" onclick="switchTab('ai',this)">🤖 AI分析</div>
+  <div class="tab" onclick="switchTab('yoy',this)">📈 昨対</div>
 </div>
 
 <div class="sub-tabs" id="budget-sub-tabs">
@@ -501,7 +504,6 @@ body { font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans','Yu Gothic UI',sa
       <div class="page-sidebar-item" onclick="switchEcSection('summary',this)">月別実績・KPI進捗</div>
       <div class="page-sidebar-item" onclick="switchEcSection('stock',this)">在庫一覧</div>
       <div class="page-sidebar-item" onclick="switchEcSection('purchase',this)">買取一覧</div>
-      <div class="page-sidebar-item" onclick="switchEcSection('yoy',this)">📈 昨対比較</div>
     </div>
 
     <div class="page-content">
@@ -828,29 +830,6 @@ body { font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans','Yu Gothic UI',sa
         </div>
       </div>
 
-
-      <!-- セクション: 昨対比較 -->
-      <div class="page-section" id="ec-section-yoy">
-        <div class="yoy-controls table-card" style="margin-bottom:12px">
-          <div style="font-weight:600;font-size:14px;margin-bottom:10px">📈 昨対比較設定</div>
-          <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end">
-            <div>
-              <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px">比較対象月</div>
-              <input type="month" id="ec-yoy-month" class="date-input" style="width:160px">
-            </div>
-            <div>
-              <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px">指標</div>
-              <div style="display:flex;gap:6px;flex-wrap:wrap">
-                <label class="yoy-metric-btn"><input type="checkbox" value="profit" checked> 粗利</label>
-                <label class="yoy-metric-btn"><input type="checkbox" value="count" checked> 販売数</label>
-                <label class="yoy-metric-btn"><input type="checkbox" value="margin"> 粗利率</label>
-                <label class="yoy-metric-btn"><input type="checkbox" value="stock"> 在庫点数</label>
-              </div>
-            </div>
-            <button class="apply-btn" onclick="renderEcYoy()">比較する</button>
-          </div>
-        </div>
-        <div id="ec-yoy-result"></div>
       </div>
     </div><!-- /page-content -->
   </div><!-- /page-layout -->
@@ -870,7 +849,6 @@ body { font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans','Yu Gothic UI',sa
         <div class="page-sidebar-item" onclick="switchSalesSection('summary',this)">月別実績・KPI進捗</div>
         <div class="page-sidebar-item" onclick="switchSalesSection('list',this)">案件一覧</div>
         <div class="page-sidebar-item" onclick="switchSalesSection('expenses',this)">仕入・経費／外注費</div>
-        <div class="page-sidebar-item" onclick="switchSalesSection('yoy',this)">📈 昨対比較</div>
       </div>
 
       <div class="page-content">
@@ -1094,7 +1072,6 @@ body { font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans','Yu Gothic UI',sa
         <div class="page-sidebar-item" onclick="switchConstructionSection('summary',this)">月別実績・KPI進捗</div>
         <div class="page-sidebar-item" onclick="switchConstructionSection('list',this)">案件一覧</div>
         <div class="page-sidebar-item" onclick="switchConstructionSection('expenses',this)">仕入・経費／外注費</div>
-        <div class="page-sidebar-item" onclick="switchConstructionSection('yoy',this)">📈 昨対比較</div>
       </div>
 
       <div class="page-content">
@@ -1311,7 +1288,6 @@ body { font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans','Yu Gothic UI',sa
         <div class="page-sidebar-item" onclick="switchGalileiSection('reps',this)">営業担当者別</div>
         <div class="page-sidebar-item" onclick="switchGalileiSection('outsource',this)">外注一覧</div>
         <div class="page-sidebar-item" onclick="switchGalileiSection('expense',this)">経費一覧</div>
-        <div class="page-sidebar-item" onclick="switchGalileiSection('yoy',this)">📈 昨対比較</div>
       </div>
 
       <div class="page-content">
@@ -1707,6 +1683,47 @@ body { font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans','Yu Gothic UI',sa
 
 
   </div><!-- /page-ai -->
+
+
+  <!-- ======================== 昨対比較ページ ======================== -->
+  <div id="page-yoy" hidden>
+
+    <!-- フィルターバー -->
+    <div class="date-filter-bar">
+      <label>期間</label>
+      <input type="month" id="yoy-from" class="date-input">
+      <span class="date-sep">〜</span>
+      <input type="month" id="yoy-to" class="date-input">
+      <div class="filter-sep"></div>
+      <div class="preset-btns">
+        <button class="preset-btn active" onclick="setYoyPreset('this_month',this)">今月</button>
+        <button class="preset-btn" onclick="setYoyPreset('last_month',this)">前月</button>
+        <button class="preset-btn" onclick="setYoyPreset('last3',this)">直近3ヶ月</button>
+        <button class="preset-btn" onclick="setYoyPreset('this_fy',this)">今年度</button>
+        <button class="preset-btn" onclick="setYoyPreset('last_fy',this)">前年度</button>
+      </div>
+      <button class="apply-btn" onclick="renderYoyPage()">適用</button>
+    </div>
+
+    <!-- カテゴリタブ -->
+    <div style="display:flex;gap:0;border-bottom:2px solid var(--border);margin-bottom:16px">
+      <button class="yoy-cat-tab active" onclick="switchYoyCat('all',this)">全体</button>
+      <button class="yoy-cat-tab" onclick="switchYoyCat('sales',this)">営業</button>
+      <button class="yoy-cat-tab" onclick="switchYoyCat('construction',this)">その他工事</button>
+      <button class="yoy-cat-tab" onclick="switchYoyCat('galilei',this)">ガリレイ工事</button>
+      <button class="yoy-cat-tab" onclick="switchYoyCat('ec',this)">EC</button>
+    </div>
+
+    <!-- 指標選択（カテゴリごとに切り替え） -->
+    <div id="yoy-metric-selector" class="table-card" style="margin-bottom:14px;padding:12px 16px">
+      <div style="font-size:11px;color:var(--text-muted);margin-bottom:8px">表示する指標を選択</div>
+      <div id="yoy-metric-checks" style="display:flex;gap:8px;flex-wrap:wrap"></div>
+    </div>
+
+    <!-- 結果エリア -->
+    <div id="yoy-result"></div>
+
+  </div><!-- /page-yoy -->
 
   <!-- ======================== 残業（HRMOS連携）ページ ======================== -->
   <div id="page-hrmos" hidden>
@@ -2890,6 +2907,323 @@ adjustTabsStickyPosition();
 setTimeout(adjustTabsStickyPosition, 300);
 
 
+// ==================== 昨対比較ページ ====================
+let yoyCat = 'all';
+let yoyFromYM = '', yoyToYM = '';
+let yoySelectedMetrics = {}; // {cat: Set of selected keys}
+
+// カテゴリ別の指標定義
+const YOY_METRIC_DEFS = {
+  all: [
+    {key:'summary', label:'全体サマリー', default:true},
+  ],
+  sales: [
+    {key:'summary',  label:'サマリー（売上・粗利・件数・単価）', default:true},
+    {key:'expense',  label:'仕入・経費 内訳', default:false},
+    {key:'outsource',label:'外注費 内訳', default:false},
+  ],
+  construction: [
+    {key:'summary',  label:'サマリー（売上・粗利・件数・単価）', default:true},
+    {key:'expense',  label:'仕入・経費 内訳', default:false},
+    {key:'outsource',label:'外注費 内訳', default:false},
+  ],
+  galilei: [
+    {key:'summary',  label:'サマリー（売上・粗利・件数・単価）', default:true},
+    {key:'rep',      label:'担当者別', default:false},
+    {key:'vendor',   label:'外注 業者別', default:false},
+    {key:'expense',  label:'経費 項目別', default:false},
+  ],
+  ec: [
+    {key:'summary',  label:'サマリー（粗利・売上・販売・買取）', default:true},
+    {key:'category', label:'メーカー別 粗利', default:false},
+  ],
+};
+
+function setYoyPreset(key, el) {
+  document.querySelectorAll('#page-yoy .preset-btn').forEach(b=>b.classList.remove('active'));
+  if(el) el.classList.add('active');
+  const now=new Date(), y=now.getFullYear(), m=now.getMonth()+1;
+  const ym=(yr,mo)=>`${yr}-${String(mo).padStart(2,'0')}`;
+  const fyStart=m>=10?y:y-1;
+  if(key==='this_month'){yoyFromYM=yoyToYM=ym(y,m);}
+  else if(key==='last_month'){const d=new Date(y,m-2,1);yoyFromYM=yoyToYM=ym(d.getFullYear(),d.getMonth()+1);}
+  else if(key==='last3'){const d=new Date(y,m-4,1);yoyFromYM=ym(d.getFullYear(),d.getMonth()+1);yoyToYM=ym(y,m);}
+  else if(key==='this_fy'){yoyFromYM=ym(fyStart,10);yoyToYM=ym(y,m);}
+  else if(key==='last_fy'){yoyFromYM=ym(fyStart-1,10);yoyToYM=ym(fyStart,9);}
+  document.getElementById('yoy-from').value=yoyFromYM;
+  document.getElementById('yoy-to').value=yoyToYM;
+  renderYoyPage();
+}
+
+function switchYoyCat(cat, el) {
+  document.querySelectorAll('.yoy-cat-tab').forEach(b=>b.classList.remove('active'));
+  if(el) el.classList.add('active');
+  yoyCat=cat;
+  yoyRenderMetricSelector();
+  renderYoyPage();
+}
+
+function yoyRenderMetricSelector() {
+  const defs = YOY_METRIC_DEFS[yoyCat]||[];
+  const sel = document.getElementById('yoy-metric-selector');
+  const checksEl = document.getElementById('yoy-metric-checks');
+  if(!checksEl) return;
+  // 全体タブは指標選択不要
+  if(yoyCat==='all'){ sel.style.display='none'; return; }
+  sel.style.display='block';
+  if(!yoySelectedMetrics[yoyCat]) {
+    yoySelectedMetrics[yoyCat] = new Set(defs.filter(d=>d.default).map(d=>d.key));
+  }
+  const selected = yoySelectedMetrics[yoyCat];
+  checksEl.innerHTML = defs.map(d=>`
+    <label class="yoy-metric-btn" style="cursor:pointer">
+      <input type="checkbox" value="${d.key}" ${selected.has(d.key)?'checked':''}
+        onchange="yoyToggleMetric('${yoyCat}','${d.key}',this.checked)">
+      ${d.label}
+    </label>`).join('');
+}
+
+function yoyToggleMetric(cat, key, checked) {
+  if(!yoySelectedMetrics[cat]) yoySelectedMetrics[cat]=new Set();
+  if(checked) yoySelectedMetrics[cat].add(key);
+  else yoySelectedMetrics[cat].delete(key);
+  renderYoyPage();
+}
+
+// ─── ユーティリティ ───
+function yoyMonthList(from,to){
+  if(!from)return[];const t=to||from,list=[];let cur=from;
+  while(cur<=t&&list.length<25){list.push(cur);const[y,m]=cur.split('-').map(Number);cur=m===12?`${y+1}-01`:`${y}-${String(m+1).padStart(2,'0')}`;}
+  return list;
+}
+function yoyPrevYM(ym){const[y,m]=ym.split('-').map(Number);return`${y-1}-${String(m).padStart(2,'0')}`;}
+function yoyPrevRange(from,to){return{from:yoyPrevYM(from),to:yoyPrevYM(to||from)};}
+function yoyFmt(v,type,unit){const n=v||0;if(type==='yen')return'¥'+fmtYen(Math.round(n));if(type==='rate')return Math.round(n*10)/10+'%';if(type==='count')return Math.round(n)+(unit||'');return String(n);}
+function yoyDiff(curr,prev,type,unit,invert){
+  const diff=(curr||0)-(prev||0);
+  const pct=prev?Math.round(diff/Math.abs(prev)*1000)/10:null;
+  const sign=diff>=0?'+':'';
+  const cls=invert
+    ?(diff>0?'yoy-diff-neg':diff<0?'yoy-diff-pos':'yoy-diff-neu')
+    :(diff>0?'yoy-diff-pos':diff<0?'yoy-diff-neg':'yoy-diff-neu');
+  let str;
+  if(type==='rate')str=`${sign}${Math.round(Math.abs(diff)*10)/10}pt`;
+  else if(type==='count')str=`${sign}${Math.round(Math.abs(diff))}${unit||''}`;
+  else str=`${sign}¥${fmtYen(Math.round(Math.abs(diff)))}`;
+  const pctStr=pct!==null&&type!=='rate'?` (${sign}${pct}%)`:'';
+  return`<span class="${cls}">${str}${pctStr}</span>`;
+}
+
+function yoyTable(title,rows){
+  const rowsHtml=rows.map(([label,cv,pv,type,unit,inv])=>`<tr>
+    <td style="padding:9px 12px;font-size:13px;color:var(--text-secondary);border-bottom:1px solid var(--bg)">${label}</td>
+    <td class="num" style="padding:9px 12px;font-size:14px;font-weight:700;border-bottom:1px solid var(--bg)">${yoyFmt(cv,type,unit)}</td>
+    <td class="num" style="padding:9px 12px;font-size:13px;color:var(--text-muted);border-bottom:1px solid var(--bg)">${yoyFmt(pv,type,unit)}</td>
+    <td class="num" style="padding:9px 12px;font-size:13px;border-bottom:1px solid var(--bg)">${yoyDiff(cv,pv,type,unit,inv)}</td>
+  </tr>`).join('');
+  return`<div class="table-card" style="margin-bottom:14px">
+    ${title?`<div style="font-weight:600;font-size:13px;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--border)">${title}</div>`:''}
+    <div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;min-width:420px">
+      <thead><tr style="border-bottom:2px solid var(--border)">
+        <th style="padding:6px 12px;font-size:11px;color:var(--text-muted);text-align:left;font-weight:500">指標</th>
+        <th style="padding:6px 12px;font-size:11px;color:var(--blue);text-align:right;font-weight:600">今期</th>
+        <th style="padding:6px 12px;font-size:11px;color:var(--text-muted);text-align:right;font-weight:500">前年同期</th>
+        <th style="padding:6px 12px;font-size:11px;color:var(--text-muted);text-align:right;font-weight:500">増減</th>
+      </tr></thead>
+      <tbody>${rowsHtml}</tbody>
+    </table></div>
+  </div>`;
+}
+
+function yoyMapTable(title,currMap,prevMap,type,unit,invert){
+  const allKeys=[...new Set([...Object.keys(currMap),...Object.keys(prevMap)])];
+  if(!allKeys.length)return'';
+  allKeys.sort((a,b)=>(currMap[b]||0)-(currMap[a]||0));
+  const rows=allKeys.map(k=>[k,currMap[k]||0,prevMap[k]||0,type,unit,invert]);
+  return yoyTable(title,rows);
+}
+
+// ─── データ集計 ───
+function yoyAggr(cat,from,to){
+  const months=yoyMonthList(from,to||from);
+  const inM=ym=>months.includes(ym);
+  if(cat==='sales'){
+    const rows=(allSalesData||[]).filter(s=>inM(String(s.yearMonth).replace('/','-').substring(0,7)));
+    const s=rows.reduce((a,r)=>a+r.sales,0),p=rows.reduce((a,r)=>a+r.profit,0),n=rows.length;
+    const repMap={};
+    rows.forEach(r=>{const rep=r.rep||'不明';repMap[rep]=(repMap[rep]||0)+r.profit;});
+    const expMap={},outMap={};
+    (allSalesExpenses||[]).filter(e=>inM(String(e.yearMonth).replace('/','-').substring(0,7))).forEach(e=>{
+      if(e.type==='expense')expMap[e.item]=(expMap[e.item]||0)+e.amount;
+      else outMap[e.item]=(outMap[e.item]||0)+e.amount;
+    });
+    return{sales:s,profit:p,count:n,avgPrice:n?s/n:0,margin:s?p/s*100:0,
+           expTotal:Object.values(expMap).reduce((a,v)=>a+v,0),
+           outTotal:Object.values(outMap).reduce((a,v)=>a+v,0),
+           expMap,outMap};
+  }
+  if(cat==='construction'){
+    const rows=allConstructionData.filter(s=>inM(String(s.yearMonth).replace('/','-').substring(0,7)));
+    const s=rows.reduce((a,r)=>a+r.sales,0),p=rows.reduce((a,r)=>a+r.profit,0),n=rows.length;
+    const expMap={},outMap={};
+    (allConstructionExpenses||[]).filter(e=>inM(String(e.yearMonth).replace('/','-').substring(0,7))).forEach(e=>{
+      if(e.type==='expense')expMap[e.item]=(expMap[e.item]||0)+e.amount;
+      else outMap[e.item]=(outMap[e.item]||0)+e.amount;
+    });
+    return{sales:s,profit:p,count:n,avgPrice:n?s/n:0,margin:s?p/s*100:0,
+           expTotal:Object.values(expMap).reduce((a,v)=>a+v,0),
+           outTotal:Object.values(outMap).reduce((a,v)=>a+v,0),
+           expMap,outMap};
+  }
+  if(cat==='galilei'){
+    // 期間が今年度FY内 → allGalileiSites のみ使用
+    // 期間が前年度FY内 → allGalileiSitesPrev のみ使用（ロード済みなら）
+    const months = yoyMonthList(from, to||from);
+    const now = new Date();
+    const curFyStart = (now.getMonth()>=9 ? now.getFullYear() : now.getFullYear()-1) + '-10';
+    const isPrev = months.length > 0 && months[months.length-1] < curFyStart;
+    const useSites = isPrev && allGalileiSitesPrev.length ? allGalileiSitesPrev : allGalileiSites;
+    const useOut   = isPrev && allGalileiOutsourcePrev.length ? allGalileiOutsourcePrev : allGalileiOutsource;
+    const useExp   = isPrev && allGalileiExpensePrev.length ? allGalileiExpensePrev : allGalileiExpense;
+    const sites=useSites.filter(s=>inM(String(s.yearMonthNorm||'').substring(0,7)));
+    const out=useOut.filter(o=>inM(String(o.yearMonthNorm||'').substring(0,7)));
+    const exp=useExp.filter(e=>inM(String(e.yearMonthNorm||'').substring(0,7)));
+    const actual=sites.reduce((a,s)=>a+s.actualAmount,0);
+    const outsrcTotal=out.reduce((a,o)=>a+o.amount,0);
+    const expTotal=exp.reduce((a,e)=>a+e.parking+e.etc+e.parts+e.disposal,0);
+    const n=sites.length;
+    const repMap={},repCount={};
+    sites.forEach(s=>{const rep=s.rep||'不明';repMap[rep]=(repMap[rep]||0)+s.actualAmount;repCount[rep]=(repCount[rep]||0)+1;});
+    const vendorMap={};
+    out.forEach(o=>{const v=o.vendor||o.item||'不明';vendorMap[v]=(vendorMap[v]||0)+o.amount;});
+    const expItemMap={'駐車場/ガソリン':0,'ETC':0,'部材費':0,'廃棄費':0};
+    exp.forEach(e=>{expItemMap['駐車場/ガソリン']+=e.parking||0;expItemMap['ETC']+=e.etc||0;expItemMap['部材費']+=e.parts||0;expItemMap['廃棄費']+=e.disposal||0;});
+    return{sales:actual,profit:actual-outsrcTotal-expTotal,count:n,avgPrice:n?actual/n:0,
+           margin:actual?(actual-outsrcTotal-expTotal)/actual*100:0,
+           outsrcTotal,expTotal,repMap,repCount,vendorMap,expItemMap};
+  }
+  if(cat==='ec'){
+    const rows=(allSales||[]).filter(s=>inM(String(s.yearMonth||'').replace('/','-').substring(0,7)));
+    const rev=rows.reduce((a,s)=>a+(s.price||0),0),p=rows.reduce((a,s)=>a+s.profit,0);
+    const saleCount=rows.length, saleAvg=saleCount?rev/saleCount:0;
+    const stk=(allStock||[]).filter(s=>inM(String(s.yearMonth||'').replace('/','-').substring(0,7)));
+    const pch=(allPurchase||[]).filter(pp=>inM(String(pp.yearMonth||pp.date||'').replace('/','-').substring(0,7)));
+    const pchAmt=pch.reduce((a,pp)=>a+(pp.price||0),0);
+    const catMap={};
+    rows.forEach(s=>{const c2=s.maker||s.media||'その他';catMap[c2]=(catMap[c2]||0)+s.profit;});
+    return{sales:rev,profit:p,count:saleCount,avgPrice:saleAvg,margin:rev?p/rev*100:0,
+           saleCount,saleAvg,stockCount:stk.length,
+           purchaseCount:pch.length,purchaseAmt:pchAmt,purchaseAvg:pch.length?pchAmt/pch.length:0,catMap};
+  }
+  return{};
+}
+
+// ─── メイン描画 ───
+function renderYoyPage(){
+  const fromEl=document.getElementById('yoy-from'),toEl=document.getElementById('yoy-to');
+  if(fromEl?.value)yoyFromYM=fromEl.value;
+  if(toEl?.value)yoyToYM=toEl.value;
+  if(!yoyFromYM)return;
+  const toYM=yoyToYM||yoyFromYM;
+  const{from:pf,to:pt}=yoyPrevRange(yoyFromYM,toYM);
+  const pl=yoyFromYM===toYM?yoyFromYM:`${yoyFromYM}〜${toYM}`;
+  const pvl=pf===pt?pf:`${pf}〜${pt}`;
+
+  const header=`<div style="display:flex;gap:12px;margin-bottom:16px;flex-wrap:wrap">
+    <div class="table-card" style="flex:1;min-width:160px;padding:10px 14px">
+      <div style="font-size:10px;color:var(--blue);font-weight:600;margin-bottom:2px">今期</div>
+      <div style="font-size:14px;font-weight:700">${pl}</div>
+    </div>
+    <div class="table-card" style="flex:1;min-width:160px;padding:10px 14px">
+      <div style="font-size:10px;color:var(--text-muted);font-weight:600;margin-bottom:2px">前年同期</div>
+      <div style="font-size:14px;font-weight:700;color:var(--text-muted)">${pvl}</div>
+    </div>
+  </div>`;
+
+  let html=header;
+
+  if(yoyCat==='all'){
+    const cats=['sales','construction','galilei','ec'];
+    const labels={sales:'営業',construction:'その他工事',galilei:'ガリレイ工事',ec:'EC'};
+    const tC={sales:0,profit:0,count:0},tP={sales:0,profit:0,count:0};
+    cats.forEach(cat=>{
+      const cd=yoyAggr(cat,yoyFromYM,toYM),pd=yoyAggr(cat,pf,pt);
+      tC.sales+=cd.sales;tC.profit+=cd.profit;tC.count+=cd.count;
+      tP.sales+=pd.sales;tP.profit+=pd.profit;tP.count+=pd.count;
+    });
+    tC.margin=tC.sales?tC.profit/tC.sales*100:0;
+    tP.margin=tP.sales?tP.profit/tP.sales*100:0;
+    html+=yoyTable('📊 全体合計',[
+      ['売上高',tC.sales,tP.sales,'yen'],['粗利額',tC.profit,tP.profit,'yen'],
+      ['粗利率',tC.margin,tP.margin,'rate'],
+    ]);
+    html+=`<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(440px,1fr));gap:14px">`;
+    cats.forEach(cat=>{
+      const cd=yoyAggr(cat,yoyFromYM,toYM),pd=yoyAggr(cat,pf,pt);
+      html+=`<div>${yoyTable(labels[cat],[
+        ['売上高',cd.sales,pd.sales,'yen'],['粗利額',cd.profit,pd.profit,'yen'],
+        ['粗利率',cd.margin,pd.margin,'rate'],
+      ])}</div>`;
+    });
+    html+='</div>';
+  } else {
+    const sel=yoySelectedMetrics[yoyCat]||new Set(['summary']);
+    const cd=yoyAggr(yoyCat,yoyFromYM,toYM),pd=yoyAggr(yoyCat,pf,pt);
+    if(!sel.size){html+='<div style="color:var(--text-muted);padding:20px">表示する指標を選択してください</div>';}
+    else{
+      if(yoyCat==='sales'){
+        if(sel.has('summary'))html+=yoyTable('📊 サマリー',[
+          ['売上高',cd.sales,pd.sales,'yen'],['粗利額',cd.profit,pd.profit,'yen'],
+          ['粗利率',cd.margin,pd.margin,'rate'],['件数',cd.count,pd.count,'count','件'],
+          ['案件単価',cd.avgPrice,pd.avgPrice,'yen'],
+          ['仕入・経費計',cd.expTotal,pd.expTotal,'yen',undefined,true],['外注費計',cd.outTotal,pd.outTotal,'yen',undefined,true],
+        ]);
+        if(sel.has('expense'))html+=yoyMapTable('💰 仕入・経費 内訳',cd.expMap||{},pd.expMap||{},'yen',undefined,true);
+        if(sel.has('outsource'))html+=yoyMapTable('🔧 外注費 内訳',cd.outMap||{},pd.outMap||{},'yen',undefined,true);
+      }
+      else if(yoyCat==='construction'){
+        if(sel.has('summary'))html+=yoyTable('📊 サマリー',[
+          ['売上高',cd.sales,pd.sales,'yen'],['粗利額',cd.profit,pd.profit,'yen'],
+          ['粗利率',cd.margin,pd.margin,'rate'],['件数',cd.count,pd.count,'count','件'],
+          ['案件単価',cd.avgPrice,pd.avgPrice,'yen'],
+          ['仕入・経費計',cd.expTotal,pd.expTotal,'yen',undefined,true],['外注費計',cd.outTotal,pd.outTotal,'yen',undefined,true],
+        ]);
+        if(sel.has('expense'))html+=yoyMapTable('💰 仕入・経費 内訳',cd.expMap||{},pd.expMap||{},'yen',undefined,true);
+        if(sel.has('outsource'))html+=yoyMapTable('🔧 外注費 内訳',cd.outMap||{},pd.outMap||{},'yen',undefined,true);
+      }
+      else if(yoyCat==='galilei'){
+        if(sel.has('summary'))html+=yoyTable('📊 サマリー',[
+          ['実質売上',cd.sales,pd.sales,'yen'],
+          ['粗利（売上-外注-経費）',cd.profit,pd.profit,'yen'],
+          ['粗利率',cd.margin,pd.margin,'rate'],
+          ['現場件数',cd.count,pd.count,'count','件'],
+          ['案件単価',cd.avgPrice,pd.avgPrice,'yen'],
+          ['外注費計',cd.outsrcTotal,pd.outsrcTotal,'yen',undefined,true],
+          ['経費計',cd.expTotal,pd.expTotal,'yen',undefined,true],
+        ]);
+        if(sel.has('rep'))html+=yoyMapTable('👤 担当者別 売上',cd.repMap||{},pd.repMap||{},'yen');
+        if(sel.has('vendor'))html+=yoyMapTable('🔧 外注 業者別',cd.vendorMap||{},pd.vendorMap||{},'yen',undefined,true);
+        if(sel.has('expense'))html+=yoyMapTable('💰 経費 項目別',cd.expItemMap||{},pd.expItemMap||{},'yen',undefined,true);
+      }
+      else if(yoyCat==='ec'){
+        if(sel.has('summary'))html+=yoyTable('📊 サマリー',[
+          ['粗利額',   cd.profit,       pd.profit,       'yen'],
+          ['売上高',   cd.sales,        pd.sales,        'yen'],
+          ['粗利率',   cd.margin,       pd.margin,       'rate'],
+          ['販売件数', cd.saleCount,    pd.saleCount,    'count','件'],
+          ['販売単価', cd.saleAvg,      pd.saleAvg,      'yen'],
+          ['買取点数', cd.purchaseCount,pd.purchaseCount,'count','点'],
+          ['買取金額', cd.purchaseAmt,  pd.purchaseAmt,  'yen'],
+          ['買取単価', cd.purchaseAvg,  pd.purchaseAvg,  'yen'],
+        ]);
+        if(sel.has('category'))html+=yoyMapTable('📦 メーカー別 粗利',cd.catMap||{},pd.catMap||{},'yen');
+      }
+    }
+  }
+  document.getElementById('yoy-result').innerHTML=html;
+}
+// ==================== END 昨対比較ページ ====================
+
 // ==================== 昨対比較 ====================
 function yoyGetChecked(containerId) {
   const el = document.getElementById(containerId);
@@ -3153,39 +3487,7 @@ function renderEcYoy() {
     yoyBuildCards(cards) + `<div class="table-card"><div class="chart-title">月別推移</div><div style="margin-top:10px">${table}</div></div>`;
 }
 
-// switchSection に yoy 対応を追加するパッチ
-const _origSwitchSales = switchSalesSection;
-switchSalesSection = function(key, el) {
-  _origSwitchSales(key, el);
-  if (key === 'yoy') {
-    const m = document.getElementById('sales-yoy-month');
-    if (m && !m.value) { const n=new Date(); m.value=`${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,'0')}`; }
-  }
-};
-const _origSwitchConst = switchConstructionSection;
-switchConstructionSection = function(key, el) {
-  _origSwitchConst(key, el);
-  if (key === 'yoy') {
-    const m = document.getElementById('construction-yoy-month');
-    if (m && !m.value) { const n=new Date(); m.value=`${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,'0')}`; }
-  }
-};
-const _origSwitchGal = switchGalileiSection;
-switchGalileiSection = function(key, el) {
-  _origSwitchGal(key, el);
-  if (key === 'yoy') {
-    const m = document.getElementById('galilei-yoy-month');
-    if (m && !m.value) { const n=new Date(); m.value=`${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,'0')}`; }
-  }
-};
-const _origSwitchEc = switchEcSection;
-switchEcSection = function(key, el) {
-  _origSwitchEc(key, el);
-  if (key === 'yoy') {
-    const m = document.getElementById('ec-yoy-month');
-    if (m && !m.value) { const n=new Date(); m.value=`${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,'0')}`; }
-  }
-};
+
 // ==================== END 昨対比較 ====================
 
 // ==================== TAB SWITCH ====================
@@ -3194,10 +3496,36 @@ let budgetSubKey = 'overview';
 function switchTab(key, el) {
   document.querySelectorAll('.tabs > .tab').forEach(t => t.classList.remove('active'));
   if(el) el.classList.add('active');
+  try { sessionStorage.setItem('lm_tab', key); } catch(e) {}
   document.getElementById('page-budget-group').hidden = (key !== 'budget');
   document.getElementById('budget-sub-tabs').hidden = (key !== 'budget');
+  document.getElementById('page-budget').hidden = (key !== 'budget');
   document.getElementById('page-ai').hidden = (key !== 'ai');
   document.getElementById('page-hrmos').hidden = (key !== 'hrmos');
+  document.getElementById('page-yoy').hidden = (key !== 'yoy');
+  // 昨対・残業・AI分析タブ時はカテゴリページを全て非表示
+  const hideCats = (key !== 'budget');
+  ['page-ec','page-sales','page-construction','page-galilei'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.hidden = hideCats;
+  });
+  if (key === 'yoy') {
+    yoyRenderMetricSelector();
+    const doRender = () => {
+      if (!yoyFromYM) setYoyPreset('this_month', document.querySelector('#page-yoy .preset-btn'));
+      else renderYoyPage();
+    };
+    // ガリレイ前年は先に取得
+    const galPromise = (!galileiLastFyLoaded)
+      ? (galileiLastFyLoaded=true, loadGalileiData(true))
+      : Promise.resolve();
+    // 経費は他のAPI呼び出しが落ち着いてから順番に取得（直列で429回避）
+    const loadExpenses = async () => {
+      if (!salesExpensesLoaded)        await loadSalesExpensesData();
+      if (!constructionExpensesLoaded) await loadConstructionExpensesData();
+    };
+    Promise.all([galPromise, loadExpenses()]).then(doRender);
+  }
   if (key === 'budget') {
     switchBudgetSub(budgetSubKey);
   }
@@ -3212,6 +3540,7 @@ function switchTab(key, el) {
 // 「予算進捗」タブ内のサブ切り替え（全体・営業・その他工事・ガリレイ工事・EC）
 function switchBudgetSub(subKey, el) {
   budgetSubKey = subKey;
+  try { sessionStorage.setItem('lm_sub', subKey); } catch(e) {}
   document.querySelectorAll('#budget-sub-tabs .subtab').forEach(t => t.classList.remove('active'));
   const activeEl = el || document.querySelector(`#budget-sub-tabs .subtab[onclick*="'${subKey}'"]`);
   if (activeEl) activeEl.classList.add('active');
@@ -3299,6 +3628,7 @@ function calcSalesFilterMonths() {
 
 // ==================== 営業 仕入・経費／外注費 ====================
 let allSalesExpenses = [];   // { sheetName, yearMonth, type:'expense'|'outsource', item, note, amount }
+let salesExpensesLoaded = false;
 const SALES_EXPENSE_SKIP_KEYWORDS = ['営業部', '管理票', '原本'];
 const salesExpensesExpanded = new Set();
 
@@ -3344,9 +3674,10 @@ async function loadSalesExpensesData() {
       );
       console.log('仕入・経費 対象シート数:', targets.length, targets.slice(0,5));
 
-      // batchGetは1リクエスト100レンジまで → 1シート7レンジなので14シートずつ
-      const BATCH_SIZE = 14;
+      // batchGetは1リクエスト100レンジまで → 1シート7レンジなので7シートずつ（429対策）
+      const BATCH_SIZE = 7;
       for (let i = 0; i < targets.length; i += BATCH_SIZE) {
+        if (i > 0) await new Promise(r => setTimeout(r, 400)); // レート制限回避
         const batch = targets.slice(i, i + BATCH_SIZE);
         const ranges = batch.flatMap(title => {
           const s = escSheet(title);
@@ -3931,6 +4262,7 @@ async function loadConstructionData() {
 
 // ==================== その他工事 仕入・経費／外注費 ====================
 let allConstructionExpenses = [];
+let constructionExpensesLoaded = false;
 const CONSTRUCTION_EXPENSE_SKIP_KEYWORDS = ['その他工事', '管理票', '原本'];
 const constructionExpensesExpanded = new Set();
 const _constructionItemExpanded = { expense:{}, outsource:{} };
@@ -3974,8 +4306,9 @@ async function loadConstructionExpensesData() {
       );
       console.log('工事 仕入・経費 対象シート数:', targets.length, targets.slice(0,5));
 
-      const BATCH_SIZE = 14;
+      const BATCH_SIZE = 7;
       for (let i = 0; i < targets.length; i += BATCH_SIZE) {
+        if (i > 0) await new Promise(r => setTimeout(r, 400));
         const batch = targets.slice(i, i + BATCH_SIZE);
         const ranges = batch.flatMap(title => {
           const s = escSheet_c(title);
@@ -4012,6 +4345,7 @@ async function loadConstructionExpensesData() {
       }
     } catch(e) { console.error('loadConstructionExpensesData エラー:', e.message); }
   }
+  constructionExpensesLoaded = true;
   console.log('工事 仕入・経費データ件数:', allConstructionExpenses.length);
   renderConstructionExpenses();
 }
@@ -4346,10 +4680,13 @@ function renderConstructionDashboard() {
 
 // ==================== GALILEI（ガリレイ工事） ====================
 let galileiLoaded = false;
-let allGalileiSites = [];       // 現場詳細
-let allGalileiReps = [];        // 営業詳細（月ごと）
-let allGalileiOutsource = [];   // 外注詳細
-let allGalileiExpense = [];     // 経費（月ごと）
+let allGalileiSites = [];         // 現場詳細（今年度）
+let allGalileiReps = [];          // 担当者詳細（月ごと）
+let allGalileiOutsource = [];     // 外注詳細（今年度）
+let allGalileiExpense = [];       // 経費（今年度）
+let allGalileiSitesPrev = [];     // 現場詳細（前年度）
+let allGalileiOutsourcePrev = []; // 外注詳細（前年度）
+let allGalileiExpensePrev = [];   // 経費（前年度）
 let galileiFilterFrom = '';
 let galileiFilterTo = '';
 
@@ -4470,7 +4807,7 @@ async function loadGalileiData(onlyLastFy=false) {
       const _prevNames = [];
       for (let m = 10; m <= 12; m++) _prevNames.push((String(_prevFy) + '年' + m + '月'));
       for (let m = 1;  m <= 9;  m++) _prevNames.push((String(_prevFy+1) + '年' + m + '月'));
-      _galEntries = _prevNames.map(name => ({ sheetId: _prevEntry.sheetId, fy: _prevEntry.fy, name }));
+      _galEntries = _prevNames.map(name => ({ sheetId: _prevEntry.sheetId, fy: 'prev', name }));
     } else {
       // FYリストが1件しかない場合は前年度データなし（同じシートを重複読み込みしない）
       console.log('前年度FYリストなし→スキップ');
@@ -4488,11 +4825,16 @@ async function loadGalileiData(onlyLastFy=false) {
     if (onlyLastFy) { galileiLastFyLoaded = true; renderGalileiDashboard(); }
     return;
   }
+  // ロード前にリセット（二重計上完全防止）
   if (!onlyLastFy) {
     allGalileiSites = [];
     allGalileiReps = [];
     allGalileiOutsource = [];
     allGalileiExpense = [];
+  } else {
+    allGalileiSitesPrev = [];
+    allGalileiOutsourcePrev = [];
+    allGalileiExpensePrev = [];
   }
   let successCount = 0;
 
@@ -4521,8 +4863,9 @@ async function loadGalileiData(onlyLastFy=false) {
         const effectiveDate = rawDate || ymNorm;
         // 物件名が空 → 「その他」
         const effectiveProperty = rawProperty || 'その他';
-        allGalileiSites.push({
+        (onlyLastFy ? allGalileiSitesPrev : allGalileiSites).push({
           yearMonth: sheetName, yearMonthNorm: ymNorm,
+          fy: onlyLastFy ? 'prev' : entry.fy,
           date: effectiveDate, rep: String(r[1]||'').trim(),
           property: effectiveProperty, area: String(r[3]||'').trim(),
           content: String(r[6]||'').trim(), budgetSales,
@@ -4533,21 +4876,24 @@ async function loadGalileiData(onlyLastFy=false) {
       repRows.filter(r => r[0]).forEach(r => {
         allGalileiReps.push({
           yearMonth: sheetName, yearMonthNorm: ymNorm,
+          fy: onlyLastFy ? 'prev' : entry.fy,
           rep: String(r[0]||'').trim(), count: parseNum(r[1]), amount: parseNum(r[2]),
         });
       });
 
       outRows.filter(r => r[0] && r[1]).forEach(r => {
-        allGalileiOutsource.push({
+        (onlyLastFy ? allGalileiOutsourcePrev : allGalileiOutsource).push({
           yearMonth: sheetName, yearMonthNorm: ymNorm,
+          fy: onlyLastFy ? 'prev' : entry.fy,
           date: String(r[0]||'').trim(), vendor: String(r[1]||'').trim(),
           amount: parseNum(r[2]), site: String(r[3]||'').trim(),
         });
       });
 
       if (expRows.length >= 4) {
-        allGalileiExpense.push({
+        (onlyLastFy ? allGalileiExpensePrev : allGalileiExpense).push({
           yearMonth: sheetName, yearMonthNorm: ymNorm,
+          fy: onlyLastFy ? 'prev' : entry.fy,
           parking: parseNum(expRows[0] ? expRows[0][0] : 0),
           etc:     parseNum(expRows[1] ? expRows[1][0] : 0),
           parts:   parseNum(expRows[2] ? expRows[2][0] : 0),
@@ -4562,6 +4908,31 @@ async function loadGalileiData(onlyLastFy=false) {
 
   await Promise.all(tasks);
 
+  // シートレベル重複除去（同じsheetId+yearMonthNormのデータが2重に入った場合）
+  if (!onlyLastFy) {
+    const seenKey = new Set();
+    const origLen = allGalileiSites.length;
+    allGalileiSites = allGalileiSites.filter(s => {
+      // 同じ年月・物件名・金額の組み合わせで重複判定
+      const k = s.yearMonthNorm + '|' + s.property + '|' + s.actualAmount + '|' + s.date;
+      if (seenKey.has(k)) return false;
+      seenKey.add(k); return true;
+    });
+    if (allGalileiSites.length !== origLen)
+      console.log('ガリレイ現場重複除去:', origLen, '→', allGalileiSites.length);
+
+    const seenOut = new Set();
+    allGalileiOutsource = allGalileiOutsource.filter(o => {
+      const k = o.yearMonthNorm + '|' + o.vendor + '|' + o.amount + '|' + o.date;
+      if (seenOut.has(k)) return false; seenOut.add(k); return true;
+    });
+
+    const seenExp = new Set();
+    allGalileiExpense = allGalileiExpense.filter(e => {
+      const k = e.yearMonthNorm + '|' + e.parking + '|' + e.etc + '|' + e.parts + '|' + e.disposal;
+      if (seenExp.has(k)) return false; seenExp.add(k); return true;
+    });
+  }
   console.log('ガリレイ取得成功シート数:', successCount, '現場件数:', allGalileiSites.length);
 
   if (successCount === 0) {
@@ -5273,6 +5644,11 @@ function renderAiAnalysis() {
   const { from, to, elapsed } = fyRangeAndElapsed();
   const remainingMonths = 12 - elapsed;
   const expectedPace = elapsed / 12 * 100;
+  // FY別目標値（今年度のFYを自動判定）
+  const _aiST = getAnnualTargets('sales',        from, to);
+  const _aiCT = getAnnualTargets('construction', from, to);
+  const _aiGT = getAnnualTargets('galilei',      from, to);
+  const _aiET = getAnnualTargets('ec',           from, to);
   const prevYM = aiPrevYM(to);
   const currYM = to;
   const priorRange = aiShiftRange(from, to, 1);
@@ -5289,7 +5665,7 @@ function renderAiAnalysis() {
   const ecProfit = ecRows.reduce((a,s)=>a+s.profit,0);
   const ecRev    = ecRows.reduce((a,s)=>a+s.price,0);
   const ecMargin = ecRev>0 ? ecProfit/ecRev*100 : 0;
-  const ecTargetP = cfg.annualProfitTarget;
+  const ecTargetP = _aiET.profitTarget || cfg.annualProfitTarget;
   const ecAchP = ecTargetP>0 ? ecProfit/ecTargetP*100 : 0;
   const ecProfitCurr = ecRows.filter(s=>isYM(s.yearMonth,currYM)).reduce((a,s)=>a+s.profit,0);
   const ecProfitPrev = allSales.filter(s=>isYM(s.yearMonth,prevYM)).reduce((a,s)=>a+s.profit,0);
@@ -5301,7 +5677,7 @@ function renderAiAnalysis() {
   // ---- 営業 ----
   const salesRows = (allSalesData||[]).filter(s=>inRange(s.yearMonth));
   const salesProfit = salesRows.reduce((a,s)=>a+s.profit,0);
-  const salesTargetP = cfg.salesAnnualProfitTarget;
+  const salesTargetP = _aiST.profitTarget || cfg.salesAnnualProfitTarget;
   const salesAchP = salesTargetP>0 ? salesProfit/salesTargetP*100 : 0;
   const salesProfitCurr = salesRows.filter(s=>isYM(s.yearMonth,currYM)).reduce((a,s)=>a+s.profit,0);
   const salesProfitPrev = (allSalesData||[]).filter(s=>isYM(s.yearMonth,prevYM)).reduce((a,s)=>a+s.profit,0);
@@ -5316,7 +5692,7 @@ function renderAiAnalysis() {
   // ---- その他工事 ----
   const constRows = allConstructionData.filter(s=>inRange(s.yearMonth));
   const constProfit = constRows.reduce((a,s)=>a+s.profit,0);
-  const constTargetP = cfg.constructionAnnualProfitTarget;
+  const constTargetP = _aiCT.profitTarget || cfg.constructionAnnualProfitTarget;
   const constAchP = constTargetP>0 ? constProfit/constTargetP*100 : 0;
   const constProfitCurr = constRows.filter(s=>isYM(s.yearMonth,currYM)).reduce((a,s)=>a+s.profit,0);
   const constProfitPrev = allConstructionData.filter(s=>isYM(s.yearMonth,prevYM)).reduce((a,s)=>a+s.profit,0);
@@ -5334,7 +5710,7 @@ function renderAiAnalysis() {
   const galOutsource = allGalileiOutsource.filter(o=>inRange(o.yearMonthNorm)).reduce((a,o)=>a+o.amount,0);
   const galExpense = allGalileiExpense.filter(e=>inRange(e.yearMonthNorm)).reduce((a,e)=>a+e.parking+e.etc+e.parts+e.disposal,0);
   const galProfit = galRev - galOutsource - galExpense;
-  const galTargetP = cfg.galileiAnnualProfitTarget;
+  const galTargetP = _aiGT.profitTarget || cfg.galileiAnnualProfitTarget;
   const galAchP = galTargetP>0 ? galProfit/galTargetP*100 : 0;
   const galOutsourceRatio = galRev>0 ? galOutsource/galRev*100 : 0;
   function galProfitForYM(ym) {
@@ -5963,23 +6339,44 @@ function refreshAllData() {
   const btn = document.getElementById('refresh-btn');
   const originalLabel = btn ? btn.innerHTML : '';
   if (btn) { btn.disabled = true; btn.innerHTML = '↻ 更新中...'; }
-  const tasks = [loadData(), loadStockData(), loadPurchaseData(), loadSalesData(), loadConstructionData(), loadGalileiData()];
-  if (galileiLastFyLoaded) tasks.push(loadGalileiData(true));
-  if (hrmosLoaded && hrmosFilterFrom && hrmosFilterTo) tasks.push(loadHrmosData(hrmosFilterFrom, hrmosFilterTo));
-  return Promise.all(tasks).then(() => {
-    if (budgetFilterFrom || budgetFilterTo) {
-      renderBudgetDashboard();
-    } else {
-      setBudgetPreset('this_month', document.querySelector('#page-budget .preset-btn[onclick*="this_month"]'));
+  salesExpensesLoaded = false;
+  constructionExpensesLoaded = false;
+  // 直列でロード（並列だとAPIレート制限429が発生するため）
+  (async () => {
+    try {
+      await loadData();
+      await loadStockData();
+      await loadPurchaseData();
+      await loadSalesData();
+      await loadConstructionData();
+      await loadGalileiData();
+      if (galileiLastFyLoaded) { galileiLastFyLoaded = false; await loadGalileiData(true); }
+      if (hrmosLoaded && hrmosFilterFrom && hrmosFilterTo) await loadHrmosData(hrmosFilterFrom, hrmosFilterTo);
+      if (budgetFilterFrom || budgetFilterTo) renderBudgetDashboard();
+      else setBudgetPreset('this_month', document.querySelector('#page-budget .preset-btn[onclick*="this_month"]'));
+      if (!document.getElementById('page-ai').hidden) renderAiAnalysis();
+    } finally {
+      if (btn) { btn.disabled = false; btn.innerHTML = originalLabel; }
     }
-    if (!document.getElementById('page-ai').hidden) renderAiAnalysis();
-  }).finally(() => {
-    if (btn) { btn.disabled = false; btn.innerHTML = originalLabel; }
-  });
+  })();
+  return;
 }
 
 // 2026年度目標値マイグレーション（未設定の場合のみ自動セット）
-// INIT
+// INIT: 前回のタブ状態を復元
+(function() {
+  try {
+    const tab = sessionStorage.getItem('lm_tab');
+    const sub = sessionStorage.getItem('lm_sub');
+    if (tab && tab !== 'budget') {
+      const el = document.querySelector(`.tabs > .tab[onclick*="'${tab}'"]`);
+      if (el) { switchTab(tab, el); }
+    } else if (sub) {
+      const el = document.querySelector(`#budget-sub-tabs .subtab[onclick*="'${sub}'"]`);
+      if (el) switchBudgetSub(sub, el);
+    }
+  } catch(e) {}
+})();
 setPreset('this_month', document.querySelector('.preset-btn[onclick*="this_month"]'));
 refreshAllData();
 
