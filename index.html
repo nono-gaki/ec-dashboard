@@ -66,7 +66,7 @@ body { font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans','Yu Gothic UI',sa
 .hrmos-emp-card-field .value { display:block; font-size:13px; font-weight:500; }
 
 /* MAIN */
-.main { padding:16px 24px; max-width:1440px; margin:0 auto; }
+.main { padding:16px 24px; max-width:1440px; margin:0 auto; overflow-x:hidden; }
 
 /* ============================================================
    SIDEBAR LAYOUT (PC) — 事業ページ内のセクション切替
@@ -155,6 +155,9 @@ body { font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans','Yu Gothic UI',sa
 /* 昨対比較 */
 .yoy-cat-tab { padding:8px 18px;border:none;background:transparent;cursor:pointer;font-size:13px;font-family:inherit;color:var(--text-muted);border-bottom:2px solid transparent;margin-bottom:-1px; }
 .yoy-cat-tab.active { color:var(--blue);font-weight:600;border-bottom-color:var(--blue); }
+/* hidden時にスペースを占有しない */
+[hidden] { display:none !important; }
+
 .yoy-metric-btn { display:inline-flex; align-items:center; gap:4px; padding:4px 10px; border:1px solid var(--border); border-radius:6px; font-size:12px; cursor:pointer; background:var(--surface); transition:border-color .15s; }
 .yoy-metric-btn:has(input:checked) { border-color:var(--blue); color:var(--blue); background:var(--blue-light); }
 .yoy-metric-btn input { display:none; }
@@ -2984,9 +2987,13 @@ function yoyRenderMetricSelector() {
 }
 
 function yoyToggleMetric(cat, key, checked) {
-  if(!yoySelectedMetrics[cat]) yoySelectedMetrics[cat]=new Set();
+  if(!yoySelectedMetrics[cat]) yoySelectedMetrics[cat]=new Set(
+    (YOY_METRIC_DEFS[cat]||[]).filter(d=>d.default).map(d=>d.key)
+  );
   if(checked) yoySelectedMetrics[cat].add(key);
   else yoySelectedMetrics[cat].delete(key);
+  // チェックボックスのUIを再描画してから結果を描画
+  yoyRenderMetricSelector();
   renderYoyPage();
 }
 
@@ -3167,7 +3174,11 @@ function renderYoyPage(){
     });
     html+='</div>';
   } else {
-    const sel=yoySelectedMetrics[yoyCat]||new Set(['summary']);
+    // 選択がない場合はデフォルト（summary）にフォールバック
+    if(!yoySelectedMetrics[yoyCat]||yoySelectedMetrics[yoyCat].size===0){
+      yoySelectedMetrics[yoyCat]=new Set(['summary']);
+    }
+    const sel=yoySelectedMetrics[yoyCat];
     const cd=yoyAggr(yoyCat,yoyFromYM,toYM),pd=yoyAggr(yoyCat,pf,pt);
     if(!sel.size){html+='<div style="color:var(--text-muted);padding:20px">表示する指標を選択してください</div>';}
     else{
@@ -3511,20 +3522,27 @@ function switchTab(key, el) {
   });
   if (key === 'yoy') {
     yoyRenderMetricSelector();
-    const doRender = () => {
-      if (!yoyFromYM) setYoyPreset('this_month', document.querySelector('#page-yoy .preset-btn'));
-      else renderYoyPage();
-    };
-    // ガリレイ前年は先に取得
-    const galPromise = (!galileiLastFyLoaded)
-      ? (galileiLastFyLoaded=true, loadGalileiData(true))
-      : Promise.resolve();
-    // 経費は他のAPI呼び出しが落ち着いてから順番に取得（直列で429回避）
-    const loadExpenses = async () => {
-      if (!salesExpensesLoaded)        await loadSalesExpensesData();
-      if (!constructionExpensesLoaded) await loadConstructionExpensesData();
-    };
-    Promise.all([galPromise, loadExpenses()]).then(doRender);
+    // まず期間をセットして即描画（データは後からロード）
+    if (!yoyFromYM) setYoyPreset('this_month', document.querySelector('#page-yoy .preset-btn'));
+    else renderYoyPage();
+    // バックグラウンドで追加データをロード（完了後に再描画）
+    (async () => {
+      let rerender = false;
+      if (!galileiLastFyLoaded) {
+        galileiLastFyLoaded = true;
+        await loadGalileiData(true);
+        rerender = true;
+      }
+      if (!salesExpensesLoaded) {
+        await loadSalesExpensesData();
+        rerender = true;
+      }
+      if (!constructionExpensesLoaded) {
+        await loadConstructionExpensesData();
+        rerender = true;
+      }
+      if (rerender) renderYoyPage();
+    })();
   }
   if (key === 'budget') {
     switchBudgetSub(budgetSubKey);
