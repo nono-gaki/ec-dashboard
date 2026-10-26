@@ -66,7 +66,7 @@ body { font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans','Yu Gothic UI',sa
 .hrmos-emp-card-field .value { display:block; font-size:13px; font-weight:500; }
 
 /* MAIN */
-.main { padding:16px 24px; max-width:1440px; margin:0 auto; overflow-x:hidden; }
+.main { padding:16px 24px; max-width:1440px; margin:0 auto; }
 
 /* ============================================================
    SIDEBAR LAYOUT (PC) — 事業ページ内のセクション切替
@@ -140,7 +140,7 @@ body { font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans','Yu Gothic UI',sa
 .filter-sep { width:1px; height:20px; background:var(--border); }
 .apply-btn { font-size:12px; padding:5px 14px; border-radius:6px; border:none; background:var(--blue); color:#fff; cursor:pointer; font-family:inherit; font-weight:500; }
 .apply-btn:hover { opacity:.85; }
-.period-label { display:none; }
+.period-label { font-size:11px; color:var(--blue); font-weight:500; background:var(--blue-light); padding:3px 10px; border-radius:5px; }
 
 /* CONFIG PANEL */
 .config-panel { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:16px; margin-bottom:16px; display:none; }
@@ -152,26 +152,6 @@ body { font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans','Yu Gothic UI',sa
 .config-save { margin-top:12px; font-size:12px; background:var(--blue); color:#fff; border:none; padding:7px 18px; border-radius:6px; cursor:pointer; font-family:inherit; }
 .fy-add-btn { font-size:11px; padding:4px 12px; border:1px dashed var(--border); background:transparent; color:var(--text-muted); border-radius:6px; cursor:pointer; font-family:inherit; margin-bottom:10px; }
 .fy-add-btn:hover { border-color:var(--blue); color:var(--blue); }
-/* 昨対比較 */
-.yoy-cat-tab { padding:8px 18px;border:none;background:transparent;cursor:pointer;font-size:13px;font-family:inherit;color:var(--text-muted);border-bottom:2px solid transparent;margin-bottom:-1px; }
-.yoy-cat-tab.active { color:var(--blue);font-weight:600;border-bottom-color:var(--blue); }
-/* hidden時にスペースを占有しない */
-[hidden] { display:none !important; }
-
-.yoy-metric-btn { display:inline-flex; align-items:center; gap:4px; padding:4px 10px; border:1px solid var(--border); border-radius:6px; font-size:12px; cursor:pointer; background:var(--surface); transition:border-color .15s; }
-.yoy-metric-btn:has(input:checked) { border-color:var(--blue); color:var(--blue); background:var(--blue-light); }
-.yoy-metric-btn input { display:none; }
-.yoy-kpi-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:10px; margin-bottom:16px; }
-.yoy-kpi-card { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:14px 16px; }
-.yoy-kpi-label { font-size:11px; color:var(--text-muted); margin-bottom:4px; }
-.yoy-kpi-values { display:flex; gap:12px; align-items:flex-end; flex-wrap:wrap; }
-.yoy-val-curr { font-size:20px; font-weight:700; color:var(--text-primary); }
-.yoy-val-prev { font-size:13px; color:var(--text-muted); }
-.yoy-diff-pos { color:var(--green); font-size:12px; font-weight:600; }
-.yoy-diff-neg { color:var(--red); font-size:12px; font-weight:600; }
-.yoy-diff-neu { color:var(--text-muted); font-size:12px; }
-.yoy-chart-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:16px; }
-@media(max-width:480px){ .yoy-chart-row { grid-template-columns:1fr; } }
 
 /* KPI CARDS */
 .kpi-row { display:grid; grid-template-columns:repeat(6,1fr); gap:12px; margin-bottom:16px; }
@@ -405,6 +385,22 @@ body { font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans','Yu Gothic UI',sa
     margin-left:0 !important; font-weight:700;
   }
 }
+.yoy-cat-tab { padding:8px 18px;border:none;background:transparent;cursor:pointer;font-size:13px;font-family:inherit;color:var(--text-muted);border-bottom:2px solid transparent;margin-bottom:-1px; }
+.yoy-cat-tab.active { color:var(--blue);font-weight:600;border-bottom-color:var(--blue); }
+.yoy-metric-btn { display:inline-flex; align-items:center; gap:4px; padding:4px 10px; border:1px solid var(--border); border-radius:6px; font-size:12px; cursor:pointer; background:var(--surface); transition:border-color .15s; }
+.yoy-metric-btn:has(input:checked) { border-color:var(--blue); color:var(--blue); background:var(--blue-light); }
+.yoy-metric-btn input { display:none; }
+.yoy-kpi-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:10px; margin-bottom:16px; }
+.yoy-kpi-card { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:14px 16px; }
+.yoy-kpi-label { font-size:11px; color:var(--text-muted); margin-bottom:4px; }
+.yoy-kpi-values { display:flex; gap:12px; align-items:flex-end; flex-wrap:wrap; }
+.yoy-val-curr { font-size:20px; font-weight:700; color:var(--text-primary); }
+.yoy-val-prev { font-size:13px; color:var(--text-muted); }
+.yoy-diff-pos { color:var(--green); font-size:12px; font-weight:600; }
+.yoy-diff-neg { color:var(--red); font-size:12px; font-weight:600; }
+.yoy-diff-neu { color:var(--text-muted); font-size:12px; }
+.yoy-chart-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:16px; }
+@media(max-width:480px){ .yoy-chart-row { grid-template-columns:1fr; } }
 </style>
 
   <!-- file://制限チェック -->
@@ -833,7 +829,6 @@ body { font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans','Yu Gothic UI',sa
         </div>
       </div>
 
-      </div>
     </div><!-- /page-content -->
   </div><!-- /page-layout -->
 
@@ -3510,7 +3505,6 @@ function switchTab(key, el) {
   try { sessionStorage.setItem('lm_tab', key); } catch(e) {}
   document.getElementById('page-budget-group').hidden = (key !== 'budget');
   document.getElementById('budget-sub-tabs').hidden = (key !== 'budget');
-  document.getElementById('page-budget').hidden = (key !== 'budget');
   document.getElementById('page-ai').hidden = (key !== 'ai');
   document.getElementById('page-hrmos').hidden = (key !== 'hrmos');
   document.getElementById('page-yoy').hidden = (key !== 'yoy');
