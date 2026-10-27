@@ -401,6 +401,28 @@ body { font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans','Yu Gothic UI',sa
 .yoy-diff-neu { color:var(--text-muted); font-size:12px; }
 .yoy-chart-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:16px; }
 @media(max-width:480px){ .yoy-chart-row { grid-template-columns:1fr; } }
+
+/* ===== グラフが枠からはみ出さないように ===== */
+.chart-card { min-width:0; }
+.chart-wrap { width:100%; }
+.chart-wrap canvas { max-width:100%; }
+.dfb-toggle { display:none; }
+@media(max-width:480px){
+  /* セクションメニュー：縦のアコーディオン → 横スクロールのタブ */
+  .mobile-accordion { display:flex !important; gap:6px; overflow-x:auto; -webkit-overflow-scrolling:touch; margin:0 -10px 10px; padding:2px 10px 6px; scrollbar-width:none; }
+  .mobile-accordion::-webkit-scrollbar { display:none; }
+  .mobile-accordion .accordion-item { flex:0 0 auto; margin:0; border:none; background:none; overflow:visible; }
+  .mobile-accordion .accordion-header { padding:7px 14px; font-size:12px; border:1px solid var(--border); border-radius:20px; background:var(--surface); white-space:nowrap; }
+  .mobile-accordion .accordion-header.active { background:var(--blue); color:#fff; border-color:var(--blue); }
+  .mobile-accordion .accordion-arrow { display:none; }
+  /* 期間指定：普段は1行、タップで展開 */
+  .dfb-toggle { display:flex; width:100%; align-items:center; justify-content:space-between; border:none; background:none; font-family:inherit; font-size:13px; font-weight:600; color:var(--text-primary); padding:2px 0; cursor:pointer; }
+  .date-filter-bar:not(.dfb-open) > *:not(.dfb-toggle) { display:none !important; }
+  .date-filter-bar:not(.dfb-open) { padding:9px 12px; margin-bottom:10px; }
+  .date-filter-bar .period-label { display:none !important; }
+  /* グラフは1列・画面幅に収める */
+  .charts-row { grid-template-columns:minmax(0,1fr) !important; }
+}
 </style>
 
   <!-- file://制限チェック -->
@@ -435,9 +457,9 @@ body { font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans','Yu Gothic UI',sa
 
 <div class="tabs">
   <div class="tab active" onclick="switchTab('budget',this)">📊 予算進捗</div>
+  <div class="tab" onclick="switchTab('yoy',this)">📈 昨対</div>
   <div class="tab" onclick="switchTab('hrmos',this)">⏱ 残業</div>
   <div class="tab" onclick="switchTab('ai',this)">🤖 AI分析</div>
-  <div class="tab" onclick="switchTab('yoy',this)">📈 昨対</div>
 </div>
 
 <div class="sub-tabs" id="budget-sub-tabs">
@@ -1686,23 +1708,6 @@ body { font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans','Yu Gothic UI',sa
   <!-- ======================== 昨対比較ページ ======================== -->
   <div id="page-yoy" hidden>
 
-    <!-- フィルターバー -->
-    <div class="date-filter-bar">
-      <label>期間</label>
-      <input type="month" id="yoy-from" class="date-input">
-      <span class="date-sep">〜</span>
-      <input type="month" id="yoy-to" class="date-input">
-      <div class="filter-sep"></div>
-      <div class="preset-btns">
-        <button class="preset-btn active" onclick="setYoyPreset('this_month',this)">今月</button>
-        <button class="preset-btn" onclick="setYoyPreset('last_month',this)">前月</button>
-        <button class="preset-btn" onclick="setYoyPreset('last3',this)">直近3ヶ月</button>
-        <button class="preset-btn" onclick="setYoyPreset('this_fy',this)">今年度</button>
-        <button class="preset-btn" onclick="setYoyPreset('last_fy',this)">前年度</button>
-      </div>
-      <button class="apply-btn" onclick="renderYoyPage()">適用</button>
-    </div>
-
     <!-- カテゴリタブ -->
     <div style="display:flex;gap:0;border-bottom:2px solid var(--border);margin-bottom:16px">
       <button class="yoy-cat-tab active" onclick="switchYoyCat('all',this)">全体</button>
@@ -1716,6 +1721,16 @@ body { font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans','Yu Gothic UI',sa
     <div id="yoy-metric-selector" class="table-card" style="margin-bottom:14px;padding:12px 16px">
       <div style="font-size:11px;color:var(--text-muted);margin-bottom:8px">表示する指標を選択</div>
       <div id="yoy-metric-checks" style="display:flex;gap:8px;flex-wrap:wrap"></div>
+    </div>
+
+    <!-- 比較する2つの月（それぞれ単月で指定） -->
+    <div style="display:flex;gap:12px;margin-bottom:16px;flex-wrap:wrap">
+      <div class="table-card" style="flex:1;min-width:160px;padding:10px 14px">
+        <input type="month" id="yoy-month-a" class="date-input" style="font-size:14px;font-weight:700;color:var(--blue);width:100%" onchange="if(this.value){document.getElementById('yoy-month-b').value=yoyPrevYM(this.value);}renderYoyPage()">
+      </div>
+      <div class="table-card" style="flex:1;min-width:160px;padding:10px 14px">
+        <input type="month" id="yoy-month-b" class="date-input" style="font-size:14px;font-weight:700;width:100%" onchange="renderYoyPage()">
+      </div>
     </div>
 
     <!-- 結果エリア -->
@@ -2137,7 +2152,7 @@ function calcFilterMonths() {
 async function fetchSheet(apiKey, sheetId, sheetName, range) {
   const enc = encodeURIComponent(sheetName + '!' + range);
   const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${enc}?key=${apiKey}`;
-  const res = await fetch(url);
+  const res = await fetchWithRetry(url);
   if (!res.ok) {
     const body = await res.text().catch(()=>'');
     throw new Error(`Sheets API エラー: ${res.status} ${res.statusText} | ${body.substring(0,200)}`);
@@ -2148,11 +2163,21 @@ async function fetchSheet(apiKey, sheetId, sheetName, range) {
 // 複数range・複数シートを1リクエストでまとめて取得（batchGet）。
 // シートが存在しない場合はGoogle Sheets API側で該当rangeのvalueRangeが省略されるか400/404になるため、
 // 呼び出し側でtry-catchすること。
+// API制限(429)のときは待ってから最大3回まで再試行
+async function fetchWithRetry(url) {
+  let res;
+  for (let i = 0; i < 4; i++) {
+    res = await fetch(url);
+    if (res.status !== 429) return res;
+    await new Promise(r => setTimeout(r, 2000 * (i + 1)));
+  }
+  return res;
+}
 async function fetchSheetBatch(apiKey, sheetId, ranges) {
   // ranges: ['シート名!A1:B2', ...]
   const params = ranges.map(r => 'ranges=' + encodeURIComponent(r)).join('&');
   const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values:batchGet?${params}&key=${apiKey}`;
-  const res = await fetch(url);
+  const res = await fetchWithRetry(url);
   if (!res.ok) {
     const body = await res.text().catch(()=>'');
     throw new Error(`Sheets API エラー: ${res.status} ${res.statusText} | ${body.substring(0,200)}`);
@@ -2877,6 +2902,7 @@ function switchEcSection(key, el) {
 }
 
 function toggleEcAccordion(key, el) {
+  if (el.classList.contains('active')) return; // タブ表示なので同じタブの再タップでは閉じない
   const isAlreadyOpen = el.classList.contains('active');
   document.querySelectorAll('#ec-accordion .accordion-header').forEach(h => h.classList.remove('active'));
   document.querySelectorAll('#page-ec .page-content > .page-section').forEach(s => { s.classList.remove('mobile-open'); s.classList.remove('active'); });
@@ -2908,6 +2934,7 @@ setTimeout(adjustTabsStickyPosition, 300);
 // ==================== 昨対比較ページ ====================
 let yoyCat = 'all';
 let yoyFromYM = '', yoyToYM = '';
+let yoyLabelA = '', yoyLabelB = '';
 let yoySelectedMetrics = {}; // {cat: Set of selected keys}
 
 // カテゴリ別の指標定義
@@ -2937,21 +2964,7 @@ const YOY_METRIC_DEFS = {
   ],
 };
 
-function setYoyPreset(key, el) {
-  document.querySelectorAll('#page-yoy .preset-btn').forEach(b=>b.classList.remove('active'));
-  if(el) el.classList.add('active');
-  const now=new Date(), y=now.getFullYear(), m=now.getMonth()+1;
-  const ym=(yr,mo)=>`${yr}-${String(mo).padStart(2,'0')}`;
-  const fyStart=m>=10?y:y-1;
-  if(key==='this_month'){yoyFromYM=yoyToYM=ym(y,m);}
-  else if(key==='last_month'){const d=new Date(y,m-2,1);yoyFromYM=yoyToYM=ym(d.getFullYear(),d.getMonth()+1);}
-  else if(key==='last3'){const d=new Date(y,m-4,1);yoyFromYM=ym(d.getFullYear(),d.getMonth()+1);yoyToYM=ym(y,m);}
-  else if(key==='this_fy'){yoyFromYM=ym(fyStart,10);yoyToYM=ym(y,m);}
-  else if(key==='last_fy'){yoyFromYM=ym(fyStart-1,10);yoyToYM=ym(fyStart,9);}
-  document.getElementById('yoy-from').value=yoyFromYM;
-  document.getElementById('yoy-to').value=yoyToYM;
-  renderYoyPage();
-}
+function setYoyPreset() { renderYoyPage(); }
 
 function switchYoyCat(cat, el) {
   document.querySelectorAll('.yoy-cat-tab').forEach(b=>b.classList.remove('active'));
@@ -3028,8 +3041,8 @@ function yoyTable(title,rows){
     <div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;min-width:420px">
       <thead><tr style="border-bottom:2px solid var(--border)">
         <th style="padding:6px 12px;font-size:11px;color:var(--text-muted);text-align:left;font-weight:500">指標</th>
-        <th style="padding:6px 12px;font-size:11px;color:var(--blue);text-align:right;font-weight:600">今期</th>
-        <th style="padding:6px 12px;font-size:11px;color:var(--text-muted);text-align:right;font-weight:500">前年同期</th>
+        <th style="padding:6px 12px;font-size:11px;color:var(--blue);text-align:right;font-weight:600">${yoyLabelA}</th>
+        <th style="padding:6px 12px;font-size:11px;color:var(--text-muted);text-align:right;font-weight:500">${yoyLabelB}</th>
         <th style="padding:6px 12px;font-size:11px;color:var(--text-muted);text-align:right;font-weight:500">増減</th>
       </tr></thead>
       <tbody>${rowsHtml}</tbody>
@@ -3122,27 +3135,18 @@ function yoyAggr(cat,from,to){
 
 // ─── メイン描画 ───
 function renderYoyPage(){
-  const fromEl=document.getElementById('yoy-from'),toEl=document.getElementById('yoy-to');
-  if(fromEl?.value)yoyFromYM=fromEl.value;
-  if(toEl?.value)yoyToYM=toEl.value;
-  if(!yoyFromYM)return;
-  const toYM=yoyToYM||yoyFromYM;
-  const{from:pf,to:pt}=yoyPrevRange(yoyFromYM,toYM);
-  const pl=yoyFromYM===toYM?yoyFromYM:`${yoyFromYM}〜${toYM}`;
-  const pvl=pf===pt?pf:`${pf}〜${pt}`;
+  const aEl=document.getElementById('yoy-month-a'), bEl=document.getElementById('yoy-month-b');
+  if(!aEl || !bEl) return;
+  if(!aEl.value){ const n=new Date(); aEl.value=`${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,'0')}`; }
+  if(!bEl.value){ bEl.value=yoyPrevYM(aEl.value); }
+  yoyFromYM=yoyToYM=aEl.value;
+  const toYM=yoyFromYM;
+  const pf=bEl.value, pt=bEl.value;
+  const fmtLabel=v=>{ const [y,m]=v.split('-'); return `${y}年${Number(m)}月`; };
+  yoyLabelA=fmtLabel(aEl.value);
+  yoyLabelB=fmtLabel(bEl.value);
 
-  const header=`<div style="display:flex;gap:12px;margin-bottom:16px;flex-wrap:wrap">
-    <div class="table-card" style="flex:1;min-width:160px;padding:10px 14px">
-      <div style="font-size:10px;color:var(--blue);font-weight:600;margin-bottom:2px">今期</div>
-      <div style="font-size:14px;font-weight:700">${pl}</div>
-    </div>
-    <div class="table-card" style="flex:1;min-width:160px;padding:10px 14px">
-      <div style="font-size:10px;color:var(--text-muted);font-weight:600;margin-bottom:2px">前年同期</div>
-      <div style="font-size:14px;font-weight:700;color:var(--text-muted)">${pvl}</div>
-    </div>
-  </div>`;
-
-  let html=header;
+  let html='';
 
   if(yoyCat==='all'){
     const cats=['sales','construction','galilei','ec'];
@@ -3517,8 +3521,7 @@ function switchTab(key, el) {
   if (key === 'yoy') {
     yoyRenderMetricSelector();
     // まず期間をセットして即描画（データは後からロード）
-    if (!yoyFromYM) setYoyPreset('this_month', document.querySelector('#page-yoy .preset-btn'));
-    else renderYoyPage();
+    renderYoyPage();
     // バックグラウンドで追加データをロード（完了後に再描画）
     (async () => {
       let rerender = false;
@@ -3644,7 +3647,13 @@ let salesExpensesLoaded = false;
 const SALES_EXPENSE_SKIP_KEYWORDS = ['営業部', '管理票', '原本'];
 const salesExpensesExpanded = new Set();
 
-async function loadSalesExpensesData() {
+let _loadSalesExpensesDataRunning = null;
+function loadSalesExpensesData() {
+  // 読み込み中に再度呼ばれたら、実行中の処理をそのまま待つ（重複リクエスト防止）
+  if (!_loadSalesExpensesDataRunning) _loadSalesExpensesDataRunning = _loadSalesExpensesDataImpl().finally(() => { _loadSalesExpensesDataRunning = null; });
+  return _loadSalesExpensesDataRunning;
+}
+async function _loadSalesExpensesDataImpl() {
   console.log('loadSalesExpensesData開始');
   const cfg = getConfig();
   allSalesExpenses = [];
@@ -4279,7 +4288,13 @@ const CONSTRUCTION_EXPENSE_SKIP_KEYWORDS = ['その他工事', '管理票', '原
 const constructionExpensesExpanded = new Set();
 const _constructionItemExpanded = { expense:{}, outsource:{} };
 
-async function loadConstructionExpensesData() {
+let _loadConstructionExpensesDataRunning = null;
+function loadConstructionExpensesData() {
+  // 読み込み中に再度呼ばれたら、実行中の処理をそのまま待つ（重複リクエスト防止）
+  if (!_loadConstructionExpensesDataRunning) _loadConstructionExpensesDataRunning = _loadConstructionExpensesDataImpl().finally(() => { _loadConstructionExpensesDataRunning = null; });
+  return _loadConstructionExpensesDataRunning;
+}
+async function _loadConstructionExpensesDataImpl() {
   console.log('loadConstructionExpensesData開始');
   const cfg = getConfig();
   allConstructionExpenses = [];
@@ -4850,18 +4865,30 @@ async function loadGalileiData(onlyLastFy=false) {
   }
   let successCount = 0;
 
-  const tasks = _galEntries.map(async (entry) => {
+  // スプシIDごとにまとめ、存在するシートだけを1回のbatchGetで取得（月ごとの個別取得をやめて高速化）
+  const _bySheetId = {};
+  _galEntries.forEach(en => { (_bySheetId[en.sheetId] = _bySheetId[en.sheetId] || []).push(en); });
+  const _fetched = [];
+  await Promise.all(Object.entries(_bySheetId).map(async ([sid, entries]) => {
+    try {
+      const metaRes = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${sid}?key=${cfg.apiKey}&fields=sheets.properties.title`);
+      if (!metaRes.ok) throw new Error('シート一覧取得失敗 ' + metaRes.status);
+      const titles = new Set(((await metaRes.json()).sheets || []).map(x => x.properties.title));
+      const exist = entries.filter(en => titles.has(en.name) && parseGalileiSheetName(en.name));
+      if (!exist.length) return;
+      const q = n => "'" + n.replace(/'/g, "''") + "'";
+      const ranges = exist.flatMap(en => [`${q(en.name)}!C4:L200`, `${q(en.name)}!N6:P22`, `${q(en.name)}!R6:U200`, `${q(en.name)}!P37:P40`]);
+      const res = await fetchSheetBatch(cfg.apiKey, sid, ranges);
+      exist.forEach((en, i) => _fetched.push({ entry: en, results: res.slice(i*4, i*4+4) }));
+    } catch(err) {
+      console.warn('ガリレイ取得失敗:', sid, err.message);
+    }
+  }));
+
+  _fetched.forEach(({ entry, results }) => {
     const sheetName = entry.name;
     const ymNorm = parseGalileiSheetName(sheetName);
-    if (!ymNorm) return;
-    try {
-      const ranges = [
-        `${sheetName}!C4:L200`,
-        `${sheetName}!N6:P22`,
-        `${sheetName}!R6:U200`,
-        `${sheetName}!P37:P40`,
-      ];
-      const [siteRows, repRows, outRows, expRows] = await fetchSheetBatch(cfg.apiKey, entry.sheetId, ranges);
+    const [siteRows = [], repRows = [], outRows = [], expRows = []] = results;
 
       siteRows.forEach(r => {
         const rawDate     = String(r[0]||'').trim();
@@ -4913,12 +4940,7 @@ async function loadGalileiData(onlyLastFy=false) {
         });
       }
       successCount++;
-    } catch(e) {
-      console.log(`${sheetName}: スキップ（シート未存在または取得失敗）`);
-    }
   });
-
-  await Promise.all(tasks);
 
   // シートレベル重複除去（同じsheetId+yearMonthNormのデータが2重に入った場合）
   if (!onlyLastFy) {
@@ -5155,6 +5177,7 @@ function switchSalesSection(key, el) {
   if(target) target.classList.add('mobile-open');
 }
 function toggleSalesAccordion(key, el) {
+  if (el.classList.contains('active')) return; // タブ表示なので同じタブの再タップでは閉じない
   const isOpen = el.classList.contains('active');
   document.querySelectorAll('#sales-accordion .accordion-header').forEach(h => h.classList.remove('active'));
   document.querySelectorAll('#page-sales .page-content > .page-section').forEach(s => { s.classList.remove('mobile-open'); s.classList.remove('active'); });
@@ -5184,6 +5207,7 @@ function switchConstructionSection(key, el) {
   if(target) target.classList.add('mobile-open');
 }
 function toggleConstructionAccordion(key, el) {
+  if (el.classList.contains('active')) return; // タブ表示なので同じタブの再タップでは閉じない
   const isOpen = el.classList.contains('active');
   document.querySelectorAll('#construction-accordion .accordion-header').forEach(h => h.classList.remove('active'));
   document.querySelectorAll('#page-construction .page-content > .page-section').forEach(s => { s.classList.remove('mobile-open'); s.classList.remove('active'); });
@@ -5413,26 +5437,29 @@ function renderBudgetDashboard() {
   months.forEach(mo=>{ mGalProfit[mo] = (mGal[mo]||0) - (mGalOutsource[mo]||0) - (mGalExpense[mo]||0); });
 
   // ── グラフ1: 積み上げ棒グラフ（全カテゴリ粗利ベース） ──
+  const _mob = window.innerWidth <= 480;
+  const chartMonths = _mob ? months.slice(-6) : months; // スマホは直近6ヶ月
+
   const ctx1 = document.getElementById('budget-chart-stack');
   if (ctx1) {
     if (ctx1._chartInst) ctx1._chartInst.destroy();
     ctx1._chartInst = new Chart(ctx1, {
       type:'bar',
       data:{
-        labels: months.map(mo=>mo.replace('-','/')),
+        labels: chartMonths.map(mo=>_mob ? Number(mo.slice(5))+'月' : mo.replace('-','/')),
         datasets:[
-          { label:'営業（粗利）',       data:months.map(mo=>mSalesProfit[mo]||0), backgroundColor:'#3B82F680', borderColor:'#3B82F6', borderWidth:1 },
-          { label:'その他工事（粗利）', data:months.map(mo=>mConstProfit[mo]||0), backgroundColor:'#F59E0B80', borderColor:'#F59E0B', borderWidth:1 },
-          { label:'ガリレイ工事（粗利）',data:months.map(mo=>mGalProfit[mo]||0), backgroundColor:'#10B98180', borderColor:'#10B981', borderWidth:1 },
-          { label:'EC（粗利）', data:months.map(mo=>mEc[mo]||0),    backgroundColor:'#8B5CF680', borderColor:'#8B5CF6', borderWidth:1 },
+          { label:'営業（粗利）',       data:chartMonths.map(mo=>mSalesProfit[mo]||0), backgroundColor:'#3B82F680', borderColor:'#3B82F6', borderWidth:1 },
+          { label:'その他工事（粗利）', data:chartMonths.map(mo=>mConstProfit[mo]||0), backgroundColor:'#F59E0B80', borderColor:'#F59E0B', borderWidth:1 },
+          { label:'ガリレイ工事（粗利）',data:chartMonths.map(mo=>mGalProfit[mo]||0), backgroundColor:'#10B98180', borderColor:'#10B981', borderWidth:1 },
+          { label:'EC（粗利）', data:chartMonths.map(mo=>mEc[mo]||0),    backgroundColor:'#8B5CF680', borderColor:'#8B5CF6', borderWidth:1 },
         ]
       },
       options:{
         responsive:true, maintainAspectRatio:false,
-        plugins:{ legend:{position:'top',labels:{font:{size:11}}} },
+        plugins:{ legend:{position:_mob?'bottom':'top',labels:{font:{size:_mob?10:11},boxWidth:_mob?10:40}} },
         scales:{
           x:{ stacked:true, ticks:{font:{size:10}} },
-          y:{ stacked:true, ticks:{ callback:v=>'¥'+fmtYen(v), font:{size:10} } }
+          y:{ stacked:true, ticks:{ callback:v=>_mob ? Math.round(v/10000)+'万' : '¥'+fmtYen(v), font:{size:10} } }
         }
       }
     });
@@ -5447,7 +5474,7 @@ function renderBudgetDashboard() {
     ctx2._chartInst = new Chart(ctx2, {
       type:'bar',
       data:{
-        labels:['営業（粗利）','その他工事（粗利）','ガリレイ工事（粗利）','EC（粗利）'],
+        labels:_mob ? ['営業','工事','ガリレイ','EC'] : ['営業（粗利）','その他工事（粗利）','ガリレイ工事（粗利）','EC（粗利）'],
         datasets:[{
           label:'達成率（%）',
           data: achData,
@@ -5645,6 +5672,233 @@ function aiAdviceFor(key, ctx) {
   return { diagnosis, actions };
 }
 
+// ==================== AI分析：月別進捗・昨対・数値チェック ====================
+const AI_CATS = [
+  { key:'sales',        name:'営業',        color:'#3B82F6' },
+  { key:'construction', name:'その他工事',  color:'#F59E0B' },
+  { key:'galilei',      name:'ガリレイ工事', color:'#10B981' },
+  { key:'ec',           name:'EC',          color:'#8B5CF6' },
+];
+
+// ガリレイ：その月のデータがある配列（今年度読込分 or 前年度読込分）から集計（二重計上しない）
+function aiGalMonth(ym) {
+  const hasCur = allGalileiSites.some(s=>s.yearMonthNorm===ym) || allGalileiOutsource.some(o=>o.yearMonthNorm===ym) || allGalileiExpense.some(e=>e.yearMonthNorm===ym);
+  const S = hasCur ? allGalileiSites     : allGalileiSitesPrev;
+  const O = hasCur ? allGalileiOutsource : allGalileiOutsourcePrev;
+  const E = hasCur ? allGalileiExpense   : allGalileiExpensePrev;
+  const sites = S.filter(s=>s.yearMonthNorm===ym);
+  const rev = sites.reduce((a,s)=>a+s.actualAmount,0);
+  const out = O.filter(o=>o.yearMonthNorm===ym).reduce((a,o)=>a+o.amount,0);
+  const exp = E.filter(e=>e.yearMonthNorm===ym).reduce((a,e)=>a+e.parking+e.etc+e.parts+e.disposal,0);
+  return { sales:rev, profit:rev-out-exp, out, exp, count:sites.length, has: sites.length>0 || out>0 || exp>0 };
+}
+
+function aiCatMonth(cat, ym) {
+  if (cat === 'galilei') return aiGalMonth(ym);
+  const src = cat==='ec' ? allSales : cat==='sales' ? (allSalesData||[]) : allConstructionData;
+  const rows = src.filter(s => aiNormYM(s.yearMonth) === ym);
+  const sales = rows.reduce((a,s)=>a+(cat==='ec' ? s.price : s.sales),0);
+  const profit = rows.reduce((a,s)=>a+s.profit,0);
+  return { sales, profit, count: rows.length, has: rows.length>0 };
+}
+
+const aiMan = v => (v<0?'-':'') + '¥' + Math.round(Math.abs(v)/10000).toLocaleString('ja-JP') + '万';
+
+function aiAchColor(p) {
+  if (p === null) return { bg:'var(--bg)', fg:'var(--text-muted)' };
+  if (p >= 100) return { bg:'#DCFCE7', fg:'#15803D' };
+  if (p >= 80)  return { bg:'#FEF3C7', fg:'#B45309' };
+  return { bg:'#FEE2E2', fg:'#B91C1C' };
+}
+
+function aiBuildMonthly(from, to, targets) {
+  const fyStartY = Number(from.slice(0,4));
+  const months = [];
+  for (let i=0;i<12;i++) { const d=new Date(fyStartY, 9+i, 1); months.push(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`); }
+  const shift = ym => { const [y,m]=ym.split('-'); return `${Number(y)-1}-${m}`; };
+
+  // カテゴリ×月のデータ
+  const grid = {};
+  AI_CATS.forEach(c => {
+    const mt = (targets[c.key]||0)/12;
+    grid[c.key] = months.map(ym => {
+      const future = ym > to;
+      const cur  = future ? null : aiCatMonth(c.key, ym);
+      const prev = aiCatMonth(c.key, shift(ym));
+      return { ym, future, partial: ym===to, cur, prev, target: mt };
+    });
+  });
+  const totalTarget = AI_CATS.reduce((a,c)=>a+(targets[c.key]||0),0)/12;
+  grid.total = months.map((ym,i) => {
+    const future = ym > to;
+    const sum = k => AI_CATS.reduce((a,c)=>a+(grid[c.key][i][k]?grid[c.key][i][k].profit:0),0);
+    return { ym, future, partial: ym===to, cur: future?null:{profit:sum('cur')}, prev:{profit:sum('prev')}, target: totalTarget };
+  });
+
+  // ── ヒートマップ表 ──
+  const cell = d => {
+    if (d.future) return `<td style="padding:6px 4px;text-align:center;color:var(--text-muted);background:var(--bg)">—</td>`;
+    const ach = d.target>0 ? d.cur.profit/d.target*100 : null;
+    const col = aiAchColor(ach);
+    let yoy = '';
+    if (d.prev && d.prev.profit) {
+      const r = (d.cur.profit - d.prev.profit)/Math.abs(d.prev.profit)*100;
+      yoy = `<div style="font-size:10px;color:${r>=0?'#15803D':'#B91C1C'}">昨${r>=0?'+':''}${Math.round(r)}%</div>`;
+    } else {
+      yoy = `<div style="font-size:10px;color:var(--text-muted)">昨 —</div>`;
+    }
+    return `<td style="padding:6px 4px;text-align:center;background:${col.bg};${d.partial?'outline:2px dashed var(--blue);outline-offset:-2px;':''}">
+      <div style="font-size:13px;font-weight:700;color:${col.fg}">${ach===null?'—':Math.round(ach)+'%'}</div>
+      <div style="font-size:10px;color:var(--text-secondary)">${aiMan(d.cur.profit)}</div>
+      ${yoy}
+    </td>`;
+  };
+  const cumCell = (rows, target) => {
+    const done = rows.filter(d=>!d.future);
+    const p = done.reduce((a,d)=>a+d.cur.profit,0);
+    const pp = done.reduce((a,d)=>a+(d.prev?d.prev.profit:0),0);
+    const ach = target>0 ? p/(target*done.length)*100 : null;
+    const col = aiAchColor(ach);
+    const r = pp ? (p-pp)/Math.abs(pp)*100 : null;
+    return `<td style="padding:6px 6px;text-align:center;background:${col.bg};border-left:2px solid var(--border)">
+      <div style="font-size:13px;font-weight:700;color:${col.fg}">${ach===null?'—':Math.round(ach)+'%'}</div>
+      <div style="font-size:10px;color:var(--text-secondary)">${aiMan(p)}</div>
+      <div style="font-size:10px;color:${r===null?'var(--text-muted)':r>=0?'#15803D':'#B91C1C'}">${r===null?'昨 —':'昨'+(r>=0?'+':'')+Math.round(r)+'%'}</div>
+    </td>`;
+  };
+  const rowsHtml = AI_CATS.map(c => `<tr>
+      <td style="padding:6px 8px;font-weight:600;white-space:nowrap;border-left:3px solid ${c.color}">${c.name}</td>
+      ${grid[c.key].map(cell).join('')}${cumCell(grid[c.key], (targets[c.key]||0)/12)}
+    </tr>`).join('') + `<tr style="border-top:2px solid var(--border)">
+      <td style="padding:6px 8px;font-weight:700;white-space:nowrap">合計</td>
+      ${grid.total.map(cell).join('')}${cumCell(grid.total, totalTarget)}
+    </tr>`;
+
+  const heatmap = `
+    <div class="table-card" style="margin-bottom:16px">
+      <div class="chart-title" style="flex-wrap:wrap;gap:8px">
+        <span>📅 月別 粗利進捗（月次目標比）と昨対</span>
+        <span style="font-size:10px;font-weight:400;color:var(--text-muted)">
+          <span style="display:inline-block;width:10px;height:10px;background:#DCFCE7;border-radius:2px;vertical-align:middle"></span> 100%以上
+          <span style="display:inline-block;width:10px;height:10px;background:#FEF3C7;border-radius:2px;vertical-align:middle;margin-left:6px"></span> 80〜100%
+          <span style="display:inline-block;width:10px;height:10px;background:#FEE2E2;border-radius:2px;vertical-align:middle;margin-left:6px"></span> 80%未満
+          <span style="display:inline-block;width:10px;height:10px;outline:2px dashed var(--blue);vertical-align:middle;margin-left:6px"></span> 今月（途中）
+        </span>
+      </div>
+      <div style="font-size:10px;color:var(--text-muted);margin:-6px 0 8px">月次目標＝年間粗利目標÷12 ／ 「昨」＝前年同月比</div>
+      <div style="overflow-x:auto">
+        <table style="width:100%;border-collapse:separate;border-spacing:2px;min-width:900px;font-size:12px">
+          <thead><tr>
+            <th style="padding:4px;font-size:10px;color:var(--text-muted);font-weight:500"></th>
+            ${months.map(ym=>`<th style="padding:4px;font-size:10px;color:var(--text-muted);font-weight:500">${Number(ym.slice(5))}月</th>`).join('')}
+            <th style="padding:4px;font-size:10px;color:var(--text-muted);font-weight:600;border-left:2px solid var(--border)">累計</th>
+          </tr></thead>
+          <tbody>${rowsHtml}</tbody>
+        </table>
+      </div>
+    </div>`;
+
+  // ── グラフ用データ ──
+  const chartData = { months, grid, targets, totalTarget };
+
+  const charts = `
+    <div class="charts-row" style="grid-template-columns:1fr 1fr;margin-bottom:16px">
+      <div class="chart-card">
+        <div class="chart-title">📈 累計達成率の推移（点線＝計画ペース）</div>
+        <div class="chart-wrap" style="height:230px"><canvas id="ai-chart-cum"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">📊 月別粗利 合計（今年度 vs 前年）</div>
+        <div class="chart-wrap" style="height:230px"><canvas id="ai-chart-yoy"></canvas></div>
+      </div>
+    </div>`;
+
+  // ── 数値チェック ──
+  const issues = [];
+  AI_CATS.forEach(c => {
+    grid[c.key].forEach(d => {
+      if (d.future) return;
+      const label = `${Number(d.ym.slice(0,4))}年${Number(d.ym.slice(5))}月`;
+      const cur = d.cur, prev = d.prev;
+      const add = (level, text) => issues.push({ level, cat:c, label, ym:d.ym, text });
+      if (cur.profit < 0) add('error', `粗利がマイナスです（${aiMan(cur.profit)}）`);
+      if (cur.sales > 0 && cur.profit > cur.sales) add('error', `粗利が売上を上回っています（売上${aiMan(cur.sales)} / 粗利${aiMan(cur.profit)}）`);
+      if (!d.partial && !cur.has) add('warn', '実績が0件です（未入力の可能性）');
+      if (c.key==='galilei' && cur.sales===0 && (cur.out>0 || cur.exp>0)) add('error', `売上0なのに外注費・経費が計上されています（外注${aiMan(cur.out)} / 経費${aiMan(cur.exp)}）`);
+      if (c.key==='galilei' && cur.sales>0 && cur.out/cur.sales >= 0.6) add('warn', `外注費が売上の${Math.round(cur.out/cur.sales*100)}%です`);
+      if (!d.partial && prev && prev.profit > 0 && cur.has) {
+        const r = (cur.profit-prev.profit)/prev.profit*100;
+        if (r <= -50) add('warn', `前年同月比 ${Math.round(r)}%（大幅減）`);
+        if (r >= 200) add('warn', `前年同月比 +${Math.round(r)}%（大幅増・入力ミスがないか確認）`);
+      }
+      if (c.key==='ec' && cur.sales>0) {
+        const mg = cur.profit/cur.sales*100;
+        const mt = targets.ecMargin || 55;
+        if (mg < mt - 15) add('warn', `粗利率が${Math.round(mg)}%で目標(${mt}%)を大きく下回っています`);
+      }
+    });
+  });
+  issues.sort((a,b) => (a.level===b.level ? b.ym.localeCompare(a.ym) : a.level==='error'?-1:1));
+  const errCnt = issues.filter(i=>i.level==='error').length, warnCnt = issues.length-errCnt;
+  const lv = { error:{bg:'#FEE2E2',fg:'#B91C1C',t:'要確認'}, warn:{bg:'#FEF3C7',fg:'#B45309',t:'注意'} };
+  const issuesHtml = `
+    <div class="table-card" style="margin-bottom:16px;border-left:4px solid ${errCnt?'#DC2626':warnCnt?'#D97706':'#16A34A'}">
+      <div class="chart-title">
+        <span>🔍 数値チェック（今年度）</span>
+        <span style="font-size:11px;font-weight:600">
+          <span style="color:#B91C1C">要確認 ${errCnt}件</span>
+          <span style="color:#B45309;margin-left:8px">注意 ${warnCnt}件</span>
+        </span>
+      </div>
+      ${issues.length ? `<div style="display:flex;flex-direction:column;gap:6px;max-height:260px;overflow-y:auto">
+        ${issues.map(i=>`<div style="display:flex;gap:8px;align-items:center;font-size:12px;padding:6px 8px;background:var(--bg);border-radius:6px">
+          <span style="flex-shrink:0;font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;background:${lv[i.level].bg};color:${lv[i.level].fg}">${lv[i.level].t}</span>
+          <span style="flex-shrink:0;font-weight:600;color:${i.cat.color}">${i.cat.name}</span>
+          <span style="flex-shrink:0;color:var(--text-muted)">${i.label}</span>
+          <span>${i.text}</span>
+        </div>`).join('')}
+      </div>` : `<div style="font-size:12px;color:#15803D">✓ 気になる数値は見つかりませんでした。</div>`}
+      <div style="font-size:10px;color:var(--text-muted);margin-top:8px">※ 今月は途中経過のため「実績0件」「前年同月比」のチェック対象外です。</div>
+    </div>`;
+
+  return { html: issuesHtml + heatmap + charts, chartData };
+}
+
+function aiRenderMonthlyCharts(cd) {
+  const { months, grid, targets, totalTarget } = cd;
+  const labels = months.map(ym => Number(ym.slice(5))+'月');
+  const cumAch = (rows, monthlyTarget) => {
+    let s = 0;
+    return rows.map(d => { if (d.future) return null; s += d.cur.profit; return monthlyTarget>0 ? Math.round(s/(monthlyTarget*12)*1000)/10 : null; });
+  };
+  destroyChart('ai-cum');
+  const c1 = document.getElementById('ai-chart-cum');
+  if (c1) charts['ai-cum'] = new Chart(c1, {
+    type:'line',
+    data:{ labels, datasets:[
+      { label:'計画ペース', data:months.map((_,i)=>Math.round((i+1)/12*1000)/10), borderColor:'#9CA3AF', borderDash:[5,5], pointRadius:0, borderWidth:1.5, fill:false },
+      ...AI_CATS.map(c => ({ label:c.name, data:cumAch(grid[c.key], (targets[c.key]||0)/12), borderColor:c.color, backgroundColor:c.color, tension:.25, pointRadius:3, borderWidth:2, spanGaps:false })),
+      { label:'合計', data:cumAch(grid.total, totalTarget), borderColor:'#111827', backgroundColor:'#111827', tension:.25, pointRadius:3, borderWidth:3 },
+    ]},
+    options:{ responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{ labels:{ font:{size:10}, boxWidth:10 } }, tooltip:{ callbacks:{ label:ctx=>` ${ctx.dataset.label}: ${ctx.raw}%` } } },
+      scales:{ y:{ min:0, ticks:{ callback:v=>v+'%', font:{size:10} } }, x:{ ticks:{ font:{size:10} }, grid:{display:false} } } }
+  });
+  destroyChart('ai-yoy');
+  const c2 = document.getElementById('ai-chart-yoy');
+  if (c2) charts['ai-yoy'] = new Chart(c2, {
+    data:{ labels, datasets:[
+      { type:'bar', label:'今年度', data:grid.total.map(d=>d.future?null:Math.round(d.cur.profit)), backgroundColor:'#3B82F6' },
+      { type:'bar', label:'前年', data:grid.total.map(d=>Math.round(d.prev.profit)), backgroundColor:'#CBD5E1' },
+      { type:'line', label:'月次目標', data:months.map(()=>Math.round(totalTarget)), borderColor:'#DC2626', borderDash:[5,5], pointRadius:0, borderWidth:1.5 },
+    ]},
+    options:{ responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{ labels:{ font:{size:10}, boxWidth:10 } }, tooltip:{ callbacks:{ label:ctx=>` ${ctx.dataset.label}: ¥${Math.round(ctx.raw||0).toLocaleString('ja-JP')}` } } },
+      scales:{ y:{ ticks:{ callback:v=>Math.round(v/10000)+'万', font:{size:10} } }, x:{ ticks:{ font:{size:10} }, grid:{display:false} } } }
+  });
+}
+// ==================== END AI分析：月別 ====================
+
 function renderAiAnalysis() {
   // ガリレイの前年度データは未取得の場合があるため、無ければ取得後に再描画する
   if (!galileiLastFyLoaded) {
@@ -5818,7 +6072,14 @@ function renderAiAnalysis() {
       }).join('')}
     </div>`;
 
+  // 月別進捗・昨対・数値チェックを総合診断の下に挿入
+  const _monthly = aiBuildMonthly(from, to, {
+    sales: salesTargetP, construction: constTargetP, galilei: galTargetP, ec: ecTargetP,
+    ecMargin: _aiET.marginTarget || cfg.marginTarget,
+  });
+  html = html.replace('<div class="budget-cat-grid" style="margin-bottom:16px">', _monthly.html + '<div class="budget-cat-grid" style="margin-bottom:16px">');
   document.getElementById('ai-analysis-body').innerHTML = html;
+  aiRenderMonthlyCharts(_monthly.chartData);
 }
 
 // ==================== GALILEI SECTION SWITCH ====================
@@ -5835,6 +6096,7 @@ function switchGalileiSection(key, el) {
   if(target) target.classList.add('mobile-open');
 }
 function toggleGalileiAccordion(key, el) {
+  if (el.classList.contains('active')) return; // タブ表示なので同じタブの再タップでは閉じない
   const isOpen = el.classList.contains('active');
   document.querySelectorAll('#galilei-accordion .accordion-header').forEach(h => h.classList.remove('active'));
   document.querySelectorAll('#page-galilei .page-content > .page-section').forEach(s => { s.classList.remove('mobile-open'); s.classList.remove('active'); });
@@ -6353,28 +6615,80 @@ function refreshAllData() {
   if (btn) { btn.disabled = true; btn.innerHTML = '↻ 更新中...'; }
   salesExpensesLoaded = false;
   constructionExpensesLoaded = false;
-  // 直列でロード（並列だとAPIレート制限429が発生するため）
-  (async () => {
+
+  // データが1つ届くたびに、全体・昨対の画面を描き直す（全部揃うまで待たない）
+  const afterEach = () => {
     try {
-      await loadData();
-      await loadStockData();
-      await loadPurchaseData();
-      await loadSalesData();
-      await loadConstructionData();
-      await loadGalileiData();
-      if (galileiLastFyLoaded) { galileiLastFyLoaded = false; await loadGalileiData(true); }
-      if (hrmosLoaded && hrmosFilterFrom && hrmosFilterTo) await loadHrmosData(hrmosFilterFrom, hrmosFilterTo);
       if (budgetFilterFrom || budgetFilterTo) renderBudgetDashboard();
       else setBudgetPreset('this_month', document.querySelector('#page-budget .preset-btn[onclick*="this_month"]'));
-      if (!document.getElementById('page-ai').hidden) renderAiAnalysis();
-    } finally {
-      if (btn) { btn.disabled = false; btn.innerHTML = originalLabel; }
-    }
-  })();
-  return;
+      if (!document.getElementById('page-yoy').hidden) renderYoyPage();
+      dfbUpdateAll();
+    } catch(e) { console.warn('再描画エラー:', e); }
+  };
+  const run = fn => Promise.resolve().then(fn).catch(e => console.warn('読み込みエラー:', e)).then(afterEach);
+
+  // 各データは1〜数回のリクエストで済むので同時に取得
+  const tasks = [
+    run(() => loadData()),
+    run(() => loadStockData()),
+    run(() => loadPurchaseData()),
+    run(() => loadSalesData()),
+    run(() => loadConstructionData()),
+    run(() => loadGalileiData()),
+  ];
+  if (galileiLastFyLoaded) tasks.push(run(() => loadGalileiData(true)));
+  if (hrmosLoaded && hrmosFilterFrom && hrmosFilterTo) tasks.push(run(() => loadHrmosData(hrmosFilterFrom, hrmosFilterTo)));
+
+  return Promise.all(tasks).then(() => {
+    if (!document.getElementById('page-ai').hidden) renderAiAnalysis();
+  }).finally(() => {
+    if (btn) { btn.disabled = false; btn.innerHTML = originalLabel; }
+  });
 }
 
 // 2026年度目標値マイグレーション（未設定の場合のみ自動セット）
+
+// ==================== スマホ：期間指定を1行に折りたたむ ====================
+function dfbLabel(bar) {
+  const ins = bar.querySelectorAll('input[type="month"]');
+  const f = ins[0] ? ins[0].value : '', t = ins[1] ? ins[1].value : '';
+  const fm = v => v ? `${v.slice(0,4)}年${Number(v.slice(5))}月` : '';
+  if (!f && !t) return '全期間';
+  if (!t || f === t) return fm(f || t);
+  return `${fm(f)} 〜 ${fm(t)}`;
+}
+function dfbUpdateAll() {
+  document.querySelectorAll('.date-filter-bar').forEach(bar => {
+    const t = bar.querySelector('.dfb-toggle .dfb-text');
+    if (t) t.textContent = '📅 ' + dfbLabel(bar);
+    const a = bar.querySelector('.dfb-toggle .dfb-arrow');
+    if (a) a.textContent = bar.classList.contains('dfb-open') ? '閉じる ▲' : '変更 ▼';
+  });
+}
+function dfbInit() {
+  document.querySelectorAll('.date-filter-bar').forEach(bar => {
+    if (bar.querySelector('.dfb-toggle')) return;
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'dfb-toggle';
+    b.innerHTML = '<span class="dfb-text"></span><span class="dfb-arrow" style="font-size:11px;font-weight:400;color:var(--blue)"></span>';
+    b.onclick = () => { bar.classList.toggle('dfb-open'); dfbUpdateAll(); };
+    bar.insertBefore(b, bar.firstChild);
+  });
+  dfbUpdateAll();
+}
+// プリセット・適用を押したら閉じて表示を更新
+document.addEventListener('click', e => {
+  const btn = e.target.closest('.date-filter-bar .preset-btn, .date-filter-bar .apply-btn');
+  if (btn) {
+    const bar = btn.closest('.date-filter-bar');
+    setTimeout(() => { bar.classList.remove('dfb-open'); dfbUpdateAll(); }, 0);
+  } else {
+    setTimeout(dfbUpdateAll, 0);
+  }
+});
+document.addEventListener('change', e => { if (e.target.closest && e.target.closest('.date-filter-bar')) dfbUpdateAll(); });
+dfbInit();
+
 // INIT: 前回のタブ状態を復元
 (function() {
   try {
