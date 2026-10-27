@@ -423,6 +423,29 @@ body { font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans','Yu Gothic UI',sa
   /* グラフは1列・画面幅に収める */
   .charts-row { grid-template-columns:minmax(0,1fr) !important; }
 }
+
+/* ===== 昨対ページ ===== */
+.yoy-tbl { min-width:420px; }
+.yoy-cat-tab { white-space:nowrap; flex-shrink:0; }
+@media(max-width:480px){
+  /* カテゴリタブ：縦書きにならないよう1行で横スクロール */
+  .yoy-cat-tabs { overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none; }
+  .yoy-cat-tabs::-webkit-scrollbar { display:none; }
+  .yoy-cat-tab { padding:8px 12px; font-size:12px; }
+  /* 年月選択：2枚を画面幅で半分ずつ */
+  .yoy-month-row { display:grid !important; grid-template-columns:1fr 1fr; gap:8px !important; }
+  .yoy-month-row .table-card { min-width:0 !important; padding:8px !important; overflow:hidden; }
+  .yoy-month-row input { width:100% !important; min-width:0; box-sizing:border-box; font-size:13px !important; padding:6px 4px; text-align:center; }
+  /* 表：横スクロールさせず画面幅に収める */
+  #page-yoy .table-card { padding:12px 10px; overflow:hidden; }
+  #page-yoy .yoy-tbl { min-width:0 !important; table-layout:fixed; }
+  #page-yoy .yoy-tbl th, #page-yoy .yoy-tbl td { padding:7px 4px !important; font-size:11px !important; word-break:break-all; }
+  #page-yoy .yoy-tbl th:nth-child(1), #page-yoy .yoy-tbl td:nth-child(1) { width:24%; }
+  #page-yoy .yoy-tbl th:nth-child(2), #page-yoy .yoy-tbl td:nth-child(2) { width:26%; font-size:12px !important; }
+  #page-yoy .yoy-tbl th:nth-child(3), #page-yoy .yoy-tbl td:nth-child(3) { width:24%; }
+  #page-yoy .yoy-tbl th:nth-child(4), #page-yoy .yoy-tbl td:nth-child(4) { width:26%; }
+  #page-yoy .yoy-pct { display:block; font-size:10px; }
+}
 </style>
 
   <!-- file://制限チェック -->
@@ -1709,7 +1732,7 @@ body { font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans','Yu Gothic UI',sa
   <div id="page-yoy" hidden>
 
     <!-- カテゴリタブ -->
-    <div style="display:flex;gap:0;border-bottom:2px solid var(--border);margin-bottom:16px">
+    <div class="yoy-cat-tabs" style="display:flex;gap:0;border-bottom:2px solid var(--border);margin-bottom:16px">
       <button class="yoy-cat-tab active" onclick="switchYoyCat('all',this)">全体</button>
       <button class="yoy-cat-tab" onclick="switchYoyCat('sales',this)">営業</button>
       <button class="yoy-cat-tab" onclick="switchYoyCat('construction',this)">その他工事</button>
@@ -1724,7 +1747,7 @@ body { font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans','Yu Gothic UI',sa
     </div>
 
     <!-- 比較する2つの月（それぞれ単月で指定） -->
-    <div style="display:flex;gap:12px;margin-bottom:16px;flex-wrap:wrap">
+    <div class="yoy-month-row" style="display:flex;gap:12px;margin-bottom:16px;flex-wrap:wrap">
       <div class="table-card" style="flex:1;min-width:160px;padding:10px 14px">
         <input type="month" id="yoy-month-a" class="date-input" style="font-size:14px;font-weight:700;color:var(--blue);width:100%" onchange="if(this.value){document.getElementById('yoy-month-b').value=yoyPrevYM(this.value);}renderYoyPage()">
       </div>
@@ -3025,7 +3048,7 @@ function yoyDiff(curr,prev,type,unit,invert){
   if(type==='rate')str=`${sign}${Math.round(Math.abs(diff)*10)/10}pt`;
   else if(type==='count')str=`${sign}${Math.round(Math.abs(diff))}${unit||''}`;
   else str=`${sign}¥${fmtYen(Math.round(Math.abs(diff)))}`;
-  const pctStr=pct!==null&&type!=='rate'?` (${sign}${pct}%)`:'';
+  const pctStr=pct!==null&&type!=='rate'?`<span class="yoy-pct"> (${sign}${pct}%)</span>`:'';
   return`<span class="${cls}">${str}${pctStr}</span>`;
 }
 
@@ -3038,7 +3061,7 @@ function yoyTable(title,rows){
   </tr>`).join('');
   return`<div class="table-card" style="margin-bottom:14px">
     ${title?`<div style="font-weight:600;font-size:13px;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--border)">${title}</div>`:''}
-    <div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;min-width:420px">
+    <div style="overflow-x:auto"><table class="yoy-tbl" style="width:100%;border-collapse:collapse">
       <thead><tr style="border-bottom:2px solid var(--border)">
         <th style="padding:6px 12px;font-size:11px;color:var(--text-muted);text-align:left;font-weight:500">指標</th>
         <th style="padding:6px 12px;font-size:11px;color:var(--blue);text-align:right;font-weight:600">${yoyLabelA}</th>
@@ -3166,7 +3189,7 @@ function renderYoyPage(){
       ['売上高',tC.sales,tP.sales,'yen'],['粗利額',tC.profit,tP.profit,'yen'],
       ['粗利率',tC.margin,tP.margin,'rate'],
     ]);
-    html+=`<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(440px,1fr));gap:14px">`;
+    html+=`<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(min(440px,100%),1fr));gap:14px">`;
     cats.forEach(cat=>{
       const cd=yoyAggr(cat,yoyFromYM,toYM),pd=yoyAggr(cat,pf,pt);
       html+=`<div>${yoyTable(labels[cat],[
