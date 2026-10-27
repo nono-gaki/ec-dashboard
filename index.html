@@ -3122,13 +3122,16 @@ function yoyAggr(cat,from,to){
     const rev=rows.reduce((a,s)=>a+(s.price||0),0),p=rows.reduce((a,s)=>a+s.profit,0);
     const saleCount=rows.length, saleAvg=saleCount?rev/saleCount:0;
     const stk=(allStock||[]).filter(s=>inM(String(s.yearMonth||'').replace('/','-').substring(0,7)));
-    const pch=(allPurchase||[]).filter(pp=>inM(String(pp.yearMonth||pp.date||'').replace('/','-').substring(0,7)));
-    const pchAmt=pch.reduce((a,pp)=>a+(pp.price||0),0);
+    // 買取：年月は「2026/10」「2026-10」「2026年10月」どの形式でも判定できるようにする
+    const pchYM=pp=>{ const m=String(pp.yearMonth||pp.date||'').match(/(\d{4})\D+(\d{1,2})/); return m?`${m[1]}-${String(m[2]).padStart(2,'0')}`:''; };
+    const pch=(allPurchase||[]).filter(pp=>inM(pchYM(pp)));
+    const pchAmt=pch.reduce((a,pp)=>a+(pp.buyPrice||0),0);      // 買取金額（税抜）
+    const pchQty=pch.reduce((a,pp)=>a+(pp.count||0),0);         // 買取点数
     const catMap={};
     rows.forEach(s=>{const c2=s.maker||s.media||'その他';catMap[c2]=(catMap[c2]||0)+s.profit;});
     return{sales:rev,profit:p,count:saleCount,avgPrice:saleAvg,margin:rev?p/rev*100:0,
            saleCount,saleAvg,stockCount:stk.length,
-           purchaseCount:pch.length,purchaseAmt:pchAmt,purchaseAvg:pch.length?pchAmt/pch.length:0,catMap};
+           purchaseCount:pchQty,purchaseAmt:pchAmt,purchaseAvg:pchQty?pchAmt/pchQty:0,catMap};
   }
   return{};
 }
