@@ -432,18 +432,24 @@ body { font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans','Yu Gothic UI',sa
   .yoy-cat-tabs { overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none; }
   .yoy-cat-tabs::-webkit-scrollbar { display:none; }
   .yoy-cat-tab { padding:8px 12px; font-size:12px; }
-  /* 年月選択：2枚を画面幅で半分ずつ */
+  /* 年月選択：2枚を画面幅で半分ずつ、入力欄はカード内で中央に */
   .yoy-month-row { display:grid !important; grid-template-columns:1fr 1fr; gap:8px !important; }
-  .yoy-month-row .table-card { min-width:0 !important; padding:8px !important; overflow:hidden; }
-  .yoy-month-row input { width:100% !important; min-width:0; box-sizing:border-box; font-size:13px !important; padding:6px 4px; text-align:center; }
-  /* 表：横スクロールさせず画面幅に収める */
-  #page-yoy .table-card { padding:12px 10px; overflow:hidden; }
+  .yoy-month-row .table-card { min-width:0 !important; padding:6px !important; overflow:hidden; }
+  .yoy-month-row input[type="month"] {
+    -webkit-appearance:none; appearance:none; display:block;
+    width:100% !important; min-width:0; max-width:100%; box-sizing:border-box; margin:0;
+    font-size:14px !important; padding:8px 4px; text-align:center;
+  }
+  .yoy-month-row input[type="month"]::-webkit-date-and-time-value { text-align:center; }
+  /* 表：数値は折り返さず1行で表示 */
+  #page-yoy .table-card { padding:12px 8px; overflow:hidden; }
   #page-yoy .yoy-tbl { min-width:0 !important; table-layout:fixed; }
-  #page-yoy .yoy-tbl th, #page-yoy .yoy-tbl td { padding:7px 4px !important; font-size:11px !important; word-break:break-all; }
-  #page-yoy .yoy-tbl th:nth-child(1), #page-yoy .yoy-tbl td:nth-child(1) { width:24%; }
-  #page-yoy .yoy-tbl th:nth-child(2), #page-yoy .yoy-tbl td:nth-child(2) { width:26%; font-size:12px !important; }
-  #page-yoy .yoy-tbl th:nth-child(3), #page-yoy .yoy-tbl td:nth-child(3) { width:24%; }
-  #page-yoy .yoy-tbl th:nth-child(4), #page-yoy .yoy-tbl td:nth-child(4) { width:26%; }
+  #page-yoy .yoy-tbl th, #page-yoy .yoy-tbl td { padding:7px 3px !important; font-size:11px !important; letter-spacing:-0.2px; }
+  #page-yoy .yoy-tbl td.num, #page-yoy .yoy-tbl th:not(:first-child) { white-space:nowrap; }
+  #page-yoy .yoy-tbl th:nth-child(1), #page-yoy .yoy-tbl td:nth-child(1) { width:19%; }
+  #page-yoy .yoy-tbl th:nth-child(2), #page-yoy .yoy-tbl td:nth-child(2) { width:28%; }
+  #page-yoy .yoy-tbl th:nth-child(3), #page-yoy .yoy-tbl td:nth-child(3) { width:26%; font-size:10.5px !important; }
+  #page-yoy .yoy-tbl th:nth-child(4), #page-yoy .yoy-tbl td:nth-child(4) { width:27%; }
   #page-yoy .yoy-pct { display:block; font-size:10px; }
 }
 </style>
