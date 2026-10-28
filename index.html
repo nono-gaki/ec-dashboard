@@ -3727,38 +3727,30 @@ async function _loadSalesExpensesDataImpl() {
       );
       console.log('仕入・経費 対象シート数:', targets.length, targets.slice(0,5));
 
-      // batchGetは1リクエスト100レンジまで → 1シート7レンジなので7シートずつ（429対策）
-      const BATCH_SIZE = 7;
-      for (let i = 0; i < targets.length; i += BATCH_SIZE) {
-        if (i > 0) await new Promise(r => setTimeout(r, 400)); // レート制限回避
-        const batch = targets.slice(i, i + BATCH_SIZE);
+      // 1シートあたり「完工日(K2)」と「明細(A14:K23)」の2範囲だけ取得し、20シートずつまとめてリクエスト（API回数を約1/7に削減）
+      const BATCH_SIZE = 20;
+      const queue = [];
+      for (let i = 0; i < targets.length; i += BATCH_SIZE) queue.push(targets.slice(i, i + BATCH_SIZE));
+      for (let qi = 0; qi < queue.length; qi++) {
+        if (qi > 0) await new Promise(r => setTimeout(r, 300));
+        const batch = queue[qi];
         const ranges = batch.flatMap(title => {
           const s = escSheet(title);
-          return [
-            `${s}!K2`,
-            `${s}!A14:A23`,
-            `${s}!C14:C23`,
-            `${s}!E14:E23`,
-            `${s}!G14:G23`,
-            `${s}!I14:I23`,
-            `${s}!K14:K23`,
-          ];
+          return [`${s}!K2`, `${s}!A14:K23`];
         });
         try {
           const batchResult = await fetchSheetBatch(cfg.apiKey, entry.sheetId, ranges);
           batch.forEach((title, j) => {
-            const base = j * 7;
+            const base = j * 2;
             const k2Rows = batchResult[base] || [];
             const rawDate = k2Rows[0] ? String(k2Rows[0][0]||'').trim() : '';
             const yearMonth = rawToYM(rawDate);
             if (!yearMonth) { console.log('完工日なし→スキップ:', title, rawDate); return; }
 
-            const expItems = batchResult[base+1] || [];
-            const expNotes = batchResult[base+2] || [];
-            const expAmts  = batchResult[base+3] || [];
-            const outItems = batchResult[base+4] || [];
-            const outNotes = batchResult[base+5] || [];
-            const outAmts  = batchResult[base+6] || [];
+            const blk = batchResult[base+1] || [];
+            const col = n => blk.map(row => [row ? row[n] : '']);
+            const expItems = col(0), expNotes = col(2), expAmts = col(4);   // 仕入・経費：A/C/E列
+            const outItems = col(6), outNotes = col(8), outAmts = col(10);  // 外注費：G/I/K列
 
             for (let r = 0; r < 10; r++) {
               const item   = expItems[r] ? String(expItems[r][0]||'').trim() : '';
@@ -3776,7 +3768,9 @@ async function _loadSalesExpensesDataImpl() {
             }
           });
         } catch(batchErr) {
-          console.warn('batchGet失敗 batch', i, ':', batchErr.message);
+          console.warn('batchGet失敗:', batchErr.message);
+          // 失敗した分は少し待ってから最後にもう一度だけ再取得（取りこぼし防止）
+          if (!batch._retried) { batch._retried = true; queue.push(batch); await new Promise(r => setTimeout(r, 8000)); }
         }
       }
     } catch(e) {
@@ -4365,25 +4359,30 @@ async function _loadConstructionExpensesDataImpl() {
       );
       console.log('工事 仕入・経費 対象シート数:', targets.length, targets.slice(0,5));
 
-      const BATCH_SIZE = 7;
-      for (let i = 0; i < targets.length; i += BATCH_SIZE) {
-        if (i > 0) await new Promise(r => setTimeout(r, 400));
-        const batch = targets.slice(i, i + BATCH_SIZE);
+      // 1シートあたり「完工日(K2)」と「明細(A14:K23)」の2範囲だけ取得し、20シートずつまとめてリクエスト（API回数を約1/7に削減）
+      const BATCH_SIZE = 20;
+      const queue = [];
+      for (let i = 0; i < targets.length; i += BATCH_SIZE) queue.push(targets.slice(i, i + BATCH_SIZE));
+      for (let qi = 0; qi < queue.length; qi++) {
+        if (qi > 0) await new Promise(r => setTimeout(r, 300));
+        const batch = queue[qi];
         const ranges = batch.flatMap(title => {
           const s = escSheet_c(title);
-          return [`${s}!K2`, `${s}!A14:A23`, `${s}!C14:C23`, `${s}!E14:E23`, `${s}!G14:G23`, `${s}!I14:I23`, `${s}!K14:K23`];
+          return [`${s}!K2`, `${s}!A14:K23`];
         });
         try {
           const batchResult = await fetchSheetBatch(cfg.apiKey, entry.sheetId, ranges);
           batch.forEach((title, j) => {
-            const base = j * 7;
+            const base = j * 2;
             const k2Rows = batchResult[base] || [];
             const rawDate = k2Rows[0] ? String(k2Rows[0][0]||'').trim() : '';
             const yearMonth = rawToYM_c(rawDate);
             if (!yearMonth) { console.log('完工日なし→スキップ:', title, rawDate); return; }
 
-            const expItems = batchResult[base+1]||[], expNotes = batchResult[base+2]||[], expAmts = batchResult[base+3]||[];
-            const outItems = batchResult[base+4]||[], outNotes = batchResult[base+5]||[], outAmts = batchResult[base+6]||[];
+            const blk = batchResult[base+1] || [];
+            const col = n => blk.map(row => [row ? row[n] : '']);
+            const expItems = col(0), expNotes = col(2), expAmts = col(4);   // 仕入・経費：A/C/E列
+            const outItems = col(6), outNotes = col(8), outAmts = col(10);  // 外注費：G/I/K列
 
             for (let r = 0; r < 10; r++) {
               const item = expItems[r] ? String(expItems[r][0]||'').trim() : '';
@@ -4400,7 +4399,11 @@ async function _loadConstructionExpensesDataImpl() {
               allConstructionExpenses.push({ sheetName:title, yearMonth, type:'outsource', item:item||'（項目なし）', note, amount });
             }
           });
-        } catch(batchErr) { console.warn('batchGet失敗:', batchErr.message); }
+        } catch(batchErr) {
+          console.warn('batchGet失敗:', batchErr.message);
+          // 失敗した分は少し待ってから最後にもう一度だけ再取得（取りこぼし防止）
+          if (!batch._retried) { batch._retried = true; queue.push(batch); await new Promise(r => setTimeout(r, 8000)); }
+        }
       }
     } catch(e) { console.error('loadConstructionExpensesData エラー:', e.message); }
   }
@@ -4851,7 +4854,15 @@ function parseGalileiSheetName(sheetName) {
   return `${m[1]}-${String(m[2]).padStart(2,'0')}`;
 }
 
-async function loadGalileiData(onlyLastFy=false) {
+// 同じ種類（今年度／前年度）の読み込みが同時に走ると、同じ配列に2回追加されて二重計上になるため、
+// 実行中なら新たに始めず、実行中の処理の完了を待つ
+const _galileiRunning = { cur:null, prev:null };
+function loadGalileiData(onlyLastFy=false) {
+  const k = onlyLastFy ? 'prev' : 'cur';
+  if (!_galileiRunning[k]) _galileiRunning[k] = _loadGalileiDataImpl(onlyLastFy).finally(() => { _galileiRunning[k] = null; });
+  return _galileiRunning[k];
+}
+async function _loadGalileiDataImpl(onlyLastFy=false) {
   console.log('loadGalileiData開始', onlyLastFy ? '(前年度分)' : '(今年度分)');
   const cfg = getConfig();
   // FYリスト対応: 後方互換でonlyLastFyも維持
