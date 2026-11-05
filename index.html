@@ -536,6 +536,7 @@ body { font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans','Yu Gothic UI',sa
       <div class="config-item"><label>非表示にする氏名・雇用形態（カンマ区切り）</label><input type="text" id="cfg-hrmos-exclude-employments" placeholder="取締役,野々垣,渡辺"></div>
     </div>
     <div style="font-size:11px;color:var(--text-muted);margin-top:6px">※上記は早期注意ラインのみの設定です。36協定の原則上限（月45時間換算）と過労死ライン（単月100時間 / 2〜6ヶ月平均80時間）は労基法の基準として自動判定されます。</div>
+
     <div style="font-size:11px;color:var(--text-muted);margin-top:2px">※HRMOSのAPIキーはここではなく、Netlifyの環境変数（HRMOS_SECRET_KEY / HRMOS_COMPANY_URL）で管理しています。</div>
 
     <button class="config-save" onclick="saveConfig()" style="margin-top:16px">保存して再読み込み</button>
@@ -2108,6 +2109,7 @@ function toggleConfig() {
     document.getElementById('cfg-hrmos-exclude-employments').value = cfg.hrmosExcludeEmployments != null ? cfg.hrmosExcludeEmployments : DEFAULT_CONFIG.hrmosExcludeEmployments;
   }
 }
+
 
 // ---- DATE PRESETS ----
 function ym(d) { return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`; }
@@ -6731,6 +6733,26 @@ document.addEventListener('click', e => {
 });
 document.addEventListener('change', e => { if (e.target.closest && e.target.closest('.date-filter-bar')) dfbUpdateAll(); });
 dfbInit();
+
+// ==================== 期間入力の同期 ====================
+// ① 営業・工事・ガリレイ・ECは各セクションに同じ期間欄があるため、どこかで変更したら全セクションの欄に反映
+//    （以前は「適用」時に先頭セクションの欄を読んでいたため、別セクションで変えた値が元に戻っていた）
+// ② 開始月を選んだら終了月も同じ年月にする（終了月はあとから変更可）
+const DFB_SYNC_CLASSES = ['ec-date-from','ec-date-to','sales-date-from','sales-date-to','construction-date-from','construction-date-to','galilei-date-from','galilei-date-to'];
+function dfbSyncInput(inp) {
+  const cls = DFB_SYNC_CLASSES.find(c => inp.classList.contains(c));
+  if (cls) document.querySelectorAll('.' + cls).forEach(x => { if (x !== inp) x.value = inp.value; });
+}
+document.addEventListener('change', e => {
+  const inp = e.target;
+  if (!(inp instanceof HTMLInputElement) || inp.type !== 'month') return;
+  const bar = inp.closest('.date-filter-bar');
+  if (!bar) return;
+  const ins = bar.querySelectorAll('input[type="month"]');
+  dfbSyncInput(inp);
+  if (inp === ins[0] && inp.value && ins[1]) { ins[1].value = inp.value; dfbSyncInput(ins[1]); }
+  dfbUpdateAll();
+});
 
 // INIT: 前回のタブ状態を復元
 (function() {
