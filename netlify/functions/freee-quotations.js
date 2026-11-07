@@ -94,34 +94,40 @@ exports.handler = async (event) => {
     const since = new Date(); since.setFullYear(since.getFullYear() - 2);
     const sinceStr = since.toISOString().slice(0, 10);
 
-    // ① 見積書の一覧（直近2年分）
-    const list = [];
-    for (let offset = 0; offset < 3000; offset += 100) {
-      const d = await api(tk, '/quotations', { limit: 100, offset, start_quotation_date: sinceStr });
-      const arr = d.quotations || d.items || [];
-      list.push(...arr);
-      if (arr.length < 100) break;
+    // ① 見積書の一覧（直近2年分）。分割読み込み中に毎回取り直さないよう10分間は保存した一覧を使う
+    let listCache = await store.get('freee-list', { type: 'json' }).catch(() => null);
+    let list = [], targets;
+    if (!params.force && !params.debug && listCache && Date.now() - listCache.at < 10 * 60 * 1000) {
+      targets = listCache.targets;
+    } else {
+      for (let offset = 0; offset < 10000; offset += 100) {
+        const d = await api(tk, '/quotations', { limit: 100, offset, start_quotation_date: sinceStr });
+        const arr = d.quotations || d.items || [];
+        list.push(...arr);
+        if (arr.length < 100) break;
+      }
+      targets = list.filter((q) => {
+        const p = `${q.partner_display_name || ''}${q.partner_name || ''}`;
+        return p.includes(keyword) && q.cancel_status !== 'canceled';
+      }).map((q) => ({ id: q.id, updated_at: q.updated_at || '' }));
+      await store.setJSON('freee-list', { at: Date.now(), targets });
     }
-    const targets = list.filter((q) => {
-      const p = `${q.partner_display_name || ''}${q.partner_name || ''}`;
-      return p.includes(keyword) && q.cancel_status !== 'canceled';
-    });
 
     // 項目名の確認用（値は返さず、項目名だけ）
     if (params.debug) {
       const sample = targets[0] ? await api(tk, `/quotations/${targets[0].id}`) : null;
       const q = sample ? (sample.quotation || sample) : null;
       const lines = q ? (q.lines || q.quotation_lines || q.items || []) : [];
-      return json(200, { listCount: list.length, targetCount: targets.length, listKeys: list[0] ? Object.keys(list[0]) : [], detailKeys: q ? Object.keys(q) : [], lineKeys: lines[0] ? Object.keys(lines[0]) : [] });
+      return json(200, { listCount: list.length, sampleNormalized: q ? { lineCount: normalizeQuote(q).lines.length, subtotal: normalizeQuote(q).subtotal } : null, targetCount: targets.length, listKeys: list[0] ? Object.keys(list[0]) : [], detailKeys: q ? Object.keys(q) : [], lineKeys: lines[0] ? Object.keys(lines[0]) : [] });
     }
 
     // ② 明細：保存済みで更新が無いものは再取得しない
     const cache = (await store.get('freee-quotes', { type: 'json' }).catch(() => null)) || { byId: {} };
     const need = targets.filter((q) => { const c = cache.byId[q.id]; return !c || (q.updated_at && c.updated !== q.updated_at); });
     let fetched = 0;
-    for (let i = 0; i < need.length; i += 4) {
-      if (Date.now() - started > 7000) break; // 時間切れ前に区切る
-      const chunk = need.slice(i, i + 4);
+    for (let i = 0; i < need.length; i += 6) {
+      if (Date.now() - started > 7500) break; // 時間切れ前に区切る
+      const chunk = need.slice(i, i + 6);
       const results = await Promise.all(chunk.map((q) => api(tk, `/quotations/${q.id}`).then((d) => d.quotation || d).catch(() => null)));
       results.forEach((r, j) => { if (r) { const n = normalizeQuote(r); n.updated = chunk[j].updated_at || n.updated; cache.byId[chunk[j].id] = n; fetched++; } });
     }
@@ -131,7 +137,7 @@ exports.handler = async (event) => {
     if (fetched) await store.setJSON('freee-quotes', cache);
 
     const quotes = Object.values(cache.byId).sort((a, b) => String(b.date).localeCompare(String(a.date)));
-    return json(200, { connected: true, quotes, remaining: Math.max(0, need.length - fetched), total: targets.length, savedAt: cache.savedAt });
+    return json(200, { connected: true, quotes, fetched, remaining: Math.max(0, need.length - fetched), total: targets.length, savedAt: cache.savedAt });
   } catch (err) {
     return json(err.reconnect ? 200 : 500, { connected: !err.reconnect, error: err.message || String(err) });
   }

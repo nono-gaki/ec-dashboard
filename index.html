@@ -6437,13 +6437,20 @@ async function freeeLoadQuotes(force) {
   freeeLoading = true;
   freeeSetStatus('freeeから読み込み中...');
   try {
-    for (let i = 0; i < 15; i++) {
-      const res = await fetch('/.netlify/functions/freee-quotations');
+    let stall = 0;
+    for (let i = 0; i < 300; i++) {
+      const res = await fetch('/.netlify/functions/freee-quotations' + (force && i === 0 ? '?force=1' : ''));
       const d = await res.json().catch(() => ({}));
       if (d.connected === false) { freeeSetStatus(d.error || '未連携です。「freeeと連携」から許可してください。', 'var(--amber)'); return; }
       if (!res.ok || d.error) throw new Error(d.error || `エラー（${res.status}）`);
       freeeQuotes = (d.quotes || []).map(freeePrepQuote);
-      if (d.remaining > 0) { freeeSetStatus(`読み込み中... ${freeeQuotes.length}/${d.total}件`); await new Promise(r => setTimeout(r, 800)); continue; }
+      if (d.remaining > 0) {
+        stall = d.fetched ? 0 : stall + 1;
+        if (stall >= 3) throw new Error('明細の取得が進みません。時間をおいて「再読込」を押してください。');
+        freeeSetStatus(`読み込み中... ${freeeQuotes.length}/${d.total}件（初回のみ時間がかかります。この間も検索できます）`);
+        await new Promise(r => setTimeout(r, 500));
+        continue;
+      }
       freeeLoaded = true;
       freeeSetStatus(`見積書 ${freeeQuotes.length}件（ガリレイ宛て）`, 'var(--green)');
       break;
