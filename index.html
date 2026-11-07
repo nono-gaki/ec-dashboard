@@ -452,6 +452,24 @@ body { font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans','Yu Gothic UI',sa
   #page-yoy .yoy-tbl th:nth-child(4), #page-yoy .yoy-tbl td:nth-child(4) { width:27%; }
   #page-yoy .yoy-pct { display:block; font-size:10px; }
 }
+@media(max-width:480px){ #est-result .kpi-row { grid-template-columns:repeat(2,1fr) !important; } }
+
+/* ===== 概算見積もり：スマホは類似現場をカード表示 ===== */
+.est-cards { display:none; }
+.est-card { border:1px solid var(--border); border-radius:8px; padding:8px 10px; }
+@media(max-width:480px){
+  #est-result .est-tblwrap { display:none; }
+  #est-result .est-cards { display:flex; flex-direction:column; gap:8px; }
+  #est-result .table-card { overflow:hidden; }
+  #est-result table { min-width:0 !important; table-layout:fixed; }
+  #est-result table th, #est-result table td { font-size:11px; padding:5px 4px; overflow-wrap:anywhere; }
+}
+
+@media(max-width:480px){
+  .freee-item-tbl { min-width:0 !important; table-layout:fixed; }
+  .freee-item-tbl th, .freee-item-tbl td { font-size:11px !important; padding:5px 3px !important; overflow-wrap:anywhere; }
+  .freee-item-tbl th:nth-child(4), .freee-item-tbl td:nth-child(4) { display:none; }
+}
 </style>
 
   <!-- file://制限チェック -->
@@ -1338,6 +1356,7 @@ body { font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans','Yu Gothic UI',sa
         <div class="page-sidebar-item" onclick="switchGalileiSection('reps',this)">営業担当者別</div>
         <div class="page-sidebar-item" onclick="switchGalileiSection('outsource',this)">外注一覧</div>
         <div class="page-sidebar-item" onclick="switchGalileiSection('expense',this)">経費一覧</div>
+        <div class="page-sidebar-item" onclick="switchGalileiSection('estimate',this)">🧮 概算見積もり</div>
       </div>
 
       <div class="page-content">
@@ -1363,6 +1382,9 @@ body { font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans','Yu Gothic UI',sa
           </div>
           <div class="accordion-item">
             <div class="accordion-header" onclick="toggleGalileiAccordion('expense',this)"><span>経費一覧</span><span class="accordion-arrow">▶</span></div>
+          </div>
+          <div class="accordion-item">
+            <div class="accordion-header" onclick="toggleGalileiAccordion('estimate',this)"><span>🧮 概算見積もり</span><span class="accordion-arrow">▶</span></div>
           </div>
         </div>
 
@@ -1653,6 +1675,48 @@ body { font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans','Yu Gothic UI',sa
               </table>
             </div>
           </div>
+        </div>
+
+        <!-- セクション: 概算見積もり（過去の類似現場から算出） -->
+        <div class="page-section" id="galilei-section-estimate">
+          <div class="table-card" style="margin-bottom:14px">
+            <div class="chart-title">🧮 概算見積もり（過去の類似現場から算出）</div>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
+              <div style="flex:2;min-width:220px">
+                <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px">施工内容（キーワード）</div>
+                <input type="text" id="est-content" class="date-input" style="width:100%;font-size:13px;padding:7px 10px" placeholder="例：冷蔵ショーケース 入替" onkeydown="if(event.key==='Enter')runGalileiEstimate()">
+              </div>
+              <div style="flex:1;min-width:140px">
+                <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px">地域（任意・同じ県を優先）</div>
+                <select id="est-area" class="date-input" style="width:100%;font-size:13px;padding:7px 8px"><option value="">指定なし</option></select>
+              </div>
+              <div style="flex:1;min-width:120px">
+                <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px">営業担当（任意・絞り込み）</div>
+                <select id="est-rep" class="date-input" style="width:100%;font-size:13px;padding:7px 8px"><option value="">指定なし</option></select>
+              </div>
+              <button class="apply-btn" style="padding:8px 20px" onclick="runGalileiEstimate()">検索</button>
+            </div>
+            <div style="font-size:10px;color:var(--text-muted);margin-top:8px">※今年度・前年度の現場一覧から施工内容が似ている現場を探し、実質金額の実績から目安を出します。同じ日・同じ現場に入っていた外注も合わせて表示します。最終金額は現場条件をふまえてご判断ください。</div>
+          </div>
+          <div class="table-card" style="margin-bottom:14px">
+            <div class="chart-title" style="flex-wrap:wrap;gap:8px">
+              <span>📄 freee見積書の明細から単価を調べる</span>
+              <span style="display:flex;gap:6px;align-items:center">
+                <span id="freee-status" style="font-size:11px;font-weight:400;color:var(--text-muted)">未読み込み</span>
+                <button class="preset-btn" onclick="freeeLoadQuotes(true)">再読込</button>
+                <a class="preset-btn" href="/.netlify/functions/freee-auth" target="_blank" rel="noopener" style="text-decoration:none">freeeと連携</a>
+              </span>
+            </div>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
+              <div style="flex:1;min-width:220px">
+                <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px">明細の品目（キーワード）</div>
+                <input type="text" id="est-item" class="date-input" style="width:100%;font-size:13px;padding:7px 10px" placeholder="例：荷造り運搬費、機器洗浄、搬入据付" onkeydown="if(event.key==='Enter')runFreeeItemSearch()">
+              </div>
+              <button class="apply-btn" style="padding:8px 20px" onclick="runFreeeItemSearch()">単価を調べる</button>
+            </div>
+            <div id="freee-item-result" style="margin-top:10px"></div>
+          </div>
+          <div id="est-result"><div style="color:var(--text-muted);font-size:12px;padding:8px 2px">施工内容を入力して「検索」を押してください。</div></div>
         </div>
 
       </div><!-- /page-content -->
@@ -6127,8 +6191,376 @@ function renderAiAnalysis() {
   aiRenderMonthlyCharts(_monthly.chartData);
 }
 
+
+
+// ==================== 市区町村 → 県（愛知・岐阜・三重・その他）の自動振り分け ====================
+const PREF_TOWNS = {
+  '愛知': ['名古屋市','千種区','東区','北区','西区','中村区','中区','昭和区','瑞穂区','熱田区','中川区','港区','南区','守山区','緑区','名東区','天白区',
+    '豊橋市','岡崎市','一宮市','瀬戸市','半田市','春日井市','豊川市','津島市','碧南市','刈谷市','豊田市','安城市','西尾市','蒲郡市','犬山市','常滑市','江南市','小牧市','稲沢市','新城市','東海市','大府市','知多市','知立市','尾張旭市','高浜市','岩倉市','豊明市','日進市','田原市','愛西市','清須市','北名古屋市','弥富市','みよし市','あま市','長久手市',
+    '東郷町','豊山町','大口町','扶桑町','大治町','蟹江町','飛島村','阿久比町','東浦町','南知多町','美浜町','武豊町','幸田町','設楽町','東栄町','豊根村'],
+  '岐阜': ['岐阜市','大垣市','高山市','多治見市','関市','中津川市','美濃市','瑞浪市','羽島市','恵那市','美濃加茂市','土岐市','各務原市','可児市','山県市','瑞穂市','飛騨市','本巣市','郡上市','下呂市','海津市',
+    '岐南町','笠松町','養老町','垂井町','関ケ原町','関ヶ原町','神戸町','輪之内町','安八町','揖斐川町','大野町','池田町','北方町','坂祝町','富加町','川辺町','七宗町','八百津町','白川町','東白川村','御嵩町','白川村'],
+  '三重': ['津市','四日市市','伊勢市','松阪市','桑名市','鈴鹿市','名張市','尾鷲市','亀山市','鳥羽市','熊野市','いなべ市','志摩市','伊賀市',
+    '木曽岬町','東員町','菰野町','朝日町','川越町','多気町','明和町','大台町','玉城町','度会町','大紀町','南伊勢町','紀北町','御浜町','紀宝町'],
+};
+// 長い名前から順に照合（「北名古屋市」を「名古屋市」より先に、など）
+const PREF_LOOKUP = Object.entries(PREF_TOWNS).flatMap(([p, list]) => list.map(t => [t, p])).sort((a,b) => b[0].length - a[0].length);
+const _prefCache = {};
+function getPref(area) {
+  const raw = String(area||'').normalize('NFKC').replace(/\s/g,'');
+  if (raw in _prefCache) return _prefCache[raw];
+  let p = 'その他';
+  if (/愛知/.test(raw)) p = '愛知';
+  else if (/岐阜/.test(raw)) p = '岐阜';
+  else if (/三重/.test(raw)) p = '三重';
+  else if (raw) {
+    // ①「市・町・村・区」まで含めた名前で照合
+    const hit = PREF_LOOKUP.find(([t]) => raw.includes(t));
+    if (hit) p = hit[1];
+    else {
+      // ②「一宮」「四日市」など末尾の市町村を省いた書き方にも対応（2文字以上の名前のみ）
+      const hit2 = PREF_LOOKUP.find(([t]) => { const b = t.replace(/[市町村区]$/,''); return b.length >= 2 && raw.startsWith(b); });
+      if (hit2) p = hit2[1];
+    }
+  }
+  return (_prefCache[raw] = p);
+}
+
+// ==================== ガリレイ：概算見積もり（類似現場検索） ====================
+// 文字の揺れ（全角/半角・空白・大小文字）をそろえる
+const estNorm = s => String(s||'').normalize('NFKC').toLowerCase().replace(/[\s　・、,，\/／()（）「」\-ー－]+/g, '');
+const estBigrams = s => { const t = estNorm(s); const set = new Set(); if (t.length === 1) set.add(t); for (let i = 0; i < t.length-1; i++) set.add(t.slice(i, i+2)); return set; };
+
+// 日付を YYYY-MM-DD にそろえる（「2026/10/5」「10/5」など。年がなければシートの年月から補う）
+function estNormDate(raw, ymNorm) {
+  const n = String(raw||'').normalize('NFKC').match(/\d+/g);
+  if (!n) return '';
+  let y, m, d;
+  if (n.length >= 3 && n[0].length === 4) { y = +n[0]; m = +n[1]; d = +n[2]; }
+  else if (n.length >= 2) {
+    m = +n[0]; d = +n[1];
+    const [yy, mm] = String(ymNorm||'').split('-').map(Number);
+    y = yy || new Date().getFullYear();
+    if (mm === 1 && m === 12) y -= 1;  // 1月のシートに前年12月の日付が入っている場合
+    if (mm === 12 && m === 1) y += 1;
+  } else return '';
+  if (!m || !d) return '';
+  return `${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+}
+
+// 今年度＋前年度の現場・外注を重複なしでまとめる
+function estAllData() {
+  const seen = new Set(), sites = [];
+  [...allGalileiSites, ...allGalileiSitesPrev].forEach(s => {
+    const k = s.yearMonthNorm + '|' + s.date + '|' + s.property + '|' + s.actualAmount;
+    if (seen.has(k)) return; seen.add(k); sites.push(s);
+  });
+  const seenO = new Set(), outs = [];
+  [...allGalileiOutsource, ...allGalileiOutsourcePrev].forEach(o => {
+    const k = o.yearMonthNorm + '|' + o.date + '|' + o.vendor + '|' + o.amount + '|' + o.site;
+    if (seenO.has(k)) return; seenO.add(k); outs.push(o);
+  });
+  return { sites, outs };
+}
+
+function galileiEstimateInit() {
+  if (!freeeLoaded && !freeeLoading) freeeLoadQuotes();
+  const fill = () => {
+    const { sites } = estAllData();
+    const countBy = key => { const m = {}; sites.forEach(s => { const v = (s[key]||'').trim(); if (v) m[v] = (m[v]||0)+1; }); return Object.entries(m).sort((a,b)=>b[1]-a[1]).map(e=>e[0]); };
+    // 地域：愛知・岐阜・三重・その他（市区町村から自動判定、件数付き）
+    const areaEl = document.getElementById('est-area');
+    if (areaEl) {
+      const cur = areaEl.value, cnt = {};
+      sites.forEach(s => { const p = getPref(s.area); cnt[p] = (cnt[p]||0)+1; });
+      areaEl.innerHTML = '<option value="">指定なし</option>' + ['愛知','岐阜','三重','その他'].map(p => `<option value="${p}">${p}（${cnt[p]||0}件）</option>`).join('');
+      areaEl.value = cur;
+    }
+    [['est-rep','rep']].forEach(([id,key]) => {
+      const el = document.getElementById(id); if (!el) return;
+      const cur = el.value;
+      el.innerHTML = '<option value="">指定なし</option>' + countBy(key).map(v=>`<option value="${v}">${v}</option>`).join('');
+      el.value = cur;
+    });
+  };
+  fill();
+  // 前年度分も検索対象にするため、未取得なら読み込んでから選択肢を更新
+  if (!galileiLastFyLoaded) { galileiLastFyLoaded = true; loadGalileiData(true).then(fill); }
+}
+
+function estMedian(arr) { if (!arr.length) return 0; const a=[...arr].sort((x,y)=>x-y), h=Math.floor(a.length/2); return a.length%2 ? a[h] : (a[h-1]+a[h])/2; }
+function estQuantile(arr, q) { if (!arr.length) return 0; const a=[...arr].sort((x,y)=>x-y), p=(a.length-1)*q, lo=Math.floor(p), hi=Math.ceil(p); return a[lo] + (a[hi]-a[lo])*(p-lo); }
+const estMan = v => '¥' + fmtYen(Math.round(v));
+
+function runGalileiEstimate() {
+  const q = (document.getElementById('est-content').value || '').trim();
+  const area = document.getElementById('est-area').value;
+  const rep = document.getElementById('est-rep').value;
+  const out = document.getElementById('est-result');
+  if (!q) { out.innerHTML = '<div style="color:var(--red);font-size:12px;padding:8px 2px">施工内容を入力してください。</div>'; return; }
+
+  const { sites, outs } = estAllData();
+  const qb = estBigrams(q);
+  const tokens = q.normalize('NFKC').split(/[\s　、,]+/).map(estNorm).filter(t => t.length >= 2);
+
+  // 類似度：施工内容（＋物件名を少し）と入力の2文字単位の一致率。同じ地域なら加点
+  const scored = sites.filter(s => s.actualAmount > 0 && (!rep || s.rep === rep)).map(s => {
+    const cb = estBigrams(s.content), pb = estBigrams(s.property);
+    let hit = 0, hitP = 0;
+    qb.forEach(b => { if (cb.has(b)) hit++; else if (pb.has(b)) hitP++; });
+    let score = qb.size ? (hit + hitP*0.5) / qb.size : 0;
+    const nc = estNorm(s.content);
+    if (tokens.length && tokens.every(t => nc.includes(t))) score = Math.max(score, 0.9);
+    if (area && getPref(s.area) === area) score += 0.15;
+    return { s, score };
+  }).filter(x => x.score >= 0.4).sort((a,b) => b.score - a.score || String(b.s.date).localeCompare(String(a.s.date)));
+
+  if (!scored.length) {
+    out.innerHTML = '<div class="table-card"><div style="font-size:13px">似ている現場が見つかりませんでした。キーワードを短くする（例：「ショーケース」「入替」など）か、別の言い方で試してください。</div></div>';
+    return;
+  }
+  const matched = scored.slice(0, 40);
+
+  // 同じ日・同じ現場に入っていた外注をひも付け
+  const nameMatch = (a, b) => { const x = estNorm(a), y = estNorm(b); return x && y && (x === y || (x.length >= 2 && y.includes(x)) || (y.length >= 2 && x.includes(y))); };
+  const outIndex = {};
+  outs.forEach(o => { const d = estNormDate(o.date, o.yearMonthNorm); if (d) (outIndex[d] = outIndex[d] || []).push(o); });
+  matched.forEach(m => {
+    const d = estNormDate(m.s.date, m.s.yearMonthNorm);
+    m.outs = d ? (outIndex[d] || []).filter(o => nameMatch(o.site, m.s.property)) : [];
+    m.outTotal = m.outs.reduce((a,o)=>a+o.amount, 0);
+    m.quote = freeeBestQuoteFor(m.s);
+  });
+
+  // 金額の目安
+  const amts = matched.map(m => m.s.actualAmount);
+  const med = estMedian(amts), p25 = estQuantile(amts, .25), p75 = estQuantile(amts, .75);
+  const withOut = matched.filter(m => m.outs.length);
+  const outRate = withOut.length / matched.length * 100;
+  const outMed = estMedian(withOut.map(m => m.outTotal));
+  const outRatio = withOut.length ? estMedian(withOut.map(m => m.outTotal / m.s.actualAmount * 100)) : 0;
+
+  // 外注業者別の集計
+  const vend = {};
+  withOut.forEach(m => m.outs.forEach(o => {
+    const v = o.vendor || '不明';
+    if (!vend[v]) vend[v] = { n:0, sum:0, last:'' };
+    vend[v].n++; vend[v].sum += o.amount;
+    const d = estNormDate(o.date, o.yearMonthNorm); if (d > vend[v].last) vend[v].last = d;
+  }));
+  const vendList = Object.entries(vend).sort((a,b) => b[1].n - a[1].n || b[1].sum - a[1].sum);
+
+  // アドバイス文
+  const adv = [];
+  adv.push(`類似現場${matched.length}件の実質金額は、中央値<b>${estMan(med)}</b>、中心的な範囲は<b>${estMan(p25)}〜${estMan(p75)}</b>です。`);
+  if (matched.length < 3) adv.push('<span style="color:var(--amber)">類似件数が少ないため、目安としての精度は低めです。</span>');
+  if (area) {
+    const same = matched.filter(m => getPref(m.s.area) === area);
+    if (same.length >= 2) adv.push(`${area}の案件（${same.length}件）に限ると中央値は${estMan(estMedian(same.map(m=>m.s.actualAmount)))}です。`);
+  }
+  if (!withOut.length) {
+    adv.push('類似現場では外注が入った記録がありません。自社対応が基本の工事と考えられます。');
+  } else {
+    adv.push(`類似現場の<b>${Math.round(outRate)}%（${withOut.length}/${matched.length}件）</b>で外注が入っています。外注費は1現場あたり中央値${estMan(outMed)}、実質金額に対して約${Math.round(outRatio)}%です。`);
+    const top = vendList[0];
+    if (top) adv.push(`よく入っている外注先は<b>${top[0]}</b>（${top[1].n}回、平均${estMan(top[1].sum/top[1].n)}）です。`);
+    if (outRate >= 50) adv.push(`外注が入る前提で、粗利の目安は ${estMan(med)} − ${estMan(outMed)} ≒ <b>${estMan(med - outMed)}</b> です。`);
+  }
+
+  const linkedQ = matched.filter(m => m.quote && m.quote.conf !== '低');
+  if (linkedQ.length) {
+    const qMed = estMedian(linkedQ.map(m => m.quote.amount));
+    const diffs = linkedQ.filter(m => m.quote.amount > 0).map(m => (m.s.actualAmount - m.quote.amount) / m.quote.amount * 100);
+    adv.push(`freeeの見積とひも付いた類似現場${linkedQ.length}件では、見積金額（税抜）の中央値は${estMan(qMed)}、実績は見積に対して中央値で${diffs.length ? (estMedian(diffs)>=0?'+':'')+Math.round(estMedian(diffs))+'%' : '—'}でした。`);
+  }
+
+  const matchBar = sc => { const w = Math.min(100, Math.round(sc*100)); return `<div style="background:var(--bg);border-radius:3px;height:6px;width:60px;display:inline-block;vertical-align:middle"><div style="height:6px;width:${w}%;background:var(--blue);border-radius:3px"></div></div>`; };
+
+  out.innerHTML = `
+    <div class="kpi-row" style="grid-template-columns:repeat(4,1fr);margin-bottom:14px">
+      ${kpiCard('概算（中央値）', estMan(med), 0, '類似'+matched.length+'件の実質金額', true, true)}
+      ${kpiCard('目安の範囲', estMan(p25)+'〜'+estMan(p75), 0, '中央50%の範囲', false, true)}
+      ${kpiCard('外注が入った割合', Math.round(outRate)+'%', 0, withOut.length+'/'+matched.length+'件', false, true)}
+      ${kpiCard('外注費（中央値）', withOut.length ? estMan(outMed) : '—', 0, withOut.length ? '実質金額の約'+Math.round(outRatio)+'%' : '外注実績なし', false, true)}
+    </div>
+    <div class="table-card" style="margin-bottom:14px;border-left:3px solid var(--blue)">
+      <div class="chart-title">💡 見積もり・外注のアドバイス</div>
+      <ul style="margin:0;padding-left:18px;font-size:12px;line-height:1.9">${adv.map(a=>`<li>${a}</li>`).join('')}</ul>
+      ${vendList.length ? `<div style="margin-top:10px;overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:12px;min-width:0">
+        <thead><tr><th style="text-align:left">外注先</th><th>回数</th><th>平均金額</th><th>直近</th></tr></thead>
+        <tbody>${vendList.map(([v,x])=>`<tr><td>${v}</td><td class="num">${x.n}回</td><td class="num">${estMan(x.sum/x.n)}</td><td class="num">${x.last?x.last.slice(2).replace(/-/g,'/'):'-'}</td></tr>`).join('')}</tbody>
+      </table></div>` : ''}
+    </div>
+    <div class="table-card">
+      <div class="chart-title">📋 類似現場（似ている順・最大40件）</div>
+      <div class="est-cards">${matched.map(m=>`<div class="est-card">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px">
+          <span style="font-weight:600;font-size:13px;min-width:0;overflow-wrap:anywhere">${m.s.property}</span>
+          <span style="font-weight:700;font-size:13px;white-space:nowrap">${estMan(m.s.actualAmount)}</span>
+        </div>
+        <div style="font-size:11px;color:var(--text-muted);margin-top:2px">
+          ${shortDate(m.s.date)}　<span style="font-size:10px;font-weight:600;padding:0 5px;border-radius:8px;background:var(--blue-light);color:var(--blue)">${getPref(m.s.area)}</span> ${m.s.area||''}${m.s.rep?'　担当 '+m.s.rep:''}
+        </div>
+        <div style="font-size:12px;color:var(--text-secondary);margin-top:3px;overflow-wrap:anywhere">${m.s.content||'-'}</div>
+        <div style="font-size:11px;margin-top:4px;padding-top:4px;border-top:1px dashed var(--border)">外注：${m.outs.length ? m.outs.map(o=>`${o.vendor} <b>${estMan(o.amount)}</b>`).join('、') : '<span style="color:var(--text-muted)">なし</span>'}</div>
+        ${m.quote ? `<div style="font-size:11px;margin-top:4px">見積：${freeeLinkHtml(m.quote)}</div>` : ''}
+      </div>`).join('')}</div>
+      <div class="est-tblwrap" style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:12px">
+        <thead><tr><th>施行日</th><th>物件名</th><th>地域</th><th>施工内容</th><th>担当</th><th>実質金額</th><th>同日・同現場の外注</th><th>freee見積</th><th>類似度</th></tr></thead>
+        <tbody>${matched.map(m=>`<tr>
+          <td style="white-space:nowrap">${shortDate(m.s.date)}</td>
+          <td style="font-weight:500">${m.s.property}</td>
+          <td style="white-space:nowrap"><span style="font-size:10px;font-weight:600;padding:1px 6px;border-radius:8px;background:var(--blue-light);color:var(--blue)">${getPref(m.s.area)}</span> ${m.s.area||''}</td>
+          <td style="color:var(--text-secondary)">${m.s.content||'-'}</td>
+          <td style="white-space:nowrap">${m.s.rep||'-'}</td>
+          <td class="num" style="font-weight:600;white-space:nowrap">${estMan(m.s.actualAmount)}</td>
+          <td style="font-size:11px">${m.outs.length ? m.outs.map(o=>`${o.vendor} ${estMan(o.amount)}`).join('<br>') : '<span style="color:var(--text-muted)">なし</span>'}</td>
+          <td style="font-size:11px">${freeeLinkHtml(m.quote)}</td>
+          <td>${matchBar(m.score)}</td>
+        </tr>`).join('')}</tbody>
+      </table></div>
+    </div>`;
+}
+// ==================== END 概算見積もり ====================
+
+// ==================== freee請求書：見積書の読み込み・ひも付け・単価検索 ====================
+let freeeQuotes = [], freeeLoaded = false, freeeLoading = false;
+
+function freeeSetStatus(text, color) {
+  const el = document.getElementById('freee-status');
+  if (el) { el.textContent = text; el.style.color = color || 'var(--text-muted)'; }
+}
+
+// 見積書を取得（件数が多い初回は、何回かに分けて続きを取得）
+async function freeeLoadQuotes(force) {
+  if (freeeLoading) return;
+  freeeLoading = true;
+  freeeSetStatus('freeeから読み込み中...');
+  try {
+    for (let i = 0; i < 15; i++) {
+      const res = await fetch('/.netlify/functions/freee-quotations');
+      const d = await res.json().catch(() => ({}));
+      if (d.connected === false) { freeeSetStatus(d.error || '未連携です。「freeeと連携」から許可してください。', 'var(--amber)'); return; }
+      if (!res.ok || d.error) throw new Error(d.error || `エラー（${res.status}）`);
+      freeeQuotes = (d.quotes || []).map(freeePrepQuote);
+      if (d.remaining > 0) { freeeSetStatus(`読み込み中... ${freeeQuotes.length}/${d.total}件`); await new Promise(r => setTimeout(r, 800)); continue; }
+      freeeLoaded = true;
+      freeeSetStatus(`見積書 ${freeeQuotes.length}件（ガリレイ宛て）`, 'var(--green)');
+      break;
+    }
+    // 検索済みなら結果を描き直してひも付けを反映
+    if ((document.getElementById('est-content') || {}).value) runGalileiEstimate();
+    if ((document.getElementById('est-item') || {}).value) runFreeeItemSearch();
+  } catch (e) {
+    freeeSetStatus('読み込み失敗：' + e.message, 'var(--red)');
+  } finally {
+    freeeLoading = false;
+  }
+}
+
+// ひも付け用の特徴を前計算（【】内の店名、本文、日付、金額）
+function freeePrepQuote(q) {
+  const texts = [q.subject, ...q.lines.map(l => l.desc)].join(' ');
+  const stores = [...texts.matchAll(/[【\[［]([^】\]］]+)[】\]］]/g)].map(m => estNorm(m[1])).filter(Boolean);
+  const headings = q.lines.filter(l => /^[■◆●□]/.test(l.desc) || !l.unitPrice).map(l => l.desc).join(' ');
+  // 見出し行（■〜）ごとに区切り、【店名】付きの区切りは店名ごとの金額を集計（1つの見積に複数店舗がある場合用）
+  const sections = []; let cur = null;
+  q.lines.forEach(l => {
+    if (/^[■◆●□]/.test(l.desc) || (!l.unitPrice && !l.amount)) {
+      const m = l.desc.match(/[【\[［]([^】\]］]+)[】\]］]/);
+      cur = { store: m ? estNorm(m[1]) : null, amount: 0 };
+      sections.push(cur);
+    } else if (cur) cur.amount += l.amount || 0;
+  });
+  return { ...q, stores, sections: sections.filter(s => s.store), textNorm: estNorm(texts), topicBigrams: estBigrams(q.subject + ' ' + headings) };
+}
+
+// 現場1件に対して、最も当てはまる見積を確度付きで返す
+function freeeBestQuoteFor(s) {
+  if (!freeeQuotes.length) return null;
+  const prop = estNorm(s.property);
+  const sd = estNormDate(s.date, s.yearMonthNorm);
+  const sdT = sd ? Date.parse(sd) : NaN;
+  const base = s.budgetSales || s.actualAmount;
+  const areaKey = estNorm(s.area).replace(/[市区町村]$/, '');
+  const cb = estBigrams(s.content);
+  let best = null;
+  freeeQuotes.forEach(q => {
+    let sc = 0, amount = q.subtotal, part = false;
+    const qT = Date.parse(q.date);
+    if (!isNaN(sdT) && !isNaN(qT)) {
+      const days = (sdT - qT) / 864e5;
+      if (days < -30 || days > 365) return;          // 施行日が見積日より大きく前・1年以上後は対象外
+      if (days >= -7 && days <= 60) sc += 0.2; else if (days <= 180) sc += 0.1;
+    }
+    const sameStore = n => n === prop || (n.length >= 2 && prop.includes(n)) || (prop.length >= 2 && n.includes(prop));
+    if (prop && q.stores.some(sameStore)) {
+      sc += 0.55;
+      // 複数店舗の見積なら、その店舗の区切り部分の金額で比べる
+      const sec = q.sections.filter(x => sameStore(x.store));
+      if (q.sections.length > 1 && sec.length) { amount = sec.reduce((a, x) => a + x.amount, 0); part = true; }
+    }
+    else if (prop.length >= 3 && q.textNorm.includes(prop)) sc += 0.45;
+    if (base && amount) { const r = Math.abs(amount - base) / Math.max(amount, base); if (r <= 0.05) sc += 0.25; else if (r <= 0.2) sc += 0.12; }
+    if (areaKey.length >= 2 && q.textNorm.includes(areaKey)) sc += 0.08;
+    let hit = 0; cb.forEach(b => { if (q.topicBigrams.has(b)) hit++; });
+    if (cb.size) sc += 0.1 * hit / cb.size;
+    if (!best || sc > best.score) best = { q, score: sc, amount, part };
+  });
+  if (!best || best.score < 0.3) return null;
+  best.conf = best.score >= 0.7 ? '高' : best.score >= 0.45 ? '中' : '低';
+  return best;
+}
+
+function freeeLinkHtml(link) {
+  if (!link) return '<span style="color:var(--text-muted)">—</span>';
+  const col = { '高':'#15803D', '中':'#B45309', '低':'#9CA3AF' }[link.conf];
+  const q = link.q;
+  const rows = q.lines.map(l => l.unitPrice
+    ? `<tr><td>${l.desc}</td><td class="num">${l.qty||''}${l.unit||''}</td><td class="num">${estMan(l.unitPrice)}</td><td class="num">${estMan(l.amount)}</td></tr>`
+    : `<tr><td colspan="4" style="font-weight:600;background:var(--bg)">${l.desc}</td></tr>`).join('');
+  return `<details><summary style="cursor:pointer">${estMan(link.amount)}${link.part ? '<span style="font-size:10px;color:var(--text-muted)">（該当部分）</span>' : ''} <span style="font-size:10px;font-weight:700;color:${col}">確度${link.conf}</span></summary>
+    <div style="font-size:11px;margin:4px 0;color:var(--text-muted)">${q.date} ${q.number}<br>${q.subject}${link.part ? `<br>見積全体 ${estMan(q.subtotal)} のうち、この店舗の区切り部分` : ''}</div>
+    <table style="width:100%;border-collapse:collapse;font-size:11px;min-width:0"><tbody>${rows}</tbody></table></details>`;
+}
+
+// 明細の品目で検索し、品目ごとの単価の相場を出す
+function runFreeeItemSearch() {
+  const out = document.getElementById('freee-item-result');
+  const q = (document.getElementById('est-item').value || '').trim();
+  if (!q) { out.innerHTML = ''; return; }
+  if (!freeeQuotes.length) { out.innerHTML = '<div style="font-size:12px;color:var(--text-muted)">freeeの見積書がまだ読み込まれていません。</div>'; return; }
+  const qb = estBigrams(q);
+  const tokens = q.normalize('NFKC').split(/[\s　、,]+/).map(estNorm).filter(t => t.length >= 2);
+  const groups = {};
+  freeeQuotes.forEach(quote => quote.lines.forEach(l => {
+    if (!l.unitPrice || /^[■◆●□]/.test(l.desc)) return;
+    const n = estNorm(l.desc);
+    let hit = 0; const lb = estBigrams(l.desc); qb.forEach(b => { if (lb.has(b)) hit++; });
+    const ok = (qb.size && hit / qb.size >= 0.6) || (tokens.length && tokens.every(t => n.includes(t)));
+    if (!ok) return;
+    const key = l.desc.replace(/[（(].*?[）)]/g, '').trim() || l.desc;   // 括弧内の補足はまとめる
+    (groups[key] = groups[key] || []).push({ ...l, quote });
+  }));
+  const list = Object.entries(groups).sort((a, b) => b[1].length - a[1].length).slice(0, 20);
+  if (!list.length) { out.innerHTML = '<div style="font-size:12px;color:var(--text-muted)">該当する明細が見つかりませんでした。</div>'; return; }
+  out.innerHTML = `<div style="overflow-x:auto"><table class="freee-item-tbl" style="width:100%;border-collapse:collapse;font-size:12px">
+    <thead><tr><th style="text-align:left">品目</th><th>件数</th><th>単価 中央値</th><th>最小〜最大</th><th>直近</th></tr></thead>
+    <tbody>${list.map(([k, arr]) => {
+      const ps = arr.map(x => x.unitPrice);
+      const latest = arr.slice().sort((a, b) => String(b.quote.date).localeCompare(String(a.quote.date)))[0];
+      return `<tr><td>${k}</td><td class="num">${arr.length}件</td><td class="num" style="font-weight:700">${estMan(estMedian(ps))}</td>
+        <td class="num" style="white-space:nowrap">${estMan(Math.min(...ps))}〜${estMan(Math.max(...ps))}</td>
+        <td style="font-size:11px">${latest.quote.date}<br><span style="color:var(--text-muted)">${estMan(latest.unitPrice)}／${latest.quote.subject}</span></td></tr>`;
+    }).join('')}</tbody></table></div>
+    <div style="font-size:10px;color:var(--text-muted);margin-top:6px">※括弧内の補足が違うだけの品目は1つにまとめています。見出し行（■〜）は除外しています。</div>`;
+}
+// ==================== END freee請求書 ====================
+
+
 // ==================== GALILEI SECTION SWITCH ====================
 function switchGalileiSection(key, el) {
+  if (key === 'estimate') setTimeout(galileiEstimateInit, 0);
   document.querySelectorAll('#galilei-sidebar .page-sidebar-item').forEach(t => t.classList.remove('active'));
   if(el) el.classList.add('active');
   document.querySelectorAll('#page-galilei .page-content > .page-section').forEach(s => s.classList.remove('active'));
@@ -6141,6 +6573,7 @@ function switchGalileiSection(key, el) {
   if(target) target.classList.add('mobile-open');
 }
 function toggleGalileiAccordion(key, el) {
+  if (key === 'estimate') setTimeout(galileiEstimateInit, 0);
   if (el.classList.contains('active')) return; // タブ表示なので同じタブの再タップでは閉じない
   const isOpen = el.classList.contains('active');
   document.querySelectorAll('#galilei-accordion .accordion-header').forEach(h => h.classList.remove('active'));
