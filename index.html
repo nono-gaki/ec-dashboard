@@ -6216,7 +6216,10 @@ function getPref(area) {
 
 // ==================== ガリレイ：概算見積もり（類似現場検索） ====================
 // 文字の揺れ（全角/半角・空白・大小文字）をそろえる
-const estNorm = s => String(s||'').normalize('NFKC').toLowerCase().replace(/[\s　・、,，\/／()（）「」\-ー－]+/g, '');
+const estNorm = s => String(s||'').normalize('NFKC').toLowerCase()
+  .replace(/入れ替え|入れ替|入替え|入れかえ|いれかえ/g, '入替').replace(/取り替え|取替え|取り替|とりかえ/g, '取替')
+  .replace(/取り外し|取外し|取りはずし/g, '取外').replace(/取り付け|取付け|取りつけ/g, '取付')
+  .replace(/[\s　・、,，\/／()（）「」\-ー－]+/g, '');
 const estBigrams = s => { const t = estNorm(s); const set = new Set(); if (t.length === 1) set.add(t); for (let i = 0; i < t.length-1; i++) set.add(t.slice(i, i+2)); return set; };
 
 // 日付を YYYY-MM-DD にそろえる（「2026/10/5」「10/5」など。年がなければシートの年月から補う）
@@ -6398,6 +6401,8 @@ function runGalileiEstimate() {
     }
   }
 
+  const itemHtml = freeeItemStatsHtml(q);
+
   out.innerHTML = `
     <div class="kpi-row" style="grid-template-columns:repeat(4,1fr);margin-bottom:14px">
       ${kpiCard('実績ベース（中央値）', amts.length ? estMan(med) : '—', 0, amts.length ? `範囲 ${estMan(p25)}〜${estMan(p75)}／${amts.length}件` : '該当なし', true, true)}
@@ -6413,6 +6418,7 @@ function runGalileiEstimate() {
         <tbody>${vendList.map(([v,x])=>`<tr><td>${v}</td><td class="num">${x.n}回</td><td class="num">${estMan(x.sum/x.n)}</td><td class="num">${x.last?x.last.slice(2).replace(/-/g,'/'):'-'}</td></tr>`).join('')}</tbody>
       </table></div>` : ''}
     </div>
+    ${itemHtml ? `<div class="table-card" style="margin-bottom:14px"><div class="chart-title">📄 品目別の単価相場（freee見積の明細より）</div>${itemHtml}</div>` : ''}
     <div class="table-card">
       <div class="chart-title" style="flex-wrap:wrap;gap:8px">
         <span>📋 似ている現場・見積（最大60件）</span>
@@ -6598,6 +6604,37 @@ function freeeLinkHtml(link) {
     <table style="width:100%;border-collapse:collapse;font-size:11px;min-width:0"><tbody>${rows}</tbody></table></details>`;
 }
 
+
+// 見積明細を品目で検索し、品目ごとの単価の相場をHTMLで返す（該当なしなら空文字）
+// ・「1200」などの数字だけでは一致させない（サイズ違いの無関係な明細を拾うため）
+// ・文字のキーワードは「すべて」含む明細を優先。1件も無い場合だけ「どれか」を含む明細を表示
+function freeeItemStatsHtml(q) {
+  if (!q || !freeeQuotes.length) return '';
+  const words = q.normalize('NFKC').split(/[\s　、,]+/).map(estNorm).filter(t => t.length >= 2 && !/^[\d.x×*]+$/.test(t));
+  if (!words.length) return '';
+  const lines = [];
+  freeeQuotes.forEach(quote => quote.lines.forEach(l => {
+    if (!l.unitPrice || /^[■◆●□]/.test(l.desc)) return;
+    lines.push({ ...l, n: estNorm(l.desc), quote });
+  }));
+  let hits = lines.filter(l => words.every(w => l.n.includes(w))), partial = false;
+  if (!hits.length && words.length > 1) { hits = lines.filter(l => words.some(w => l.n.includes(w))); partial = true; }
+  if (!hits.length) return '';
+  const groups = {};
+  hits.forEach(l => { const key = l.desc.replace(/[（(].*?[）)]/g, '').trim() || l.desc; (groups[key] = groups[key] || []).push(l); });
+  const list = Object.entries(groups).sort((a, b) => b[1].length - a[1].length).slice(0, 15);
+  return `${partial ? `<div style="font-size:11px;color:var(--amber);margin-bottom:6px">すべてのキーワードを含む明細が無いため、いずれかを含む明細を表示しています。</div>` : ''}
+    <div style="overflow-x:auto"><table class="freee-item-tbl" style="width:100%;border-collapse:collapse;font-size:12px">
+    <thead><tr><th style="text-align:left">品目</th><th>件数</th><th>単価 中央値</th><th>最小〜最大</th><th>直近</th></tr></thead>
+    <tbody>${list.map(([k, arr]) => {
+      const ps = arr.map(x => x.unitPrice);
+      const latest = arr.slice().sort((a, b) => String(b.quote.date).localeCompare(String(a.quote.date)))[0];
+      return `<tr><td>${k}</td><td class="num">${arr.length}件</td><td class="num" style="font-weight:700">${estMan(estMedian(ps))}</td>
+        <td class="num" style="white-space:nowrap">${estMan(Math.min(...ps))}〜${estMan(Math.max(...ps))}</td>
+        <td style="font-size:11px">${latest.quote.date}<br><span style="color:var(--text-muted)">${estMan(latest.unitPrice)}／${latest.quote.subject}</span></td></tr>`;
+    }).join('')}</tbody></table></div>
+    <div style="font-size:10px;color:var(--text-muted);margin-top:6px">※キーワード（${words.join('・')}）を含む明細を品目ごとに集計。数字（サイズ等）は判定に使いません。括弧内の補足が違うだけの品目は1つにまとめています。</div>`;
+}
 // ==================== END freee請求書 ====================
 
 
