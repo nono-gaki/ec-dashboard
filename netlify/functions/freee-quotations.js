@@ -102,8 +102,9 @@ exports.handler = async (event) => {
 
     // ① 見積書の一覧（直近2年分）。分割読み込み中に毎回取り直さないよう10分間は保存した一覧を使う
     let listCache = await store.get('freee-list', { type: 'json' }).catch(() => null);
+    const FILTER_VERSION = 2; // 絞り込み条件を変えたら番号を上げて一覧を取り直す
     let list = [], targets;
-    if (!params.force && !params.debug && listCache && listCache.keywordsKey === keywordsKey && Date.now() - listCache.at < 10 * 60 * 1000) {
+    if (!params.force && !params.debug && listCache && listCache.keywordsKey === keywordsKey && listCache.v === FILTER_VERSION && Date.now() - listCache.at < 10 * 60 * 1000) {
       targets = listCache.targets;
     } else {
       for (let offset = 0; offset < 10000; offset += 100) {
@@ -114,9 +115,9 @@ exports.handler = async (event) => {
       }
       targets = list.filter((q) => {
         const p = partnerText(q);
-        return keywords.some((k) => p.includes(k)) && q.cancel_status !== 'canceled';
+        return keywords.some((k) => p.includes(k)) && q.cancel_status !== 'canceled' && !/買取|査定/.test(String(q.subject || ''));
       }).map((q) => ({ id: q.id, updated_at: q.updated_at || '', partner: partnerLabel(q) }));
-      await store.setJSON('freee-list', { at: Date.now(), targets, keywordsKey });
+      await store.setJSON('freee-list', { at: Date.now(), targets, keywordsKey, v: FILTER_VERSION });
     }
 
     // 項目名の確認用（値は返さず、項目名だけ）
