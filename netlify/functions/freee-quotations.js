@@ -90,14 +90,20 @@ exports.handler = async (event) => {
     if (!tk) return json(200, { connected: false });
 
     const params = event.queryStringParameters || {};
-    const keyword = process.env.FREEE_PARTNER_KEYWORD || 'ガリレイ';
+    // 取引先名にこれらの語を含む見積書を対象にする（全角・半角は区別しない）
+    // 旧社名「福島工業」や「豊橋営業所」宛てで登録されている取引先も拾う
+    const keywords = (process.env.FREEE_PARTNER_KEYWORDS || 'ガリレイ,福島工業,フクシマ,豊橋営業所')
+      .split(',').map((k) => k.normalize('NFKC').trim()).filter(Boolean);
+    const keywordsKey = keywords.join(',');
+    const partnerText = (q) => Object.keys(q).filter((k) => k.startsWith('partner') && typeof q[k] === 'string').map((k) => q[k]).join(' ').normalize('NFKC');
+    const partnerLabel = (q) => q.partner_display_name || q.partner_name || '';
     const since = new Date(); since.setFullYear(since.getFullYear() - 2);
     const sinceStr = since.toISOString().slice(0, 10);
 
     // ① 見積書の一覧（直近2年分）。分割読み込み中に毎回取り直さないよう10分間は保存した一覧を使う
     let listCache = await store.get('freee-list', { type: 'json' }).catch(() => null);
     let list = [], targets;
-    if (!params.force && !params.debug && listCache && Date.now() - listCache.at < 10 * 60 * 1000) {
+    if (!params.force && !params.debug && listCache && listCache.keywordsKey === keywordsKey && Date.now() - listCache.at < 10 * 60 * 1000) {
       targets = listCache.targets;
     } else {
       for (let offset = 0; offset < 10000; offset += 100) {
@@ -107,10 +113,10 @@ exports.handler = async (event) => {
         if (arr.length < 100) break;
       }
       targets = list.filter((q) => {
-        const p = `${q.partner_display_name || ''}${q.partner_name || ''}`;
-        return p.includes(keyword) && q.cancel_status !== 'canceled';
-      }).map((q) => ({ id: q.id, updated_at: q.updated_at || '' }));
-      await store.setJSON('freee-list', { at: Date.now(), targets });
+        const p = partnerText(q);
+        return keywords.some((k) => p.includes(k)) && q.cancel_status !== 'canceled';
+      }).map((q) => ({ id: q.id, updated_at: q.updated_at || '', partner: partnerLabel(q) }));
+      await store.setJSON('freee-list', { at: Date.now(), targets, keywordsKey });
     }
 
     // 項目名の確認用（値は返さず、項目名だけ）
@@ -137,7 +143,10 @@ exports.handler = async (event) => {
     if (fetched) await store.setJSON('freee-quotes', cache);
 
     const quotes = Object.values(cache.byId).sort((a, b) => String(b.date).localeCompare(String(a.date)));
-    return json(200, { connected: true, quotes, fetched, remaining: Math.max(0, need.length - fetched), total: targets.length, savedAt: cache.savedAt });
+    // 取引先ごとの件数（対象に正しく含まれているか確認する用）
+    const partnerCounts = {};
+    targets.forEach((t) => { const k = t.partner || '（取引先名なし）'; partnerCounts[k] = (partnerCounts[k] || 0) + 1; });
+    return json(200, { connected: true, quotes, partnerCounts, fetched, remaining: Math.max(0, need.length - fetched), total: targets.length, savedAt: cache.savedAt });
   } catch (err) {
     return json(err.reconnect ? 200 : 500, { connected: !err.reconnect, error: err.message || String(err) });
   }
