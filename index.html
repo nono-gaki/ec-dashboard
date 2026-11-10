@@ -2232,6 +2232,7 @@ function calcFilterMonths() {
 }
 
 // ---- FETCH ----
+// ※読み込み範囲は「B6:O」のように最終行を指定しない形にしている（行数が増えても全行読む。以前は2000行までで、それ以降の新しい行が読まれていなかった）
 async function fetchSheet(apiKey, sheetId, sheetName, range) {
   const enc = encodeURIComponent(sheetName + '!' + range);
   const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${enc}?key=${apiKey}`;
@@ -2294,14 +2295,15 @@ async function loadData() {
     let _ecAllRows = [];
     for (const entry of _ecList) {
       try {
-        const _r = await fetchSheet(cfg.apiKey, entry.sheetId, entry.sheet1 || cfg.sheet1, 'B6:O2000');
+        const _r = await fetchSheet(cfg.apiKey, entry.sheetId, entry.sheet1 || cfg.sheet1, 'B6:O');
         _r.forEach(r => { r._fy = entry.fy; });
         _ecAllRows = _ecAllRows.concat(_r);
       } catch(e2) { console.warn('EC FY取得失敗:', entry.fy, e2.message); }
     }
     const rows = _ecAllRows;
 
-    allSales = rows.filter(r => r[0] && r[1]).map(r => {
+    // 予算管理表（SUMIFS）と同じく、B列（年月）があれば集計対象にする（C列が空の行も含める）
+    allSales = rows.filter(r => String(r[0]||'').trim() && (r[1] || r[7] || r[11])).map(r => {
       const pt = parseNum(r[7]);
       const pro = parseNum(r[11]);
       return {
@@ -2667,7 +2669,7 @@ async function loadStockData() {
     // Q=製品仕様[15] R=備考[16] S=検索[17] T=状態[18] U=メルカリ価格[19]
     // V=販売(税込)[20] W=仕入(税込)[21] X=粗利額[22] Y=粗利率[23]
     // Z=対応[24] AA=売価変更日[25]
-    const rows = await fetchSheet(cfg.apiKey, STOCK_SHEET_ID, STOCK_SHEET_NAME, 'B5:Z2000');
+    const rows = await fetchSheet(cfg.apiKey, STOCK_SHEET_ID, STOCK_SHEET_NAME, 'B5:Z');
     console.log('在庫データ行数:', rows.length);
     // ヘッダー行(5行目)をスキップ → rowsの先頭1行を除く
     const dataRows = rows.slice(1).filter(r => r[0]);
@@ -2858,7 +2860,7 @@ async function loadPurchaseData() {
     // A=買取年月[0] B=買取日[1] C=買取先[2] D=内容[3] E=点数[4]
     // F=買取金額(税抜)[5] G=販売金額(税抜)[6] H=販売金額(税込)[7]
     // I=粗利額(税抜)[8] J=粗利率[9] K=備考(手入力)[10]
-    const rows = await fetchSheet(cfg.apiKey, PURCHASE_SHEET_ID, PURCHASE_SHEET_NAME, 'A6:K2000');
+    const rows = await fetchSheet(cfg.apiKey, PURCHASE_SHEET_ID, PURCHASE_SHEET_NAME, 'A6:K');
     console.log('買取データ行数:', rows.length);
     const dataRows = rows.filter(r => r[0]);
     console.log('フィルタ後行数:', dataRows.length);
@@ -3147,7 +3149,7 @@ function yoyAggr(cat,from,to){
   const inM=ym=>months.includes(ym);
   if(cat==='sales'){
     const rows=(allSalesData||[]).filter(s=>inM(String(s.yearMonth).replace('/','-').substring(0,7)));
-    const s=rows.reduce((a,r)=>a+r.sales,0),p=rows.reduce((a,r)=>a+r.profit,0),n=rows.length;
+    const s=rows.reduce((a,r)=>a+r.sales,0),p=rows.reduce((a,r)=>a+r.profit,0),n=rows.filter(r=>r.countable!==false).length;
     const repMap={};
     rows.forEach(r=>{const rep=r.rep||'不明';repMap[rep]=(repMap[rep]||0)+r.profit;});
     const expMap={},outMap={};
@@ -4073,7 +4075,7 @@ async function loadSalesData() {
     let _salesAllRows = [];
     for (const entry of _salesList) {
       try {
-        const _r = await fetchSheet(cfg.apiKey, entry.sheetId, entry.sheet || cfg.salesSheet, 'A6:N2000');
+        const _r = await fetchSheet(cfg.apiKey, entry.sheetId, entry.sheet || cfg.salesSheet, 'A6:N');
         _r.forEach(r => { r._fy = entry.fy; });
         _salesAllRows = _salesAllRows.concat(_r);
       } catch(e2) { console.warn('営業FY取得失敗:', entry.fy, e2.message); }
@@ -4083,20 +4085,41 @@ async function loadSalesData() {
     const dataRows = rows.filter(r => r[0]);
     console.log('フィルタ後行数:', dataRows.length);
 
-    allSalesData = dataRows.map(r => ({
-      yearMonth: String(r[0]||'').trim(),
-      date:      String(r[1]||'').trim(),
-      client:    String(r[2]||'').trim(),
-      content:   String(r[3]||'').trim(),
-      sales:     parseNum(r[4]),
-      cost:      parseNum(r[5]),
-      outsource: parseNum(r[6]),
-      profit:    parseNum(r[7]),
-      profitRate:parseFloat(String(r[8]||'0').replace(/[%,]/g,''))||0,
-      terms:     String(r[9]||'').trim(),
-      paymentDate:String(r[10]||'').trim(),
-      note:      String(r[11]||'').trim(),
-    }));
+    // N列（ストック売上）に終了日がある行は、予算管理表と同じく
+    // 開始月（A列）〜終了月（N列）の月数で売上・粗利などを均等に按分して各月に計上する
+    const toYMobj = v => { const m = String(v||'').normalize('NFKC').match(/(\d{4})\D+(\d{1,2})/); return m ? { y:+m[1], m:+m[2] } : null; };
+    allSalesData = [];
+    dataRows.forEach(r => {
+      const base = {
+        yearMonth: String(r[0]||'').trim(),
+        date:      String(r[1]||'').trim(),
+        client:    String(r[2]||'').trim(),
+        content:   String(r[3]||'').trim(),
+        sales:     parseNum(r[4]),
+        cost:      parseNum(r[5]),
+        outsource: parseNum(r[6]),
+        profit:    parseNum(r[7]),
+        profitRate:parseFloat(String(r[8]||'0').replace(/[%,]/g,''))||0,
+        terms:     String(r[9]||'').trim(),
+        paymentDate:String(r[10]||'').trim(),
+        note:      String(r[11]||'').trim(),
+        countable: true,   // 案件数に数えるか（按分した2か月目以降は数えない）
+      };
+      const start = toYMobj(r[0]), end = toYMobj(r[13]);
+      const n = (start && end) ? (end.y - start.y) * 12 + (end.m - start.m) + 1 : 0;
+      if (n > 1) {
+        for (let i = 0; i < n; i++) {
+          const d = new Date(start.y, start.m - 1 + i, 1);
+          allSalesData.push({ ...base,
+            yearMonth: `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}`,
+            sales: base.sales / n, cost: base.cost / n, outsource: base.outsource / n, profit: base.profit / n,
+            content: `${base.content}（ストック按分 ${i+1}/${n}）`,
+            stockShare: true, countable: i === 0 });
+        }
+      } else {
+        allSalesData.push(base);
+      }
+    });
 
     // 初回のみデフォルト今月にセット。再読み込み時は選択中の期間を維持
     const isFirstSalesLoad = !salesLoaded;
@@ -4140,7 +4163,7 @@ function renderSalesDashboard() {
     if (!monthMap[ym2]) monthMap[ym2] = {sales:0, profit:0, count:0};
     monthMap[ym2].sales  += s.sales;
     monthMap[ym2].profit += s.profit;
-    monthMap[ym2].count  += 1;
+    monthMap[ym2].count  += (s.countable===false ? 0 : 1);
 
     const cl = s.client || 'その他';
     clientMap[cl] = (clientMap[cl]||0) + s.profit;
@@ -4149,7 +4172,7 @@ function renderSalesDashboard() {
   const months = Object.keys(monthMap).sort();
   const totalSales  = sales.reduce((a,s)=>a+s.sales,0);
   const totalProfit = sales.reduce((a,s)=>a+s.profit,0);
-  const totalCount  = sales.length;
+  const totalCount  = sales.filter(s=>s.countable!==false).length;
   const totalMargin = totalSales>0 ? totalProfit/totalSales*100 : 0;
 
   const now = new Date();
@@ -4316,7 +4339,7 @@ async function loadConstructionData() {
     let _constAllRows = [];
     for (const entry of _constList) {
       try {
-        const _r = await fetchSheet(cfg.apiKey, entry.sheetId, entry.sheet || cfg.constructionSheet, 'A6:I2000');
+        const _r = await fetchSheet(cfg.apiKey, entry.sheetId, entry.sheet || cfg.constructionSheet, 'A6:I');
         _r.forEach(r => { r._fy = entry.fy; });
         _constAllRows = _constAllRows.concat(_r);
       } catch(e2) { console.warn('工事FY取得失敗:', entry.fy, e2.message); }
