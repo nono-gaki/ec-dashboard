@@ -6565,7 +6565,7 @@ function freeePrepQuote(q) {
       sections.push(cur);
     } else if (cur) cur.amount += l.amount || 0;
   });
-  return { ...q, stores, sections: sections.filter(s => s.store), textNorm: estNorm(texts), topicBigrams: estBigrams(q.subject + ' ' + headings) };
+  return { ...q, stores, sections: sections.filter(s => s.store), textNorm: estNorm(texts), textBigrams: estBigrams(texts), topicBigrams: estBigrams(q.subject + ' ' + headings) };
 }
 
 // 現場1件に対して、最も当てはまる見積を確度付きで返す
@@ -6580,13 +6580,22 @@ function freeeScore(q, s) {
     if (days < -30 || days > 365) return null;          // 施行日が見積日より大きく前・1年以上後は対象外
     if (days >= -7 && days <= 60) sc += 0.2; else if (days <= 180) sc += 0.1;
   }
+  // 店名（物件名）の一致は必須。一致しない見積は、金額や工事内容が近くてもひも付けない
   const sameStore = n => n === prop || (n.length >= 2 && prop.includes(n)) || (prop.length >= 2 && n.includes(prop));
   if (prop && q.stores.some(sameStore)) {
     sc += 0.55;
     // 複数店舗の見積なら、その店舗の区切り部分の金額で比べる
     const sec = q.sections.filter(x => sameStore(x.store));
     if (q.sections.length > 1 && sec.length) { amount = sec.reduce((a, x) => a + x.amount, 0); part = true; }
-  } else if (prop.length >= 3 && q.textNorm.includes(prop)) sc += 0.45;
+  } else if (prop.length >= 3 && q.textNorm.includes(prop)) {
+    sc += 0.5;
+  } else {
+    // 表記ゆれ（「魚魚丸 西尾」「ヴォーノ・イタリア」など）は、物件名の文字の7割以上が見積に含まれていれば一致とみなす
+    const pb = estBigrams(s.property);
+    let hit = 0; pb.forEach(b => { if (q.textBigrams.has(b)) hit++; });
+    if (pb.size >= 2 && hit / pb.size >= 0.7) sc += 0.35;
+    else return null;
+  }
   const base = s.budgetSales || s.actualAmount;
   if (base && amount) { const r = Math.abs(amount - base) / Math.max(amount, base); if (r <= 0.05) sc += 0.25; else if (r <= 0.2) sc += 0.12; }
   const areaKey = estNorm(s.area).replace(/[市区町村]$/, '');
@@ -6596,13 +6605,13 @@ function freeeScore(q, s) {
   if (cb.size) sc += 0.1 * hit / cb.size;
   return { score: sc, amount, part };
 }
-const freeeConf = sc => sc >= 0.7 ? '高' : sc >= 0.45 ? '中' : '低';
+const freeeConf = sc => sc >= 0.8 ? '高' : sc >= 0.6 ? '中' : '低';
 
 // 現場1件に対して、最も当てはまる見積を確度付きで返す
 function freeeBestQuoteFor(s) {
   let best = null;
   freeeQuotes.forEach(q => { const r = freeeScore(q, s); if (r && (!best || r.score > best.score)) best = { q, ...r }; });
-  if (!best || best.score < 0.3) return null;
+  if (!best || best.score < 0.45) return null;
   best.conf = freeeConf(best.score);
   return best;
 }
